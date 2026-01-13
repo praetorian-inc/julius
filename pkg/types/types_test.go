@@ -7,6 +7,7 @@ import (
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	"gopkg.in/yaml.v3"
 )
 
 func TestResult_JSONMarshal(t *testing.T) {
@@ -47,12 +48,13 @@ func TestProbe_Fields(t *testing.T) {
 		Type:       "http",
 		Path:       "/api/tags",
 		Method:     "GET",
-		Match:      MatchRules{Status: 200},
+		RawMatch:   []RawRule{{Type: "status", Value: 200}},
 		Confidence: "high",
 	}
 
 	assert.Equal(t, "/api/tags", p.Path)
-	assert.Equal(t, 200, p.Match.Status)
+	assert.Len(t, p.RawMatch, 1)
+	assert.Equal(t, "status", p.RawMatch[0].Type)
 }
 
 func TestMatchRules_BodyMatch(t *testing.T) {
@@ -71,4 +73,38 @@ func TestProbe_DefaultMethod(t *testing.T) {
 	assert.Equal(t, "GET", p.Method)
 	assert.Equal(t, "http", p.Type)
 	assert.Equal(t, "medium", p.Confidence)
+}
+
+func TestProbe_NewFields(t *testing.T) {
+	yamlData := `
+type: http
+path: /api/auth
+method: POST
+body: '{"test": "data"}'
+headers:
+  Content-Type: application/json
+  Authorization: Bearer token
+match:
+  - type: status
+    value: 200
+  - type: body.contains
+    value: success
+confidence: high
+`
+	var probe Probe
+	err := yaml.Unmarshal([]byte(yamlData), &probe)
+	require.NoError(t, err)
+
+	assert.Equal(t, "POST", probe.Method)
+	assert.Equal(t, `{"test": "data"}`, probe.Body)
+	assert.Equal(t, "application/json", probe.Headers["Content-Type"])
+	assert.Equal(t, "Bearer token", probe.Headers["Authorization"])
+	assert.Len(t, probe.RawMatch, 2)
+
+	// Test GetRules
+	rules, err := probe.GetRules()
+	require.NoError(t, err)
+	assert.Len(t, rules, 2)
+	assert.Equal(t, "status", rules[0].GetType())
+	assert.Equal(t, "body.contains", rules[1].GetType())
 }

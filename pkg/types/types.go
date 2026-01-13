@@ -1,5 +1,7 @@
 package types
 
+import "fmt"
+
 type Result struct {
 	Target       string `json:"target"`
 	Service      string `json:"service"`
@@ -22,11 +24,13 @@ type ProbeDefinition struct {
 }
 
 type Probe struct {
-	Type       string     `yaml:"type"`
-	Path       string     `yaml:"path"`
-	Method     string     `yaml:"method"`
-	Match      MatchRules `yaml:"match"`
-	Confidence string     `yaml:"confidence"`
+	Type       string            `yaml:"type"`
+	Path       string            `yaml:"path"`
+	Method     string            `yaml:"method"`
+	Body       string            `yaml:"body,omitempty"`
+	Headers    map[string]string `yaml:"headers,omitempty"`
+	RawMatch   []RawRule         `yaml:"match"`
+	Confidence string            `yaml:"confidence"`
 }
 
 type MatchRules struct {
@@ -56,4 +60,17 @@ func (p *Probe) ApplyDefaults() {
 	if p.Confidence == "" {
 		p.Confidence = "medium"
 	}
+}
+
+// GetRules converts RawMatch to typed Rule slice
+func (p *Probe) GetRules() ([]Rule, error) {
+	rules := make([]Rule, 0, len(p.RawMatch))
+	for i, raw := range p.RawMatch {
+		rule, err := raw.ToRule()
+		if err != nil {
+			return nil, fmt.Errorf("rule %d: %w", i, err)
+		}
+		rules = append(rules, rule)
+	}
+	return rules, nil
 }
