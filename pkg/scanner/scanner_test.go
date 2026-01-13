@@ -279,6 +279,282 @@ func TestProbe_WithBodyAndHeaders(t *testing.T) {
 	assert.True(t, matched)
 }
 
+func TestScanWithModels(t *testing.T) {
+	tests := []struct {
+		name           string
+		fingerprint    string
+		modelsResponse string
+		modelsStatus   int
+		expectModels   []string
+		expectError    bool
+	}{
+		{
+			name:           "successful models extraction",
+			fingerprint:    `{"models":[{"name":"llama3.2:1b"}]}`,
+			modelsResponse: `{"models":[{"name":"llama3.2:1b"}]}`,
+			modelsStatus:   http.StatusOK,
+			expectModels:   []string{"llama3.2:1b"},
+			expectError:    false,
+		},
+		{
+			name:           "models fetch fails",
+			fingerprint:    `{"models":[]}`,
+			modelsResponse: "",
+			modelsStatus:   http.StatusUnauthorized,
+			expectModels:   nil,
+			expectError:    true,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+				switch r.URL.Path {
+				case "/api/tags":
+					w.WriteHeader(http.StatusOK)
+					w.Write([]byte(tt.fingerprint))
+				case "/api/models":
+					w.WriteHeader(tt.modelsStatus)
+					if tt.modelsResponse != "" {
+						w.Write([]byte(tt.modelsResponse))
+					}
+				default:
+					w.WriteHeader(http.StatusNotFound)
+				}
+			}))
+			defer server.Close()
+
+			scanner := NewScanner(5 * time.Second)
+			probes := []*types.ProbeDefinition{
+				{
+					Name:     "ollama",
+					Category: "self-hosted",
+					Probes: []types.Probe{
+						{
+							Type:   "http",
+							Path:   "/api/tags",
+							Method: "GET",
+							RawMatch: []rules.RawRule{
+								{Type: "status", Value: 200},
+							},
+							Confidence: "high",
+						},
+					},
+					Models: &types.ModelsConfig{
+						Path:    "/api/models",
+						Method:  "GET",
+						Extract: ".models[].name",
+					},
+				},
+			}
+
+			result := scanner.Scan(server.URL, probes)
+			require.NotNil(t, result, "expected result")
+
+			assert.Equal(t, "ollama", result.Service)
+			assert.Equal(t, tt.expectModels, result.Models)
+
+			if tt.expectError {
+				assert.NotEmpty(t, result.Error, "expected error")
+			} else {
+				assert.Empty(t, result.Error, "expected no error")
+			}
+		})
+	}
+}
+
+func TestScanWithoutModelsConfig(t *testing.T) {
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.WriteHeader(http.StatusOK)
+		w.Write([]byte(`OK`))
+	}))
+	defer server.Close()
+
+	scanner := NewScanner(5 * time.Second)
+	probes := []*types.ProbeDefinition{
+		{
+			Name:     "test-service",
+			Category: "test",
+			Probes: []types.Probe{
+				{
+					Type:   "http",
+					Path:   "/health",
+					Method: "GET",
+					RawMatch: []rules.RawRule{
+						{Type: "status", Value: 200},
+					},
+					Confidence: "medium",
+				},
+			},
+			// No Models config
+		},
+	}
+
+	result := scanner.Scan(server.URL, probes)
+	require.NotNil(t, result)
+
+	assert.Equal(t, "test-service", result.Service)
+	assert.Empty(t, result.Models)
+	assert.Empty(t, result.Error)
+}
+
+func TestFetchModels(t *testing.T) {
+	tests := []struct {
+		name           string
+		serverResponse string
+		serverStatus   int
+		config         *types.ModelsConfig
+		expected       []string
+		wantErr        bool
+	}{
+		{
+			name:           "successful fetch",
+			serverResponse: `{"data":[{"id":"gpt-4"},{"id":"gpt-3.5-turbo"}]}`,
+			serverStatus:   http.StatusOK,
+			config: &types.ModelsConfig{
+				Path:    "/v1/models",
+				Method:  "GET",
+				Extract: ".data[].id",
+			},
+			expected: []string{"gpt-4", "gpt-3.5-turbo"},
+		},
+		{
+			name:           "default GET method",
+			serverResponse: `{"models":[{"name":"llama"}]}`,
+			serverStatus:   http.StatusOK,
+			config: &types.ModelsConfig{
+				Path:    "/api/tags",
+				Extract: ".models[].name",
+			},
+			expected: []string{"llama"},
+		},
+		{
+			name:         "unauthorized error",
+			serverStatus: http.StatusUnauthorized,
+			config: &types.ModelsConfig{
+				Path:    "/v1/models",
+				Extract: ".data[].id",
+			},
+			wantErr: true,
+		},
+		{
+			name:         "not found error",
+			serverStatus: http.StatusNotFound,
+			config: &types.ModelsConfig{
+				Path:    "/v1/models",
+				Extract: ".data[].id",
+			},
+			wantErr: true,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+				w.WriteHeader(tt.serverStatus)
+				if tt.serverResponse != "" {
+					w.Write([]byte(tt.serverResponse))
+				}
+			}))
+			defer server.Close()
+
+			scanner := NewScanner(5 * time.Second)
+			models, err := scanner.fetchModels(server.URL, tt.config)
+
+			if tt.wantErr {
+				assert.Error(t, err)
+				return
+			}
+
+			require.NoError(t, err)
+			assert.Equal(t, tt.expected, models)
+		})
+	}
+}
+
+func TestFetchModelsWithHeaders(t *testing.T) {
+	var receivedAuth string
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		receivedAuth = r.Header.Get("Authorization")
+		w.WriteHeader(http.StatusOK)
+		w.Write([]byte(`{"data":[{"id":"model-1"}]}`))
+	}))
+	defer server.Close()
+
+	scanner := NewScanner(5 * time.Second)
+	cfg := &types.ModelsConfig{
+		Path:    "/v1/models",
+		Method:  "GET",
+		Headers: map[string]string{"Authorization": "Bearer test-token"},
+		Extract: ".data[].id",
+	}
+
+	_, err := scanner.fetchModels(server.URL, cfg)
+	require.NoError(t, err)
+	assert.Equal(t, "Bearer test-token", receivedAuth)
+}
+
+func TestExtractModels(t *testing.T) {
+	tests := []struct {
+		name     string
+		body     string
+		expr     string
+		expected []string
+		wantErr  bool
+	}{
+		{
+			name:     "OpenAI format",
+			body:     `{"data":[{"id":"gpt-4"},{"id":"gpt-3.5-turbo"}]}`,
+			expr:     ".data[].id",
+			expected: []string{"gpt-4", "gpt-3.5-turbo"},
+		},
+		{
+			name:     "Ollama format",
+			body:     `{"models":[{"name":"llama3.2:1b"},{"name":"mistral:7b"}]}`,
+			expr:     ".models[].name",
+			expected: []string{"llama3.2:1b", "mistral:7b"},
+		},
+		{
+			name:     "simple array",
+			body:     `["model-a","model-b"]`,
+			expr:     ".[]",
+			expected: []string{"model-a", "model-b"},
+		},
+		{
+			name:     "empty result",
+			body:     `{"data":[]}`,
+			expr:     ".data[].id",
+			expected: []string{},
+		},
+		{
+			name:    "invalid JSON",
+			body:    `not json`,
+			expr:    ".data[].id",
+			wantErr: true,
+		},
+		{
+			name:    "invalid jq expression",
+			body:    `{"data":[]}`,
+			expr:    ".[invalid",
+			wantErr: true,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			models, err := extractModels([]byte(tt.body), tt.expr)
+
+			if tt.wantErr {
+				assert.Error(t, err, "expected error")
+				return
+			}
+
+			require.NoError(t, err, "unexpected error")
+			assert.Equal(t, tt.expected, models)
+		})
+	}
+}
+
 func TestExtractPort(t *testing.T) {
 	tests := []struct {
 		name   string

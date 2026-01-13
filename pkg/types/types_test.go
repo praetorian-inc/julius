@@ -84,3 +84,122 @@ confidence: high
 	assert.Equal(t, "status", ruleList[0].GetType())
 	assert.Equal(t, "body.contains", ruleList[1].GetType())
 }
+
+func TestModelsConfig(t *testing.T) {
+	tests := []struct {
+		name            string
+		yaml            string
+		expectModels    bool
+		expectedPath    string
+		expectedMethod  string
+		expectedExtract string
+	}{
+		{
+			name: "full config",
+			yaml: `
+name: test
+probes: []
+models:
+  path: /v1/models
+  method: GET
+  headers:
+    Authorization: Bearer test
+  extract: ".data[].id"
+`,
+			expectModels:    true,
+			expectedPath:    "/v1/models",
+			expectedMethod:  "GET",
+			expectedExtract: ".data[].id",
+		},
+		{
+			name: "optional models block",
+			yaml: `
+name: test
+probes: []
+`,
+			expectModels: false,
+		},
+		{
+			name: "minimal models config",
+			yaml: `
+name: test
+probes: []
+models:
+  path: /api/tags
+  extract: ".models[].name"
+`,
+			expectModels:    true,
+			expectedPath:    "/api/tags",
+			expectedMethod:  "",
+			expectedExtract: ".models[].name",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			var pd ProbeDefinition
+			err := yaml.Unmarshal([]byte(tt.yaml), &pd)
+			require.NoError(t, err, "YAML parsing should succeed")
+
+			if tt.expectModels {
+				require.NotNil(t, pd.Models, "Models should not be nil")
+				assert.Equal(t, tt.expectedPath, pd.Models.Path)
+				assert.Equal(t, tt.expectedMethod, pd.Models.Method)
+				assert.Equal(t, tt.expectedExtract, pd.Models.Extract)
+			} else {
+				assert.Nil(t, pd.Models, "Models should be nil when not specified")
+			}
+		})
+	}
+}
+
+func TestResultFields(t *testing.T) {
+	tests := []struct {
+		name           string
+		models         []string
+		err            string
+		expectedModels int
+		expectError    bool
+	}{
+		{
+			name:           "with models",
+			models:         []string{"gpt-4", "gpt-3.5-turbo"},
+			err:            "",
+			expectedModels: 2,
+			expectError:    false,
+		},
+		{
+			name:           "with error",
+			models:         []string{},
+			err:            "models request returned 401",
+			expectedModels: 0,
+			expectError:    true,
+		},
+		{
+			name:           "empty fields",
+			models:         []string{},
+			err:            "",
+			expectedModels: 0,
+			expectError:    false,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			result := Result{
+				Target:     "https://example.com",
+				Service:    "openai",
+				Confidence: "high",
+				Models:     tt.models,
+				Error:      tt.err,
+			}
+
+			assert.Len(t, result.Models, tt.expectedModels)
+			if tt.expectError {
+				assert.NotEmpty(t, result.Error)
+			} else {
+				assert.Empty(t, result.Error)
+			}
+		})
+	}
+}

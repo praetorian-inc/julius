@@ -7,11 +7,13 @@ import (
 )
 
 type Result struct {
-	Target       string `json:"target"`
-	Service      string `json:"service"`
-	Confidence   string `json:"confidence"`
-	MatchedProbe string `json:"matched_probe"`
-	Category     string `json:"category"`
+	Target       string   `json:"target"`
+	Service      string   `json:"service"`
+	Confidence   string   `json:"confidence"`
+	MatchedProbe string   `json:"matched_probe"`
+	Category     string   `json:"category"`
+	Models []string `json:"models,omitempty"`
+	Error  string   `json:"error,omitempty"`
 }
 
 type OutputWriter interface {
@@ -19,12 +21,21 @@ type OutputWriter interface {
 }
 
 type ProbeDefinition struct {
-	Name        string  `yaml:"name"`
-	Description string  `yaml:"description"`
-	Category    string  `yaml:"category"`
-	PortHint    int     `yaml:"port_hint"`
-	APIDocs     string  `yaml:"api_docs"`
-	Probes      []Probe `yaml:"probes"`
+	Name        string        `yaml:"name"`
+	Description string        `yaml:"description"`
+	Category    string        `yaml:"category"`
+	PortHint    int           `yaml:"port_hint"`
+	APIDocs     string        `yaml:"api_docs"`
+	Probes      []Probe       `yaml:"probes"`
+	Models      *ModelsConfig `yaml:"models,omitempty"`
+}
+
+type ModelsConfig struct {
+	Path    string            `yaml:"path"`
+	Method  string            `yaml:"method,omitempty"`
+	Headers map[string]string `yaml:"headers,omitempty"`
+	Body    string            `yaml:"body,omitempty"`
+	Extract string            `yaml:"extract"`
 }
 
 type Probe struct {

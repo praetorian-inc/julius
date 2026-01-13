@@ -3,6 +3,7 @@ package probe
 import (
 	"embed"
 	"fmt"
+	"io/fs"
 	"net/http"
 	"os"
 	"path/filepath"
@@ -28,7 +29,15 @@ func ParseProbe(data []byte) (*types.ProbeDefinition, error) {
 }
 
 func LoadProbesFromDir(dir string) ([]*types.ProbeDefinition, error) {
-	entries, err := os.ReadDir(dir)
+	return loadProbesFromFS(os.DirFS(dir), ".")
+}
+
+func LoadProbesFromFS(fsys embed.FS, dir string) ([]*types.ProbeDefinition, error) {
+	return loadProbesFromFS(fsys, dir)
+}
+
+func loadProbesFromFS(fsys fs.FS, dir string) ([]*types.ProbeDefinition, error) {
+	entries, err := fs.ReadDir(fsys, dir)
 	if err != nil {
 		return nil, fmt.Errorf("reading probe directory: %w", err)
 	}
@@ -38,12 +47,12 @@ func LoadProbesFromDir(dir string) ([]*types.ProbeDefinition, error) {
 		if entry.IsDir() {
 			continue
 		}
-		if !strings.HasSuffix(entry.Name(), ".yaml") && !strings.HasSuffix(entry.Name(), ".yml") {
+		if !isTemplateFileExt(entry.Name()) {
 			continue
 		}
 
 		path := filepath.Join(dir, entry.Name())
-		data, err := os.ReadFile(path)
+		data, err := fs.ReadFile(fsys, path)
 		if err != nil {
 			return nil, fmt.Errorf("reading %s: %w", path, err)
 		}
@@ -51,38 +60,6 @@ func LoadProbesFromDir(dir string) ([]*types.ProbeDefinition, error) {
 		pd, err := ParseProbe(data)
 		if err != nil {
 			return nil, fmt.Errorf("parsing %s: %w", path, err)
-		}
-
-		probes = append(probes, pd)
-	}
-
-	return probes, nil
-}
-
-func LoadProbesFromFS(fsys embed.FS, dir string) ([]*types.ProbeDefinition, error) {
-	entries, err := fsys.ReadDir(dir)
-	if err != nil {
-		return nil, fmt.Errorf("reading embedded probe directory: %w", err)
-	}
-
-	var probes []*types.ProbeDefinition
-	for _, entry := range entries {
-		if entry.IsDir() {
-			continue
-		}
-		if !strings.HasSuffix(entry.Name(), ".yaml") && !strings.HasSuffix(entry.Name(), ".yml") {
-			continue
-		}
-
-		path := filepath.Join(dir, entry.Name())
-		data, err := fsys.ReadFile(path)
-		if err != nil {
-			return nil, fmt.Errorf("reading embedded %s: %w", path, err)
-		}
-
-		pd, err := ParseProbe(data)
-		if err != nil {
-			return nil, fmt.Errorf("parsing embedded %s: %w", path, err)
 		}
 
 		probes = append(probes, pd)
@@ -111,4 +88,8 @@ func MatchRules(resp *http.Response, body []byte, ruleList []rules.Rule) bool {
 		}
 	}
 	return true
+}
+
+func isTemplateFileExt(filename string) bool {
+	return strings.HasSuffix(filename, ".yaml") || strings.HasSuffix(filename, ".yml")
 }

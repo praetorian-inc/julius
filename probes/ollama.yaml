@@ -25,3 +25,8 @@ probes:
       - type: body.contains
         value: "Ollama is running"
     confidence: medium
+
+models:
+  path: /api/tags
+  method: GET
+  extract: ".models[].name"

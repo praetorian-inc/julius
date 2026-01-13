@@ -26,3 +26,8 @@ probes:
         header: Server
         value: "llama.cpp"
     confidence: high
+
+models:
+  path: /v1/models
+  method: GET
+  extract: ".data[].id"

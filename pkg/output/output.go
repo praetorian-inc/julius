@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
+	"strings"
 
 	"github.com/olekukonko/tablewriter"
 	"github.com/praetorian-inc/julius/pkg/types"
@@ -24,18 +25,22 @@ func (tw *TableWriter) Write(results []types.Result) error {
 	}
 
 	table := tablewriter.NewWriter(tw.writer)
-	table.SetHeader([]string{"TARGET", "SERVICE", "CONFIDENCE", "MATCHED PROBE", "CATEGORY"})
+	table.SetHeader([]string{"TARGET", "SERVICE", "CONFIDENCE", "MATCHED PROBE", "CATEGORY", "MODELS", "ERROR"})
 	table.SetBorder(false)
 	table.SetHeaderAlignment(tablewriter.ALIGN_LEFT)
 	table.SetAlignment(tablewriter.ALIGN_LEFT)
 
 	for _, result := range results {
+		models := strings.Join(result.Models, ", ")
+
 		table.Append([]string{
 			result.Target,
 			result.Service,
 			result.Confidence,
 			result.MatchedProbe,
 			result.Category,
+			models,
+			result.Error,
 		})
 	}
 

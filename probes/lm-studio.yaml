@@ -25,3 +25,8 @@ probes:
       - type: body.contains
         value: '"object":"list"'
     confidence: medium
+
+models:
+  path: /v1/models
+  method: GET
+  extract: ".data[].id"
