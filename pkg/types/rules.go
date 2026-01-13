@@ -38,56 +38,110 @@ type RawRule struct {
 	Header string `yaml:"header,omitempty"`
 }
 
+// Decoder converts a RawRule to a typed Rule
+type Decoder func(raw *RawRule) (Rule, error)
+
+// toInt converts any to int (handles float64 from YAML)
+func toInt(v any) (int, error) {
+	switch val := v.(type) {
+	case int:
+		return val, nil
+	case float64:
+		return int(val), nil
+	case uint64:
+		return int(val), nil
+	default:
+		return 0, fmt.Errorf("value must be int, got %T", v)
+	}
+}
+
+// toString converts any to string
+func toString(v any) (string, error) {
+	val, ok := v.(string)
+	if !ok {
+		return "", fmt.Errorf("value must be string, got %T", v)
+	}
+	return val, nil
+}
+
+// decodeStatusRule decodes a status rule
+func decodeStatusRule(raw *RawRule) (Rule, error) {
+	val, err := toInt(raw.Value)
+	if err != nil {
+		return nil, fmt.Errorf("status %w", err)
+	}
+	return &StatusRule{
+		BaseRule: BaseRule{Type: raw.Type, Not: raw.Not},
+		Status:   val,
+	}, nil
+}
+
+// decodeBodyContainsRule decodes a body.contains rule
+func decodeBodyContainsRule(raw *RawRule) (Rule, error) {
+	val, err := toString(raw.Value)
+	if err != nil {
+		return nil, fmt.Errorf("body.contains %w", err)
+	}
+	return &BodyContainsRule{
+		BaseRule: BaseRule{Type: raw.Type, Not: raw.Not},
+		Value:    val,
+	}, nil
+}
+
+// decodeBodyPrefixRule decodes a body.prefix rule
+func decodeBodyPrefixRule(raw *RawRule) (Rule, error) {
+	val, err := toString(raw.Value)
+	if err != nil {
+		return nil, fmt.Errorf("body.prefix %w", err)
+	}
+	return &BodyPrefixRule{
+		BaseRule: BaseRule{Type: raw.Type, Not: raw.Not},
+		Value:    val,
+	}, nil
+}
+
+// decodeHeaderContainsRule decodes a header.contains rule
+func decodeHeaderContainsRule(raw *RawRule) (Rule, error) {
+	val, err := toString(raw.Value)
+	if err != nil {
+		return nil, fmt.Errorf("header.contains %w", err)
+	}
+	return &HeaderContainsRule{
+		BaseRule: BaseRule{Type: raw.Type, Not: raw.Not},
+		Header:   raw.Header,
+		Value:    val,
+	}, nil
+}
+
+// decodeHeaderPrefixRule decodes a header.prefix rule
+func decodeHeaderPrefixRule(raw *RawRule) (Rule, error) {
+	val, err := toString(raw.Value)
+	if err != nil {
+		return nil, fmt.Errorf("header.prefix %w", err)
+	}
+	return &HeaderPrefixRule{
+		BaseRule: BaseRule{Type: raw.Type, Not: raw.Not},
+		Header:   raw.Header,
+		Value:    val,
+	}, nil
+}
+
+// ruleDecoders maps type names to decoder functions
+var ruleDecoders = map[string]Decoder{
+	"status":          decodeStatusRule,
+	"body.contains":   decodeBodyContainsRule,
+	"body.prefix":     decodeBodyPrefixRule,
+	"header.contains": decodeHeaderContainsRule,
+	"header.prefix":   decodeHeaderPrefixRule,
+}
+
 // ToRule converts RawRule to the appropriate Rule implementation
 func (r *RawRule) ToRule() (Rule, error) {
-	base := BaseRule{Type: r.Type, Not: r.Not}
-
-	switch r.Type {
-	case "status":
-		val, ok := r.Value.(int)
-		if !ok {
-			// YAML might parse as float64 or uint64
-			if fval, ok := r.Value.(float64); ok {
-				val = int(fval)
-			} else if uval, ok := r.Value.(uint64); ok {
-				val = int(uval)
-			} else {
-				return nil, fmt.Errorf("status value must be int, got %T", r.Value)
-			}
-		}
-		return &StatusRule{BaseRule: base, Status: val}, nil
-
-	case "body.contains":
-		val, ok := r.Value.(string)
-		if !ok {
-			return nil, fmt.Errorf("body.contains value must be string, got %T", r.Value)
-		}
-		return &BodyContainsRule{BaseRule: base, Value: val}, nil
-
-	case "body.prefix":
-		val, ok := r.Value.(string)
-		if !ok {
-			return nil, fmt.Errorf("body.prefix value must be string, got %T", r.Value)
-		}
-		return &BodyPrefixRule{BaseRule: base, Value: val}, nil
-
-	case "header.contains":
-		val, ok := r.Value.(string)
-		if !ok {
-			return nil, fmt.Errorf("header.contains value must be string, got %T", r.Value)
-		}
-		return &HeaderContainsRule{BaseRule: base, Header: r.Header, Value: val}, nil
-
-	case "header.prefix":
-		val, ok := r.Value.(string)
-		if !ok {
-			return nil, fmt.Errorf("header.prefix value must be string, got %T", r.Value)
-		}
-		return &HeaderPrefixRule{BaseRule: base, Header: r.Header, Value: val}, nil
-
-	default:
+	decoder, ok := ruleDecoders[r.Type]
+	if !ok {
 		return nil, fmt.Errorf("unknown rule type: %s", r.Type)
 	}
+	return decoder(r)
 }
 
 // StatusRule matches HTTP status codes
