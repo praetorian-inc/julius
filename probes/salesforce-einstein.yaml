@@ -1,0 +1,21 @@
+# probes/salesforce-einstein.yaml
+name: salesforce-einstein
+description: Salesforce Einstein Messaging API (MIAW)
+category: cloud-managed
+port_hint: 443
+api_docs: https://developer.salesforce.com/docs/service/messaging-api/
+
+probes:
+  - type: http
+    path: /iamessage/api/v2/authorization/unauthenticated/access-token
+    method: POST
+    headers:
+      Content-Type: application/json
+    body: '{"orgId":"00D000000000062","esDeveloperName":"test","capabilitiesVersion":"63","platform":"Web","context":{"appName":"test","clientVersion":"1.0.0"}}'
+    match:
+      - type: status
+        value: 400
+      - type: body.contains
+        value: "<!DOCTYPE html"
+        not: true
+    confidence: medium
