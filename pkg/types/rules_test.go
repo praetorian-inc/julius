@@ -5,7 +5,9 @@ import (
 	"net/http"
 	"testing"
 
+	"github.com/goccy/go-yaml"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 func TestStatusRule_Match(t *testing.T) {
@@ -130,4 +132,58 @@ func TestHeaderPrefixRule_Match(t *testing.T) {
 
 	resp = &http.Response{Header: http.Header{"Server": []string{"nginx"}}}
 	assert.False(t, rule.Match(resp, nil))
+}
+
+func TestUnmarshalRule(t *testing.T) {
+	tests := []struct {
+		name     string
+		yaml     string
+		wantType string
+		wantNot  bool
+	}{
+		{
+			name:     "status rule",
+			yaml:     "type: status\nvalue: 200",
+			wantType: "status",
+		},
+		{
+			name:     "body.contains rule",
+			yaml:     "type: body.contains\nvalue: models",
+			wantType: "body.contains",
+		},
+		{
+			name:     "body.contains with not",
+			yaml:     "type: body.contains\nvalue: error\nnot: true",
+			wantType: "body.contains",
+			wantNot:  true,
+		},
+		{
+			name:     "body.prefix rule",
+			yaml:     "type: body.prefix\nvalue: OK",
+			wantType: "body.prefix",
+		},
+		{
+			name:     "header.contains rule",
+			yaml:     "type: header.contains\nheader: Server\nvalue: uvicorn",
+			wantType: "header.contains",
+		},
+		{
+			name:     "header.prefix rule",
+			yaml:     "type: header.prefix\nheader: Server\nvalue: llama",
+			wantType: "header.prefix",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			var raw RawRule
+			err := yaml.Unmarshal([]byte(tt.yaml), &raw)
+			require.NoError(t, err)
+
+			rule, err := raw.ToRule()
+			require.NoError(t, err)
+			assert.Equal(t, tt.wantType, rule.GetType())
+			assert.Equal(t, tt.wantNot, rule.IsNegated())
+		})
+	}
 }
