@@ -2,6 +2,8 @@
 package scanner
 
 import (
+	"fmt"
+	"io"
 	"net/http"
 	"net/http/httptest"
 	"testing"
@@ -35,11 +37,9 @@ func TestProbe_Match(t *testing.T) {
 		Type:   "http",
 		Path:   "/",
 		Method: "GET",
-		Match: types.MatchRules{
-			Status: 200,
-			Body: types.BodyMatch{
-				Contains: "test response",
-			},
+		RawMatch: []types.RawRule{
+			{Type: "status", Value: 200},
+			{Type: "body.contains", Value: "test response"},
 		},
 	}
 
@@ -61,11 +61,9 @@ func TestProbe_NoMatch(t *testing.T) {
 		Type:   "http",
 		Path:   "/",
 		Method: "GET",
-		Match: types.MatchRules{
-			Status: 200,
-			Body: types.BodyMatch{
-				Contains: "test response",
-			},
+		RawMatch: []types.RawRule{
+			{Type: "status", Value: 200},
+			{Type: "body.contains", Value: "test response"},
 		},
 	}
 
@@ -91,10 +89,8 @@ func TestScan_FirstMatch(t *testing.T) {
 				{
 					Path:   "/v1/messages",
 					Method: "POST",
-					Match: types.MatchRules{
-						Body: types.BodyMatch{
-							Contains: "claude",
-						},
+					RawMatch: []types.RawRule{
+						{Type: "body.contains", Value: "claude"},
 					},
 				},
 			},
@@ -106,10 +102,8 @@ func TestScan_FirstMatch(t *testing.T) {
 				{
 					Path:   "/v1/chat/completions",
 					Method: "POST",
-					Match: types.MatchRules{
-						Body: types.BodyMatch{
-							Contains: "openai",
-						},
+					RawMatch: []types.RawRule{
+						{Type: "body.contains", Value: "openai"},
 					},
 				},
 			},
@@ -141,10 +135,8 @@ func TestScan_NoMatch(t *testing.T) {
 				{
 					Path:   "/v1/chat/completions",
 					Method: "POST",
-					Match: types.MatchRules{
-						Body: types.BodyMatch{
-							Contains: "openai",
-						},
+					RawMatch: []types.RawRule{
+						{Type: "body.contains", Value: "openai"},
 					},
 				},
 			},
@@ -180,10 +172,8 @@ func TestScanAll(t *testing.T) {
 				{
 					Path:   "/v1/chat/completions",
 					Method: "POST",
-					Match: types.MatchRules{
-						Body: types.BodyMatch{
-							Contains: "openai",
-						},
+					RawMatch: []types.RawRule{
+						{Type: "body.contains", Value: "openai"},
 					},
 				},
 			},
@@ -195,10 +185,8 @@ func TestScanAll(t *testing.T) {
 				{
 					Path:   "/v1/messages",
 					Method: "POST",
-					Match: types.MatchRules{
-						Body: types.BodyMatch{
-							Contains: "claude",
-						},
+					RawMatch: []types.RawRule{
+						{Type: "body.contains", Value: "claude"},
 					},
 				},
 			},
@@ -242,10 +230,8 @@ func TestScanAll_SomeNoMatch(t *testing.T) {
 				{
 					Path:   "/v1/chat/completions",
 					Method: "POST",
-					Match: types.MatchRules{
-						Body: types.BodyMatch{
-							Contains: "openai",
-						},
+					RawMatch: []types.RawRule{
+						{Type: "body.contains", Value: "openai"},
 					},
 				},
 			},
@@ -256,6 +242,40 @@ func TestScanAll_SomeNoMatch(t *testing.T) {
 
 	require.Len(t, results, 1, "ScanAll should return 1 result")
 	assert.Equal(t, "OpenAI", results[0].Service)
+}
+
+func TestProbe_WithBodyAndHeaders(t *testing.T) {
+	// Create test server that echoes back request body and headers
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		body, _ := io.ReadAll(r.Body)
+		contentType := r.Header.Get("Content-Type")
+		auth := r.Header.Get("Authorization")
+
+		response := fmt.Sprintf(`{"body":"%s","content_type":"%s","auth":"%s"}`,
+			string(body), contentType, auth)
+		w.WriteHeader(200)
+		w.Write([]byte(response))
+	}))
+	defer server.Close()
+
+	s := NewScanner(5 * time.Second)
+	p := types.Probe{
+		Path:   "/test",
+		Method: "POST",
+		Body:   `{"test":"data"}`,
+		Headers: map[string]string{
+			"Content-Type":  "application/json",
+			"Authorization": "Bearer token123",
+		},
+		RawMatch: []types.RawRule{
+			{Type: "status", Value: 200},
+			{Type: "body.contains", Value: "test"},
+		},
+	}
+
+	matched, err := s.Probe(server.URL, p)
+	require.NoError(t, err)
+	assert.True(t, matched)
 }
 
 func TestExtractPort(t *testing.T) {

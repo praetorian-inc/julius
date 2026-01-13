@@ -2,9 +2,11 @@ package scanner
 
 import (
 	"fmt"
+	"io"
 	"net/http"
 	"net/url"
 	"strconv"
+	"strings"
 	"time"
 
 	"github.com/praetorian-inc/julius/pkg/probe"
@@ -23,12 +25,25 @@ func NewScanner(timeout time.Duration) *Scanner {
 	}
 }
 
+const maxResponseBodySize = 10 * 1024 * 1024 // 10MB limit for security
+
 func (s *Scanner) Probe(target string, p types.Probe) (bool, error) {
 	url := target + p.Path
 
-	req, err := http.NewRequest(p.Method, url, nil)
+	// Create request body if specified
+	var bodyReader io.Reader
+	if p.Body != "" {
+		bodyReader = strings.NewReader(p.Body)
+	}
+
+	req, err := http.NewRequest(p.Method, url, bodyReader)
 	if err != nil {
 		return false, fmt.Errorf("creating request: %w", err)
+	}
+
+	// Set custom headers
+	for key, value := range p.Headers {
+		req.Header.Set(key, value)
 	}
 
 	resp, err := s.client.Do(req)
@@ -37,7 +52,20 @@ func (s *Scanner) Probe(target string, p types.Probe) (bool, error) {
 	}
 	defer resp.Body.Close()
 
-	matched := probe.Match(resp, p.Match)
+	// Read body with size limit (security)
+	limitedReader := io.LimitReader(resp.Body, maxResponseBodySize)
+	body, err := io.ReadAll(limitedReader)
+	if err != nil {
+		return false, fmt.Errorf("reading response body: %w", err)
+	}
+
+	// Convert RawMatch to rules and check
+	rules, err := p.GetRules()
+	if err != nil {
+		return false, fmt.Errorf("parsing rules: %w", err)
+	}
+
+	matched := probe.MatchRules(resp, body, rules)
 	return matched, nil
 }
 
