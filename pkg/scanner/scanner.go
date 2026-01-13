@@ -17,6 +17,7 @@ import (
 
 type Scanner struct {
 	client *http.Client
+	cache  map[string]*CachedResponse
 }
 
 func NewScanner(timeout time.Duration) *Scanner {
@@ -24,15 +25,17 @@ func NewScanner(timeout time.Duration) *Scanner {
 		client: &http.Client{
 			Timeout: timeout,
 		},
+		cache: make(map[string]*CachedResponse),
 	}
 }
 
 func (s *Scanner) Probe(target string, p types.Probe) (bool, error) {
 	url := target + p.Path
 
-	// Create request body if specified
+	var bodyBytes []byte
 	var bodyReader io.Reader
 	if p.Body != "" {
+		bodyBytes = []byte(p.Body)
 		bodyReader = strings.NewReader(p.Body)
 	}
 
@@ -41,20 +44,13 @@ func (s *Scanner) Probe(target string, p types.Probe) (bool, error) {
 		return false, fmt.Errorf("creating request: %w", err)
 	}
 
-	// Set custom headers
 	for key, value := range p.Headers {
 		req.Header.Set(key, value)
 	}
 
-	resp, err := s.client.Do(req)
+	resp, body, err := s.cachedRequest(req, bodyBytes)
 	if err != nil {
 		return false, fmt.Errorf("executing request: %w", err)
-	}
-	defer resp.Body.Close()
-
-	body, err := io.ReadAll(resp.Body)
-	if err != nil {
-		return false, fmt.Errorf("reading response body: %w", err)
 	}
 
 	rules, err := p.GetRules()
@@ -103,6 +99,19 @@ func (s *Scanner) Scan(target string, probes []*types.ProbeDefinition) *types.Re
 	return nil
 }
 
+func (s *Scanner) ScanAll(targets []string, probes []*types.ProbeDefinition) []types.Result {
+	var results []types.Result
+
+	for _, target := range targets {
+		result := s.Scan(target, probes)
+		if result != nil {
+			results = append(results, *result)
+		}
+	}
+
+	return results
+}
+
 func (s *Scanner) fetchModels(target string, cfg *types.ModelsConfig) ([]string, error) {
 	method := cfg.Method
 	if method == "" {
@@ -111,8 +120,10 @@ func (s *Scanner) fetchModels(target string, cfg *types.ModelsConfig) ([]string,
 
 	url := target + cfg.Path
 
+	var bodyBytes []byte
 	var bodyReader io.Reader
 	if cfg.Body != "" {
+		bodyBytes = []byte(cfg.Body)
 		bodyReader = strings.NewReader(cfg.Body)
 	}
 
@@ -125,35 +136,16 @@ func (s *Scanner) fetchModels(target string, cfg *types.ModelsConfig) ([]string,
 		req.Header.Set(key, value)
 	}
 
-	resp, err := s.client.Do(req)
+	resp, body, err := s.cachedRequest(req, bodyBytes)
 	if err != nil {
 		return nil, fmt.Errorf("models request failed: %w", err)
 	}
-	defer resp.Body.Close()
 
 	if resp.StatusCode != http.StatusOK {
 		return nil, fmt.Errorf("models request returned %d", resp.StatusCode)
 	}
 
-	body, err := io.ReadAll(resp.Body)
-	if err != nil {
-		return nil, fmt.Errorf("reading models response: %w", err)
-	}
-
 	return extractModels(body, cfg.Extract)
-}
-
-func (s *Scanner) ScanAll(targets []string, probes []*types.ProbeDefinition) []types.Result {
-	var results []types.Result
-
-	for _, target := range targets {
-		result := s.Scan(target, probes)
-		if result != nil {
-			results = append(results, *result)
-		}
-	}
-
-	return results
 }
 
 func ExtractPort(target string) int {
@@ -181,7 +173,6 @@ func ExtractPort(target string) int {
 	}
 }
 
-// extractModels parses JSON body and extracts model names using a jq expression
 func extractModels(body []byte, jqExpr string) ([]string, error) {
 	var data any
 	if err := json.Unmarshal(body, &data); err != nil {
