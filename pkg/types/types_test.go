@@ -1,4 +1,3 @@
-// pkg/types/types_test.go
 package types
 
 import (
@@ -43,29 +42,6 @@ func TestProbeDefinition_Fields(t *testing.T) {
 	assert.Equal(t, 11434, pd.PortHint)
 }
 
-func TestProbe_Fields(t *testing.T) {
-	p := Probe{
-		Type:       "http",
-		Path:       "/api/tags",
-		Method:     "GET",
-		RawMatch:   []RawRule{{Type: "status", Value: 200}},
-		Confidence: "high",
-	}
-
-	assert.Equal(t, "/api/tags", p.Path)
-	assert.Len(t, p.RawMatch, 1)
-	assert.Equal(t, "status", p.RawMatch[0].Type)
-}
-
-func TestMatchRules_BodyMatch(t *testing.T) {
-	mr := MatchRules{
-		Status: 200,
-		Body:   BodyMatch{Contains: "models"},
-	}
-
-	assert.Equal(t, "models", mr.Body.Contains)
-}
-
 func TestProbe_DefaultMethod(t *testing.T) {
 	p := Probe{Path: "/health"}
 	p.ApplyDefaults()
@@ -102,9 +78,9 @@ confidence: high
 	assert.Len(t, probe.RawMatch, 2)
 
 	// Test GetRules
-	rules, err := probe.GetRules()
+	ruleList, err := probe.GetRules()
 	require.NoError(t, err)
-	assert.Len(t, rules, 2)
-	assert.Equal(t, "status", rules[0].GetType())
-	assert.Equal(t, "body.contains", rules[1].GetType())
+	assert.Len(t, ruleList, 2)
+	assert.Equal(t, "status", ruleList[0].GetType())
+	assert.Equal(t, "body.contains", ruleList[1].GetType())
 }

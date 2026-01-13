@@ -1,5 +1,5 @@
 // pkg/types/rules_test.go
-package types
+package rules
 
 import (
 	"net/http"

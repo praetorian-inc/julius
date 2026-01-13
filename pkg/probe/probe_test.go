@@ -5,6 +5,7 @@ import (
 	"os"
 	"testing"
 
+	"github.com/praetorian-inc/julius/pkg/rules"
 	"github.com/praetorian-inc/julius/pkg/types"
 	"github.com/praetorian-inc/julius/probes"
 	"github.com/stretchr/testify/assert"
@@ -44,24 +45,24 @@ func TestLoadProbesFromFS(t *testing.T) {
 }
 
 func TestSortProbesByPortHint(t *testing.T) {
-	probes := []*types.ProbeDefinition{
+	probeList := []*types.ProbeDefinition{
 		{Name: "generic", PortHint: 0},
 		{Name: "ollama", PortHint: 11434},
 		{Name: "vllm", PortHint: 8000},
 	}
 
-	sorted := SortProbesByPortHint(probes, 11434)
+	sorted := SortProbesByPortHint(probeList, 11434)
 
 	assert.Equal(t, "ollama", sorted[0].Name)
 }
 
 func TestSortProbesByPortHint_NoMatch(t *testing.T) {
-	probes := []*types.ProbeDefinition{
+	probeList := []*types.ProbeDefinition{
 		{Name: "a", PortHint: 8000},
 		{Name: "b", PortHint: 9000},
 	}
 
-	sorted := SortProbesByPortHint(probes, 11434)
+	sorted := SortProbesByPortHint(probeList, 11434)
 	// Order should be unchanged
 	assert.Len(t, sorted, 2)
 }
@@ -73,12 +74,12 @@ func TestMatchRules_AllPass(t *testing.T) {
 	}
 	body := []byte(`{"models": []}`)
 
-	rules := []types.Rule{
-		&types.StatusRule{BaseRule: types.BaseRule{Type: "status"}, Status: 200},
-		&types.BodyContainsRule{BaseRule: types.BaseRule{Type: "body.contains"}, Value: "models"},
+	ruleList := []rules.Rule{
+		&rules.StatusRule{BaseRule: rules.BaseRule{Type: "status"}, Status: 200},
+		&rules.BodyContainsRule{BaseRule: rules.BaseRule{Type: "body.contains"}, Value: "models"},
 	}
 
-	result := MatchRules(resp, body, rules)
+	result := MatchRules(resp, body, ruleList)
 	assert.True(t, result)
 }
 
@@ -89,17 +90,17 @@ func TestMatchRules_NegationRejects(t *testing.T) {
 	}
 	body := []byte(`<!DOCTYPE html><body>OK</body>`)
 
-	rules := []types.Rule{
-		&types.StatusRule{BaseRule: types.BaseRule{Type: "status"}, Status: 200},
-		&types.BodyContainsRule{BaseRule: types.BaseRule{Type: "body.contains", Not: true}, Value: "<!DOCTYPE html"},
+	ruleList := []rules.Rule{
+		&rules.StatusRule{BaseRule: rules.BaseRule{Type: "status"}, Status: 200},
+		&rules.BodyContainsRule{BaseRule: rules.BaseRule{Type: "body.contains", Not: true}, Value: "<!DOCTYPE html"},
 	}
 
-	result := MatchRules(resp, body, rules)
+	result := MatchRules(resp, body, ruleList)
 	assert.False(t, result) // Should fail because body contains HTML (negated rule fails)
 }
 
 func TestMatchRules_EmptyRules(t *testing.T) {
 	resp := &http.Response{StatusCode: 200}
-	result := MatchRules(resp, nil, []types.Rule{})
+	result := MatchRules(resp, nil, []rules.Rule{})
 	assert.True(t, result) // Empty rules should pass (nothing to check)
 }

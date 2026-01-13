@@ -1,6 +1,10 @@
 package types
 
-import "fmt"
+import (
+	"fmt"
+
+	"github.com/praetorian-inc/julius/pkg/rules"
+)
 
 type Result struct {
 	Target       string `json:"target"`
@@ -29,25 +33,8 @@ type Probe struct {
 	Method     string            `yaml:"method"`
 	Body       string            `yaml:"body,omitempty"`
 	Headers    map[string]string `yaml:"headers,omitempty"`
-	RawMatch   []RawRule         `yaml:"match"`
+	RawMatch   []rules.RawRule   `yaml:"match"`
 	Confidence string            `yaml:"confidence"`
-}
-
-type MatchRules struct {
-	Status int         `yaml:"status"`
-	Body   BodyMatch   `yaml:"body"`
-	Header HeaderMatch `yaml:"header"`
-}
-
-type BodyMatch struct {
-	Contains string `yaml:"contains"`
-	Prefix   string `yaml:"prefix"`
-}
-
-type HeaderMatch struct {
-	Name     string `yaml:"name"`
-	Contains string `yaml:"contains"`
-	Prefix   string `yaml:"prefix"`
 }
 
 func (p *Probe) ApplyDefaults() {
@@ -63,14 +50,14 @@ func (p *Probe) ApplyDefaults() {
 }
 
 // GetRules converts RawMatch to typed Rule slice
-func (p *Probe) GetRules() ([]Rule, error) {
-	rules := make([]Rule, 0, len(p.RawMatch))
+func (p *Probe) GetRules() ([]rules.Rule, error) {
+	result := make([]rules.Rule, 0, len(p.RawMatch))
 	for i, raw := range p.RawMatch {
 		rule, err := raw.ToRule()
 		if err != nil {
 			return nil, fmt.Errorf("rule %d: %w", i, err)
 		}
-		rules = append(rules, rule)
+		result = append(result, rule)
 	}
-	return rules, nil
+	return result, nil
 }

@@ -10,6 +10,7 @@ import (
 	"strings"
 
 	"github.com/goccy/go-yaml"
+	"github.com/praetorian-inc/julius/pkg/rules"
 	"github.com/praetorian-inc/julius/pkg/types"
 )
 
@@ -104,8 +105,8 @@ func SortProbesByPortHint(probes []*types.ProbeDefinition, targetPort int) []*ty
 }
 
 // MatchRules checks if all rules match the response
-func MatchRules(resp *http.Response, body []byte, rules []types.Rule) bool {
-	for _, rule := range rules {
+func MatchRules(resp *http.Response, body []byte, ruleList []rules.Rule) bool {
+	for _, rule := range ruleList {
 		if !rule.Match(resp, body) {
 			return false
 		}

@@ -9,6 +9,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/praetorian-inc/julius/pkg/rules"
 	"github.com/praetorian-inc/julius/pkg/types"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -37,7 +38,7 @@ func TestProbe_Match(t *testing.T) {
 		Type:   "http",
 		Path:   "/",
 		Method: "GET",
-		RawMatch: []types.RawRule{
+		RawMatch: []rules.RawRule{
 			{Type: "status", Value: 200},
 			{Type: "body.contains", Value: "test response"},
 		},
@@ -61,7 +62,7 @@ func TestProbe_NoMatch(t *testing.T) {
 		Type:   "http",
 		Path:   "/",
 		Method: "GET",
-		RawMatch: []types.RawRule{
+		RawMatch: []rules.RawRule{
 			{Type: "status", Value: 200},
 			{Type: "body.contains", Value: "test response"},
 		},
@@ -89,7 +90,7 @@ func TestScan_FirstMatch(t *testing.T) {
 				{
 					Path:   "/v1/messages",
 					Method: "POST",
-					RawMatch: []types.RawRule{
+					RawMatch: []rules.RawRule{
 						{Type: "body.contains", Value: "claude"},
 					},
 				},
@@ -102,7 +103,7 @@ func TestScan_FirstMatch(t *testing.T) {
 				{
 					Path:   "/v1/chat/completions",
 					Method: "POST",
-					RawMatch: []types.RawRule{
+					RawMatch: []rules.RawRule{
 						{Type: "body.contains", Value: "openai"},
 					},
 				},
@@ -135,7 +136,7 @@ func TestScan_NoMatch(t *testing.T) {
 				{
 					Path:   "/v1/chat/completions",
 					Method: "POST",
-					RawMatch: []types.RawRule{
+					RawMatch: []rules.RawRule{
 						{Type: "body.contains", Value: "openai"},
 					},
 				},
@@ -172,7 +173,7 @@ func TestScanAll(t *testing.T) {
 				{
 					Path:   "/v1/chat/completions",
 					Method: "POST",
-					RawMatch: []types.RawRule{
+					RawMatch: []rules.RawRule{
 						{Type: "body.contains", Value: "openai"},
 					},
 				},
@@ -185,7 +186,7 @@ func TestScanAll(t *testing.T) {
 				{
 					Path:   "/v1/messages",
 					Method: "POST",
-					RawMatch: []types.RawRule{
+					RawMatch: []rules.RawRule{
 						{Type: "body.contains", Value: "claude"},
 					},
 				},
@@ -230,7 +231,7 @@ func TestScanAll_SomeNoMatch(t *testing.T) {
 				{
 					Path:   "/v1/chat/completions",
 					Method: "POST",
-					RawMatch: []types.RawRule{
+					RawMatch: []rules.RawRule{
 						{Type: "body.contains", Value: "openai"},
 					},
 				},
@@ -267,7 +268,7 @@ func TestProbe_WithBodyAndHeaders(t *testing.T) {
 			"Content-Type":  "application/json",
 			"Authorization": "Bearer token123",
 		},
-		RawMatch: []types.RawRule{
+		RawMatch: []rules.RawRule{
 			{Type: "status", Value: 200},
 			{Type: "body.contains", Value: "test"},
 		},
