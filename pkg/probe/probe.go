@@ -104,7 +104,6 @@ func SortProbesByPortHint(probes []*types.ProbeDefinition, targetPort int) []*ty
 	return sorted
 }
 
-// MatchRules checks if all rules match the response
 func MatchRules(resp *http.Response, body []byte, ruleList []rules.Rule) bool {
 	for _, rule := range ruleList {
 		if !rule.Match(resp, body) {

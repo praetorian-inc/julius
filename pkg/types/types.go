@@ -49,7 +49,6 @@ func (p *Probe) ApplyDefaults() {
 	}
 }
 
-// GetRules converts RawMatch to typed Rule slice
 func (p *Probe) GetRules() ([]rules.Rule, error) {
 	result := make([]rules.Rule, 0, len(p.RawMatch))
 	for i, raw := range p.RawMatch {
