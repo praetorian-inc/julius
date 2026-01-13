@@ -47,7 +47,7 @@ func loadProbesFromFS(fsys fs.FS, dir string) ([]*types.ProbeDefinition, error) 
 		if entry.IsDir() {
 			continue
 		}
-		if !strings.HasSuffix(entry.Name(), ".yaml") && !strings.HasSuffix(entry.Name(), ".yml") {
+		if !isTemplateFileExt(entry.Name()) {
 			continue
 		}
 
@@ -88,4 +88,8 @@ func MatchRules(resp *http.Response, body []byte, ruleList []rules.Rule) bool {
 		}
 	}
 	return true
+}
+
+func isTemplateFileExt(filename string) bool {
+	return strings.HasSuffix(filename, ".yaml") || strings.HasSuffix(filename, ".yml")
 }
