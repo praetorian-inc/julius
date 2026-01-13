@@ -10,16 +10,18 @@ probes:
     path: /
     method: GET
     match:
-      status: 200
-      body:
-        contains: "gradio"
+      - type: status
+        value: 200
+      - type: body.contains
+        value: "gradio"
     confidence: high
 
   - type: http
     path: /config
     method: GET
     match:
-      status: 200
-      body:
-        contains: '"version":'
+      - type: status
+        value: 200
+      - type: body.contains
+        value: '"version":'
     confidence: medium

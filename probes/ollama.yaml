@@ -10,16 +10,18 @@ probes:
     path: /api/tags
     method: GET
     match:
-      status: 200
-      body:
-        contains: '"models":'
+      - type: status
+        value: 200
+      - type: body.contains
+        value: '"models":'
     confidence: high
 
   - type: http
     path: /
     method: GET
     match:
-      status: 200
-      body:
-        contains: "Ollama is running"
+      - type: status
+        value: 200
+      - type: body.contains
+        value: "Ollama is running"
     confidence: medium

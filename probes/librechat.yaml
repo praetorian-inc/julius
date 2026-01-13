@@ -10,16 +10,18 @@ probes:
     path: /
     method: GET
     match:
-      status: 200
-      body:
-        contains: "LibreChat"
+      - type: status
+        value: 200
+      - type: body.contains
+        value: "LibreChat"
     confidence: high
 
   - type: http
     path: /api/endpoints
     method: GET
     match:
-      status: 200
-      body:
-        contains: '"openAI"'
+      - type: status
+        value: 200
+      - type: body.contains
+        value: '"openAI"'
     confidence: high

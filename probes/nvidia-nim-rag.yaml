@@ -10,14 +10,16 @@ probes:
     path: /
     method: GET
     match:
-      status: 200
-      body:
-        contains: "NVIDIA"
+      - type: status
+        value: 200
+      - type: body.contains
+        value: "NVIDIA"
     confidence: medium
 
   - type: http
     path: /generate
     method: GET
     match:
-      status: 405
+      - type: status
+        value: 405
     confidence: low

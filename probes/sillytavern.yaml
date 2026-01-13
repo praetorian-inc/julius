@@ -10,7 +10,8 @@ probes:
     path: /
     method: GET
     match:
-      status: 200
-      body:
-        contains: "SillyTavern"
+      - type: status
+        value: 200
+      - type: body.contains
+        value: "SillyTavern"
     confidence: high

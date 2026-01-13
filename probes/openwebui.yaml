@@ -10,15 +10,17 @@ probes:
     path: /
     method: GET
     match:
-      status: 200
-      header:
-        name: Server
-        contains: uvicorn
+      - type: status
+        value: 200
+      - type: header.contains
+        header: Server
+        value: uvicorn
     confidence: medium
 
   - type: http
     path: /api/health
     method: GET
     match:
-      status: 200
+      - type: status
+        value: 200
     confidence: high
