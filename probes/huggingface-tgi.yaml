@@ -15,3 +15,8 @@ probes:
       - type: body.contains
         value: '"model_id":'
     confidence: high
+
+models:
+  path: /info
+  method: GET
+  extract: "[.model_id]"
