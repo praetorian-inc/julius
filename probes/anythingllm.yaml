@@ -15,11 +15,3 @@ probes:
       - type: body.contains
         value: "AnythingLLM"
     confidence: high
-
-models:
-  path: /api/system/custom-models
-  method: POST
-  headers:
-    Content-Type: application/json
-  body: '{"provider":"openai","apiKey":null,"basePath":null}'
-  extract: ".models[].id"
