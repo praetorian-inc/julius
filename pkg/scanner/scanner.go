@@ -1,22 +1,19 @@
 package scanner
 
 import (
-	"encoding/json"
 	"fmt"
 	"io"
 	"net/http"
-	"net/url"
-	"strconv"
 	"strings"
 	"time"
 
-	"github.com/itchyny/gojq"
 	"github.com/praetorian-inc/julius/pkg/probe"
 	"github.com/praetorian-inc/julius/pkg/types"
 )
 
 type Scanner struct {
 	client *http.Client
+	cache  map[string]*CachedResponse
 }
 
 func NewScanner(timeout time.Duration) *Scanner {
@@ -24,46 +21,21 @@ func NewScanner(timeout time.Duration) *Scanner {
 		client: &http.Client{
 			Timeout: timeout,
 		},
+		cache: make(map[string]*CachedResponse),
 	}
 }
 
-func (s *Scanner) Probe(target string, p types.Probe) (bool, error) {
-	url := target + p.Path
+func (s *Scanner) ScanAll(targets []string, probes []*types.ProbeDefinition) []types.Result {
+	var results []types.Result
 
-	// Create request body if specified
-	var bodyReader io.Reader
-	if p.Body != "" {
-		bodyReader = strings.NewReader(p.Body)
+	for _, target := range targets {
+		result := s.Scan(target, probes)
+		if result != nil {
+			results = append(results, *result)
+		}
 	}
 
-	req, err := http.NewRequest(p.Method, url, bodyReader)
-	if err != nil {
-		return false, fmt.Errorf("creating request: %w", err)
-	}
-
-	// Set custom headers
-	for key, value := range p.Headers {
-		req.Header.Set(key, value)
-	}
-
-	resp, err := s.client.Do(req)
-	if err != nil {
-		return false, fmt.Errorf("executing request: %w", err)
-	}
-	defer resp.Body.Close()
-
-	body, err := io.ReadAll(resp.Body)
-	if err != nil {
-		return false, fmt.Errorf("reading response body: %w", err)
-	}
-
-	rules, err := p.GetRules()
-	if err != nil {
-		return false, fmt.Errorf("parsing rules: %w", err)
-	}
-
-	matched := probe.MatchRules(resp, body, rules)
-	return matched, nil
+	return results
 }
 
 func (s *Scanner) Scan(target string, probes []*types.ProbeDefinition) *types.Result {
@@ -88,13 +60,14 @@ func (s *Scanner) Scan(target string, probes []*types.ProbeDefinition) *types.Re
 				Category:     pd.Category,
 			}
 
-			if pd.Models != nil {
-				models, err := s.fetchModels(target, pd.Models)
-				if err != nil {
-					result.Error = err.Error()
-				}
-				result.Models = models
+			if pd.Models == nil {
+				return result
 			}
+			models, err := s.fetchModels(target, pd.Models)
+			if err != nil {
+				result.Error = err.Error()
+			}
+			result.Models = models
 
 			return result
 		}
@@ -103,114 +76,56 @@ func (s *Scanner) Scan(target string, probes []*types.ProbeDefinition) *types.Re
 	return nil
 }
 
-func (s *Scanner) fetchModels(target string, cfg *types.ModelsConfig) ([]string, error) {
-	method := cfg.Method
-	if method == "" {
-		method = "GET"
-	}
-
-	url := target + cfg.Path
-
-	var bodyReader io.Reader
-	if cfg.Body != "" {
-		bodyReader = strings.NewReader(cfg.Body)
-	}
-
-	req, err := http.NewRequest(method, url, bodyReader)
+func (s *Scanner) Probe(target string, p types.Probe) (bool, error) {
+	resp, body, err := s.doRequest(target, p.Method, p.Path, p.Body, p.Headers)
 	if err != nil {
-		return nil, fmt.Errorf("creating models request: %w", err)
+		return false, fmt.Errorf("executing request: %w", err)
 	}
 
-	for key, value := range cfg.Headers {
-		req.Header.Set(key, value)
+	rules, err := p.GetRules()
+	if err != nil {
+		return false, fmt.Errorf("parsing rules: %w", err)
 	}
 
-	resp, err := s.client.Do(req)
+	matched := probe.MatchRules(resp, body, rules)
+	return matched, nil
+}
+
+func (s *Scanner) fetchModels(target string, cfg *types.ModelsConfig) ([]string, error) {
+	resp, body, err := s.doRequest(target, cfg.Method, cfg.Path, cfg.Body, cfg.Headers)
 	if err != nil {
 		return nil, fmt.Errorf("models request failed: %w", err)
 	}
-	defer resp.Body.Close()
 
 	if resp.StatusCode != http.StatusOK {
 		return nil, fmt.Errorf("models request returned %d", resp.StatusCode)
 	}
 
-	body, err := io.ReadAll(resp.Body)
-	if err != nil {
-		return nil, fmt.Errorf("reading models response: %w", err)
-	}
-
 	return extractModels(body, cfg.Extract)
 }
 
-func (s *Scanner) ScanAll(targets []string, probes []*types.ProbeDefinition) []types.Result {
-	var results []types.Result
-
-	for _, target := range targets {
-		result := s.Scan(target, probes)
-		if result != nil {
-			results = append(results, *result)
-		}
+func (s *Scanner) doRequest(target, method, path, body string, headers map[string]string) (*http.Response, []byte, error) {
+	if method == "" {
+		method = "GET"
 	}
 
-	return results
-}
+	url := target + path
 
-func ExtractPort(target string) int {
-	u, err := url.Parse(target)
+	var bodyBytes []byte
+	var bodyReader io.Reader
+	if body != "" {
+		bodyBytes = []byte(body)
+		bodyReader = strings.NewReader(body)
+	}
+
+	req, err := http.NewRequest(method, url, bodyReader)
 	if err != nil {
-		return 0
+		return nil, nil, fmt.Errorf("creating request: %w", err)
 	}
 
-	port := u.Port()
-	if port != "" {
-		p, err := strconv.Atoi(port)
-		if err != nil {
-			return 0
-		}
-		return p
+	for key, value := range headers {
+		req.Header.Set(key, value)
 	}
 
-	switch u.Scheme {
-	case "https":
-		return 443
-	case "http":
-		return 80
-	default:
-		return 0
-	}
-}
-
-// extractModels parses JSON body and extracts model names using a jq expression
-func extractModels(body []byte, jqExpr string) ([]string, error) {
-	var data any
-	if err := json.Unmarshal(body, &data); err != nil {
-		return nil, fmt.Errorf("invalid JSON: %w", err)
-	}
-
-	query, err := gojq.Parse(jqExpr)
-	if err != nil {
-		return nil, fmt.Errorf("invalid jq expression: %w", err)
-	}
-
-	var models []string
-	iter := query.Run(data)
-	for {
-		v, ok := iter.Next()
-		if !ok {
-			break
-		}
-		if err, isErr := v.(error); isErr {
-			return nil, fmt.Errorf("jq execution error: %w", err)
-		}
-		if s, ok := v.(string); ok {
-			models = append(models, s)
-		}
-	}
-
-	if models == nil {
-		models = []string{}
-	}
-
-	return models, nil
+	return s.cachedRequest(req, bodyBytes)
 }
