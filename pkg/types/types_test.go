@@ -157,30 +157,30 @@ func TestResultFields(t *testing.T) {
 	tests := []struct {
 		name           string
 		models         []string
-		errors         []string
+		err            string
 		expectedModels int
-		expectedErrors int
+		expectError    bool
 	}{
 		{
 			name:           "with models",
 			models:         []string{"gpt-4", "gpt-3.5-turbo"},
-			errors:         []string{},
+			err:            "",
 			expectedModels: 2,
-			expectedErrors: 0,
+			expectError:    false,
 		},
 		{
-			name:           "with errors",
+			name:           "with error",
 			models:         []string{},
-			errors:         []string{"models request returned 401"},
+			err:            "models request returned 401",
 			expectedModels: 0,
-			expectedErrors: 1,
+			expectError:    true,
 		},
 		{
 			name:           "empty fields",
 			models:         []string{},
-			errors:         []string{},
+			err:            "",
 			expectedModels: 0,
-			expectedErrors: 0,
+			expectError:    false,
 		},
 	}
 
@@ -191,11 +191,15 @@ func TestResultFields(t *testing.T) {
 				Service:    "openai",
 				Confidence: "high",
 				Models:     tt.models,
-				Errors:     tt.errors,
+				Error:      tt.err,
 			}
 
 			assert.Len(t, result.Models, tt.expectedModels)
-			assert.Len(t, result.Errors, tt.expectedErrors)
+			if tt.expectError {
+				assert.NotEmpty(t, result.Error)
+			} else {
+				assert.Empty(t, result.Error)
+			}
 		})
 	}
 }

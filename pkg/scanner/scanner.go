@@ -80,25 +80,20 @@ func (s *Scanner) Scan(target string, probes []*types.ProbeDefinition) *types.Re
 				continue
 			}
 
-			// Match found - build result
 			result := &types.Result{
 				Target:       target,
 				Service:      pd.Name,
 				Confidence:   p.Confidence,
 				MatchedProbe: p.Path,
 				Category:     pd.Category,
-				Models:       []string{},
-				Errors:       []string{},
 			}
 
-			// Fetch models if configured
 			if pd.Models != nil {
 				models, err := s.fetchModels(target, pd.Models)
 				if err != nil {
-					result.Errors = append(result.Errors, err.Error())
-				} else {
-					result.Models = models
+					result.Error = err.Error()
 				}
+				result.Models = models
 			}
 
 			return result

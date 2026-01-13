@@ -213,7 +213,7 @@ func TestNewWriter_UnknownFormat(t *testing.T) {
 	assert.Contains(t, err.Error(), "unknown format")
 }
 
-func TestTableWriterModelsAndErrors(t *testing.T) {
+func TestTableWriterModelsAndError(t *testing.T) {
 	tests := []struct {
 		name           string
 		result         types.Result
@@ -232,29 +232,27 @@ func TestTableWriterModelsAndErrors(t *testing.T) {
 			expectInOutput: []string{"MODELS", "llama3.2:1b", "mistral:7b"},
 		},
 		{
-			name: "with errors",
+			name: "with error",
 			result: types.Result{
 				Target:       "https://example.com",
 				Service:      "openai",
 				Confidence:   "high",
 				MatchedProbe: "/v1/chat",
 				Category:     "cloud-managed",
-				Errors:       []string{"401 unauthorized"},
+				Error:        "401 unauthorized",
 			},
-			expectInOutput: []string{"ERRORS", "401 unauthorized"},
+			expectInOutput: []string{"ERROR", "401 unauthorized"},
 		},
 		{
-			name: "empty models and errors",
+			name: "empty models and error",
 			result: types.Result{
 				Target:       "https://example.com",
 				Service:      "test",
 				Confidence:   "medium",
 				MatchedProbe: "/health",
 				Category:     "test",
-				Models:       []string{},
-				Errors:       []string{},
 			},
-			expectInOutput: []string{"MODELS", "ERRORS"},
+			expectInOutput: []string{"MODELS", "ERROR"},
 		},
 	}
 

@@ -6,23 +6,14 @@ import (
 	"github.com/praetorian-inc/julius/pkg/rules"
 )
 
-// ModelsConfig defines how to fetch and extract model names from an LLM service
-type ModelsConfig struct {
-	Path    string            `yaml:"path"`
-	Method  string            `yaml:"method,omitempty"`
-	Headers map[string]string `yaml:"headers,omitempty"`
-	Body    string            `yaml:"body,omitempty"`
-	Extract string            `yaml:"extract"`
-}
-
 type Result struct {
 	Target       string   `json:"target"`
 	Service      string   `json:"service"`
 	Confidence   string   `json:"confidence"`
 	MatchedProbe string   `json:"matched_probe"`
 	Category     string   `json:"category"`
-	Models       []string `json:"models,omitempty"`
-	Errors       []string `json:"errors,omitempty"`
+	Models []string `json:"models,omitempty"`
+	Error  string   `json:"error,omitempty"`
 }
 
 type OutputWriter interface {
@@ -37,6 +28,14 @@ type ProbeDefinition struct {
 	APIDocs     string        `yaml:"api_docs"`
 	Probes      []Probe       `yaml:"probes"`
 	Models      *ModelsConfig `yaml:"models,omitempty"`
+}
+
+type ModelsConfig struct {
+	Path    string            `yaml:"path"`
+	Method  string            `yaml:"method,omitempty"`
+	Headers map[string]string `yaml:"headers,omitempty"`
+	Body    string            `yaml:"body,omitempty"`
+	Extract string            `yaml:"extract"`
 }
 
 type Probe struct {

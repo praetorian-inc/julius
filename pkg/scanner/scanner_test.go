@@ -286,7 +286,7 @@ func TestScanWithModels(t *testing.T) {
 		modelsResponse string
 		modelsStatus   int
 		expectModels   []string
-		expectErrors   bool
+		expectError    bool
 	}{
 		{
 			name:           "successful models extraction",
@@ -294,15 +294,15 @@ func TestScanWithModels(t *testing.T) {
 			modelsResponse: `{"models":[{"name":"llama3.2:1b"}]}`,
 			modelsStatus:   http.StatusOK,
 			expectModels:   []string{"llama3.2:1b"},
-			expectErrors:   false,
+			expectError:    false,
 		},
 		{
 			name:           "models fetch fails",
 			fingerprint:    `{"models":[]}`,
 			modelsResponse: "",
 			modelsStatus:   http.StatusUnauthorized,
-			expectModels:   []string{},
-			expectErrors:   true,
+			expectModels:   nil,
+			expectError:    true,
 		},
 	}
 
@@ -354,10 +354,10 @@ func TestScanWithModels(t *testing.T) {
 			assert.Equal(t, "ollama", result.Service)
 			assert.Equal(t, tt.expectModels, result.Models)
 
-			if tt.expectErrors {
-				assert.NotEmpty(t, result.Errors, "expected errors")
+			if tt.expectError {
+				assert.NotEmpty(t, result.Error, "expected error")
 			} else {
-				assert.Empty(t, result.Errors, "expected no errors")
+				assert.Empty(t, result.Error, "expected no error")
 			}
 		})
 	}
@@ -395,7 +395,7 @@ func TestScanWithoutModelsConfig(t *testing.T) {
 
 	assert.Equal(t, "test-service", result.Service)
 	assert.Empty(t, result.Models)
-	assert.Empty(t, result.Errors)
+	assert.Empty(t, result.Error)
 }
 
 func TestFetchModels(t *testing.T) {

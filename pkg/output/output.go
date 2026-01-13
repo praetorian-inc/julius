@@ -25,14 +25,13 @@ func (tw *TableWriter) Write(results []types.Result) error {
 	}
 
 	table := tablewriter.NewWriter(tw.writer)
-	table.SetHeader([]string{"TARGET", "SERVICE", "CONFIDENCE", "MATCHED PROBE", "CATEGORY", "MODELS", "ERRORS"})
+	table.SetHeader([]string{"TARGET", "SERVICE", "CONFIDENCE", "MATCHED PROBE", "CATEGORY", "MODELS", "ERROR"})
 	table.SetBorder(false)
 	table.SetHeaderAlignment(tablewriter.ALIGN_LEFT)
 	table.SetAlignment(tablewriter.ALIGN_LEFT)
 
 	for _, result := range results {
 		models := strings.Join(result.Models, ", ")
-		errors := strings.Join(result.Errors, ", ")
 
 		table.Append([]string{
 			result.Target,
@@ -41,7 +40,7 @@ func (tw *TableWriter) Write(results []types.Result) error {
 			result.MatchedProbe,
 			result.Category,
 			models,
-			errors,
+			result.Error,
 		})
 	}
 
