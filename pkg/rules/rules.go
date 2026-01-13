@@ -5,30 +5,26 @@ import (
 	"net/http"
 )
 
-// Rule defines the interface for matching HTTP responses
 type Rule interface {
 	Match(resp *http.Response, body []byte) bool
 	GetType() string
 	IsNegated() bool
 }
 
-// BaseRule provides common fields for all rule types
 type BaseRule struct {
 	Type string
 	Not  bool
 }
 
-// GetType returns the rule type
 func (b BaseRule) GetType() string {
 	return b.Type
 }
 
-// IsNegated returns whether the rule is negated
 func (b BaseRule) IsNegated() bool {
 	return b.Not
 }
 
-// RawRule is used for YAML unmarshaling before converting to specific rule type
+// RawRule is the YAML representation before conversion to typed Rule
 type RawRule struct {
 	Type   string `yaml:"type"`
 	Not    bool   `yaml:"not,omitempty"`
@@ -36,18 +32,14 @@ type RawRule struct {
 	Header string `yaml:"header,omitempty"`
 }
 
-// Decoder converts a RawRule to a typed Rule
 type Decoder func(raw *RawRule) (Rule, error)
 
-// ruleDecoders maps type names to constructor functions (populated by init())
 var ruleDecoders = map[string]Decoder{}
 
-// Register adds a rule decoder to the registry (called by each rule's init)
 func Register(typeName string, decoder Decoder) {
 	ruleDecoders[typeName] = decoder
 }
 
-// ToRule converts RawRule to the appropriate Rule implementation
 func (r *RawRule) ToRule() (Rule, error) {
 	decoder, ok := ruleDecoders[r.Type]
 	if !ok {
@@ -56,7 +48,6 @@ func (r *RawRule) ToRule() (Rule, error) {
 	return decoder(r)
 }
 
-// toInt converts any to int (handles float64 from YAML)
 func toInt(v any) (int, error) {
 	switch val := v.(type) {
 	case int:
@@ -70,7 +61,6 @@ func toInt(v any) (int, error) {
 	}
 }
 
-// toString converts any to string
 func toString(v any) (string, error) {
 	val, ok := v.(string)
 	if !ok {

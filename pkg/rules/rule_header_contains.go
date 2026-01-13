@@ -10,19 +10,17 @@ func init() {
 	Register("header.contains", NewHeaderContainsRule)
 }
 
-// HeaderContainsRule matches if a header value contains a string
 type HeaderContainsRule struct {
 	BaseRule
 	Header string
 	Value  string
 }
 
-// Match checks if the header value contains the specified string
 func (r HeaderContainsRule) Match(resp *http.Response, body []byte) bool {
 	headerVal := resp.Header.Get(r.Header)
 	if headerVal == "" {
 		if r.Not {
-			return true // Header not present, NOT contains = true
+			return true
 		}
 		return false
 	}
@@ -33,7 +31,6 @@ func (r HeaderContainsRule) Match(resp *http.Response, body []byte) bool {
 	return result
 }
 
-// NewHeaderContainsRule creates a HeaderContainsRule from a RawRule
 func NewHeaderContainsRule(raw *RawRule) (Rule, error) {
 	val, err := toString(raw.Value)
 	if err != nil {

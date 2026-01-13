@@ -10,13 +10,11 @@ func init() {
 	Register("body.prefix", NewBodyPrefixRule)
 }
 
-// BodyPrefixRule matches if response body starts with a string value
 type BodyPrefixRule struct {
 	BaseRule
 	Value string
 }
 
-// Match checks if the response body starts with the specified string
 func (r BodyPrefixRule) Match(resp *http.Response, body []byte) bool {
 	result := strings.HasPrefix(string(body), r.Value)
 	if r.Not {
@@ -25,7 +23,6 @@ func (r BodyPrefixRule) Match(resp *http.Response, body []byte) bool {
 	return result
 }
 
-// NewBodyPrefixRule creates a BodyPrefixRule from a RawRule
 func NewBodyPrefixRule(raw *RawRule) (Rule, error) {
 	val, err := toString(raw.Value)
 	if err != nil {

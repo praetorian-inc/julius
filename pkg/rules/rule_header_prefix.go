@@ -10,14 +10,12 @@ func init() {
 	Register("header.prefix", NewHeaderPrefixRule)
 }
 
-// HeaderPrefixRule matches if a header value starts with a string
 type HeaderPrefixRule struct {
 	BaseRule
 	Header string
 	Value  string
 }
 
-// Match checks if the header value starts with the specified string
 func (r HeaderPrefixRule) Match(resp *http.Response, body []byte) bool {
 	headerVal := resp.Header.Get(r.Header)
 	if headerVal == "" {
@@ -33,7 +31,6 @@ func (r HeaderPrefixRule) Match(resp *http.Response, body []byte) bool {
 	return result
 }
 
-// NewHeaderPrefixRule creates a HeaderPrefixRule from a RawRule
 func NewHeaderPrefixRule(raw *RawRule) (Rule, error) {
 	val, err := toString(raw.Value)
 	if err != nil {
