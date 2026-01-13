@@ -279,6 +279,125 @@ func TestProbe_WithBodyAndHeaders(t *testing.T) {
 	assert.True(t, matched)
 }
 
+func TestScanWithModels(t *testing.T) {
+	tests := []struct {
+		name           string
+		fingerprint    string
+		modelsResponse string
+		modelsStatus   int
+		expectModels   []string
+		expectErrors   bool
+	}{
+		{
+			name:           "successful models extraction",
+			fingerprint:    `{"models":[{"name":"llama3.2:1b"}]}`,
+			modelsResponse: `{"models":[{"name":"llama3.2:1b"}]}`,
+			modelsStatus:   http.StatusOK,
+			expectModels:   []string{"llama3.2:1b"},
+			expectErrors:   false,
+		},
+		{
+			name:           "models fetch fails",
+			fingerprint:    `{"models":[]}`,
+			modelsResponse: "",
+			modelsStatus:   http.StatusUnauthorized,
+			expectModels:   []string{},
+			expectErrors:   true,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+				switch r.URL.Path {
+				case "/api/tags":
+					w.WriteHeader(http.StatusOK)
+					w.Write([]byte(tt.fingerprint))
+				case "/api/models":
+					w.WriteHeader(tt.modelsStatus)
+					if tt.modelsResponse != "" {
+						w.Write([]byte(tt.modelsResponse))
+					}
+				default:
+					w.WriteHeader(http.StatusNotFound)
+				}
+			}))
+			defer server.Close()
+
+			scanner := NewScanner(5 * time.Second)
+			probes := []*types.ProbeDefinition{
+				{
+					Name:     "ollama",
+					Category: "self-hosted",
+					Probes: []types.Probe{
+						{
+							Type:   "http",
+							Path:   "/api/tags",
+							Method: "GET",
+							RawMatch: []rules.RawRule{
+								{Type: "status", Value: 200},
+							},
+							Confidence: "high",
+						},
+					},
+					Models: &types.ModelsConfig{
+						Path:    "/api/models",
+						Method:  "GET",
+						Extract: ".models[].name",
+					},
+				},
+			}
+
+			result := scanner.Scan(server.URL, probes)
+			require.NotNil(t, result, "expected result")
+
+			assert.Equal(t, "ollama", result.Service)
+			assert.Equal(t, tt.expectModels, result.Models)
+
+			if tt.expectErrors {
+				assert.NotEmpty(t, result.Errors, "expected errors")
+			} else {
+				assert.Empty(t, result.Errors, "expected no errors")
+			}
+		})
+	}
+}
+
+func TestScanWithoutModelsConfig(t *testing.T) {
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.WriteHeader(http.StatusOK)
+		w.Write([]byte(`OK`))
+	}))
+	defer server.Close()
+
+	scanner := NewScanner(5 * time.Second)
+	probes := []*types.ProbeDefinition{
+		{
+			Name:     "test-service",
+			Category: "test",
+			Probes: []types.Probe{
+				{
+					Type:   "http",
+					Path:   "/health",
+					Method: "GET",
+					RawMatch: []rules.RawRule{
+						{Type: "status", Value: 200},
+					},
+					Confidence: "medium",
+				},
+			},
+			// No Models config
+		},
+	}
+
+	result := scanner.Scan(server.URL, probes)
+	require.NotNil(t, result)
+
+	assert.Equal(t, "test-service", result.Service)
+	assert.Empty(t, result.Models)
+	assert.Empty(t, result.Errors)
+}
+
 func TestFetchModels(t *testing.T) {
 	tests := []struct {
 		name           string
