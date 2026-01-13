@@ -64,8 +64,8 @@ func toString(v any) (string, error) {
 	return val, nil
 }
 
-// decodeStatusRule decodes a status rule
-func decodeStatusRule(raw *RawRule) (Rule, error) {
+// NewStatusRule creates a StatusRule from a RawRule
+func NewStatusRule(raw *RawRule) (Rule, error) {
 	val, err := toInt(raw.Value)
 	if err != nil {
 		return nil, fmt.Errorf("status %w", err)
@@ -76,8 +76,8 @@ func decodeStatusRule(raw *RawRule) (Rule, error) {
 	}, nil
 }
 
-// decodeBodyContainsRule decodes a body.contains rule
-func decodeBodyContainsRule(raw *RawRule) (Rule, error) {
+// NewBodyContainsRule creates a BodyContainsRule from a RawRule
+func NewBodyContainsRule(raw *RawRule) (Rule, error) {
 	val, err := toString(raw.Value)
 	if err != nil {
 		return nil, fmt.Errorf("body.contains %w", err)
@@ -88,8 +88,8 @@ func decodeBodyContainsRule(raw *RawRule) (Rule, error) {
 	}, nil
 }
 
-// decodeBodyPrefixRule decodes a body.prefix rule
-func decodeBodyPrefixRule(raw *RawRule) (Rule, error) {
+// NewBodyPrefixRule creates a BodyPrefixRule from a RawRule
+func NewBodyPrefixRule(raw *RawRule) (Rule, error) {
 	val, err := toString(raw.Value)
 	if err != nil {
 		return nil, fmt.Errorf("body.prefix %w", err)
@@ -100,8 +100,8 @@ func decodeBodyPrefixRule(raw *RawRule) (Rule, error) {
 	}, nil
 }
 
-// decodeHeaderContainsRule decodes a header.contains rule
-func decodeHeaderContainsRule(raw *RawRule) (Rule, error) {
+// NewHeaderContainsRule creates a HeaderContainsRule from a RawRule
+func NewHeaderContainsRule(raw *RawRule) (Rule, error) {
 	val, err := toString(raw.Value)
 	if err != nil {
 		return nil, fmt.Errorf("header.contains %w", err)
@@ -113,8 +113,8 @@ func decodeHeaderContainsRule(raw *RawRule) (Rule, error) {
 	}, nil
 }
 
-// decodeHeaderPrefixRule decodes a header.prefix rule
-func decodeHeaderPrefixRule(raw *RawRule) (Rule, error) {
+// NewHeaderPrefixRule creates a HeaderPrefixRule from a RawRule
+func NewHeaderPrefixRule(raw *RawRule) (Rule, error) {
 	val, err := toString(raw.Value)
 	if err != nil {
 		return nil, fmt.Errorf("header.prefix %w", err)
@@ -126,13 +126,13 @@ func decodeHeaderPrefixRule(raw *RawRule) (Rule, error) {
 	}, nil
 }
 
-// ruleDecoders maps type names to decoder functions
+// ruleDecoders maps type names to constructor functions
 var ruleDecoders = map[string]Decoder{
-	"status":          decodeStatusRule,
-	"body.contains":   decodeBodyContainsRule,
-	"body.prefix":     decodeBodyPrefixRule,
-	"header.contains": decodeHeaderContainsRule,
-	"header.prefix":   decodeHeaderPrefixRule,
+	"status":          NewStatusRule,
+	"body.contains":   NewBodyContainsRule,
+	"body.prefix":     NewBodyPrefixRule,
+	"header.contains": NewHeaderContainsRule,
+	"header.prefix":   NewHeaderPrefixRule,
 }
 
 // ToRule converts RawRule to the appropriate Rule implementation
