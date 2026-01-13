@@ -74,3 +74,26 @@ func TestBodyContainsRule_Match_WithNot(t *testing.T) {
 	body = []byte(`<!DOCTYPE html><body>OK</body>`)
 	assert.False(t, rule.Match(nil, body)) // NOT contains html = false
 }
+
+func TestBodyPrefixRule_Match(t *testing.T) {
+	rule := BodyPrefixRule{Value: "OK"}
+
+	body := []byte(`OK - server is running`)
+	assert.True(t, rule.Match(nil, body))
+
+	body = []byte(`Error: server down`)
+	assert.False(t, rule.Match(nil, body))
+}
+
+func TestBodyPrefixRule_Match_WithNot(t *testing.T) {
+	rule := BodyPrefixRule{
+		BaseRule: BaseRule{Not: true},
+		Value:    "Error",
+	}
+
+	body := []byte(`OK`)
+	assert.True(t, rule.Match(nil, body))
+
+	body = []byte(`Error: something went wrong`)
+	assert.False(t, rule.Match(nil, body))
+}

@@ -61,3 +61,18 @@ func (r BodyContainsRule) Match(resp *http.Response, body []byte) bool {
 	}
 	return result
 }
+
+// BodyPrefixRule matches if response body starts with a string value
+type BodyPrefixRule struct {
+	BaseRule
+	Value string
+}
+
+// Match checks if the response body starts with the specified string
+func (r BodyPrefixRule) Match(resp *http.Response, body []byte) bool {
+	result := strings.HasPrefix(string(body), r.Value)
+	if r.Not {
+		return !result
+	}
+	return result
+}
