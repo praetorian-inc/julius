@@ -7,13 +7,6 @@ api_docs: https://localai.io/api/
 
 probes:
   - type: http
-    path: /readyz
-    method: GET
-    match:
-      status: 200
-    confidence: medium
-
-  - type: http
     path: /v1/models
     method: GET
     match:
@@ -21,3 +14,12 @@ probes:
       body:
         contains: '"object":"list"'
     confidence: high
+
+  - type: http
+    path: /readyz
+    method: GET
+    match:
+      status: 200
+      body:
+        prefix: "OK"
+    confidence: medium

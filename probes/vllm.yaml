@@ -11,13 +11,17 @@ probes:
     method: GET
     match:
       status: 200
-    confidence: medium
+      header:
+        name: Server
+        contains: "uvicorn"
+    confidence: high
 
   - type: http
     path: /v1/models
     method: GET
     match:
       status: 200
-      body:
-        contains: '"data":'
-    confidence: high
+      header:
+        name: Server
+        contains: "uvicorn"
+    confidence: medium

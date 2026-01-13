@@ -1,0 +1,25 @@
+# probes/librechat.yaml
+name: librechat
+description: LibreChat - Multi-model chat interface with RAG support
+category: rag-orchestration
+port_hint: 3080
+api_docs: https://www.librechat.ai/docs
+
+probes:
+  - type: http
+    path: /
+    method: GET
+    match:
+      status: 200
+      body:
+        contains: "LibreChat"
+    confidence: high
+
+  - type: http
+    path: /api/endpoints
+    method: GET
+    match:
+      status: 200
+      body:
+        contains: '"openAI"'
+    confidence: high

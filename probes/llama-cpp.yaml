@@ -1,0 +1,26 @@
+# probes/llama-cpp.yaml
+name: llama-cpp
+description: llama.cpp HTTP server
+category: self-hosted
+port_hint: 8080
+api_docs: https://github.com/ggerganov/llama.cpp/blob/master/examples/server/README.md
+
+probes:
+  - type: http
+    path: /v1/models
+    method: GET
+    match:
+      status: 200
+      body:
+        contains: '"owned_by":"llamacpp"'
+    confidence: high
+
+  - type: http
+    path: /health
+    method: GET
+    match:
+      status: 200
+      header:
+        name: Server
+        contains: "llama.cpp"
+    confidence: high

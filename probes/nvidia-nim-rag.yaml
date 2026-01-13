@@ -1,0 +1,23 @@
+# probes/nvidia-nim-rag.yaml
+name: nvidia-nim-rag
+description: NVIDIA AI Blueprints RAG (NIM-based)
+category: rag-orchestration
+port_hint: 8081
+api_docs: https://developer.nvidia.com/ai-enterprise
+
+probes:
+  - type: http
+    path: /
+    method: GET
+    match:
+      status: 200
+      body:
+        contains: "NVIDIA"
+    confidence: medium
+
+  - type: http
+    path: /generate
+    method: GET
+    match:
+      status: 405
+    confidence: low
