@@ -10,17 +10,19 @@ probes:
     path: /v1/models
     method: GET
     match:
-      status: 200
-      body:
-        contains: '"owned_by":"llamacpp"'
+      - type: status
+        value: 200
+      - type: body.contains
+        value: '"owned_by":"llamacpp"'
     confidence: high
 
   - type: http
     path: /health
     method: GET
     match:
-      status: 200
-      header:
-        name: Server
-        contains: "llama.cpp"
+      - type: status
+        value: 200
+      - type: header.contains
+        header: Server
+        value: "llama.cpp"
     confidence: high

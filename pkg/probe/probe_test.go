@@ -1,12 +1,11 @@
 package probe
 
 import (
-	"io"
 	"net/http"
 	"os"
-	"strings"
 	"testing"
 
+	"github.com/praetorian-inc/julius/pkg/rules"
 	"github.com/praetorian-inc/julius/pkg/types"
 	"github.com/praetorian-inc/julius/probes"
 	"github.com/stretchr/testify/assert"
@@ -46,74 +45,62 @@ func TestLoadProbesFromFS(t *testing.T) {
 }
 
 func TestSortProbesByPortHint(t *testing.T) {
-	probes := []*types.ProbeDefinition{
+	probeList := []*types.ProbeDefinition{
 		{Name: "generic", PortHint: 0},
 		{Name: "ollama", PortHint: 11434},
 		{Name: "vllm", PortHint: 8000},
 	}
 
-	sorted := SortProbesByPortHint(probes, 11434)
+	sorted := SortProbesByPortHint(probeList, 11434)
 
 	assert.Equal(t, "ollama", sorted[0].Name)
 }
 
 func TestSortProbesByPortHint_NoMatch(t *testing.T) {
-	probes := []*types.ProbeDefinition{
+	probeList := []*types.ProbeDefinition{
 		{Name: "a", PortHint: 8000},
 		{Name: "b", PortHint: 9000},
 	}
 
-	sorted := SortProbesByPortHint(probes, 11434)
+	sorted := SortProbesByPortHint(probeList, 11434)
 	// Order should be unchanged
 	assert.Len(t, sorted, 2)
 }
 
-func TestMatch_StatusCode(t *testing.T) {
+func TestMatchRules_AllPass(t *testing.T) {
 	resp := &http.Response{
 		StatusCode: 200,
-		Body:       io.NopCloser(strings.NewReader("")),
-		Header:     make(http.Header),
-	}
-	rules := types.MatchRules{Status: 200}
-
-	assert.True(t, Match(resp, rules), "Match() should return true for matching status")
-}
-
-func TestMatch_StatusCodeMismatch(t *testing.T) {
-	resp := &http.Response{
-		StatusCode: 404,
-		Body:       io.NopCloser(strings.NewReader("")),
-		Header:     make(http.Header),
-	}
-	rules := types.MatchRules{Status: 200}
-
-	assert.False(t, Match(resp, rules), "Match() should return false for mismatching status")
-}
-
-func TestMatch_BodyContains(t *testing.T) {
-	resp := &http.Response{
-		StatusCode: 200,
-		Body:       io.NopCloser(strings.NewReader(`{"models": []}`)),
-		Header:     make(http.Header),
-	}
-	rules := types.MatchRules{
-		Status: 200,
-		Body:   types.BodyMatch{Contains: "models"},
-	}
-
-	assert.True(t, Match(resp, rules), "Match() should return true for body contains")
-}
-
-func TestMatch_HeaderContains(t *testing.T) {
-	resp := &http.Response{
-		StatusCode: 200,
-		Body:       io.NopCloser(strings.NewReader("")),
 		Header:     http.Header{"Server": []string{"uvicorn"}},
 	}
-	rules := types.MatchRules{
-		Status: 200,
-		Header: types.HeaderMatch{Name: "Server", Contains: "uvicorn"},
+	body := []byte(`{"models": []}`)
+
+	ruleList := []rules.Rule{
+		&rules.StatusRule{BaseRule: rules.BaseRule{Type: "status"}, Status: 200},
+		&rules.BodyContainsRule{BaseRule: rules.BaseRule{Type: "body.contains"}, Value: "models"},
 	}
 
-	assert.True(t, Match(resp, rules), "Match() should return true for header contains")
+	result := MatchRules(resp, body, ruleList)
+	assert.True(t, result)
+}
+
+func TestMatchRules_NegationRejects(t *testing.T) {
+	resp := &http.Response{
+		StatusCode: 200,
+		Header:     make(http.Header),
+	}
+	body := []byte(`<!DOCTYPE html><body>OK</body>`)
+
+	ruleList := []rules.Rule{
+		&rules.StatusRule{BaseRule: rules.BaseRule{Type: "status"}, Status: 200},
+		&rules.BodyContainsRule{BaseRule: rules.BaseRule{Type: "body.contains", Not: true}, Value: "<!DOCTYPE html"},
+	}
+
+	result := MatchRules(resp, body, ruleList)
+	assert.False(t, result) // Should fail because body contains HTML (negated rule fails)
+}
+
+func TestMatchRules_EmptyRules(t *testing.T) {
+	resp := &http.Response{StatusCode: 200}
+	result := MatchRules(resp, nil, []rules.Rule{})
+	assert.True(t, result) // Empty rules should pass (nothing to check)
 }

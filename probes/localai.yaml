@@ -10,16 +10,18 @@ probes:
     path: /v1/models
     method: GET
     match:
-      status: 200
-      body:
-        contains: '"object":"list"'
+      - type: status
+        value: 200
+      - type: body.contains
+        value: '"object":"list"'
     confidence: high
 
   - type: http
     path: /readyz
     method: GET
     match:
-      status: 200
-      body:
-        prefix: "OK"
+      - type: status
+        value: 200
+      - type: body.prefix
+        value: "OK"
     confidence: medium

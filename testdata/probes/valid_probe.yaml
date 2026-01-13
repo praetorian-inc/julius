@@ -10,7 +10,8 @@ probes:
     path: /health
     method: GET
     match:
-      status: 200
-      body:
-        contains: "ok"
+      - type: status
+        value: 200
+      - type: body.contains
+        value: "ok"
     confidence: high
