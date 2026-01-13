@@ -152,3 +152,50 @@ models:
 		})
 	}
 }
+
+func TestResultFields(t *testing.T) {
+	tests := []struct {
+		name           string
+		models         []string
+		errors         []string
+		expectedModels int
+		expectedErrors int
+	}{
+		{
+			name:           "with models",
+			models:         []string{"gpt-4", "gpt-3.5-turbo"},
+			errors:         []string{},
+			expectedModels: 2,
+			expectedErrors: 0,
+		},
+		{
+			name:           "with errors",
+			models:         []string{},
+			errors:         []string{"models request returned 401"},
+			expectedModels: 0,
+			expectedErrors: 1,
+		},
+		{
+			name:           "empty fields",
+			models:         []string{},
+			errors:         []string{},
+			expectedModels: 0,
+			expectedErrors: 0,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			result := Result{
+				Target:     "https://example.com",
+				Service:    "openai",
+				Confidence: "high",
+				Models:     tt.models,
+				Errors:     tt.errors,
+			}
+
+			assert.Len(t, result.Models, tt.expectedModels)
+			assert.Len(t, result.Errors, tt.expectedErrors)
+		})
+	}
+}

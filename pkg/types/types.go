@@ -16,11 +16,13 @@ type ModelsConfig struct {
 }
 
 type Result struct {
-	Target       string `json:"target"`
-	Service      string `json:"service"`
-	Confidence   string `json:"confidence"`
-	MatchedProbe string `json:"matched_probe"`
-	Category     string `json:"category"`
+	Target       string   `json:"target"`
+	Service      string   `json:"service"`
+	Confidence   string   `json:"confidence"`
+	MatchedProbe string   `json:"matched_probe"`
+	Category     string   `json:"category"`
+	Models       []string `json:"models,omitempty"`
+	Errors       []string `json:"errors,omitempty"`
 }
 
 type OutputWriter interface {
