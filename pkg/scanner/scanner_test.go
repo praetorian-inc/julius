@@ -279,6 +279,67 @@ func TestProbe_WithBodyAndHeaders(t *testing.T) {
 	assert.True(t, matched)
 }
 
+func TestExtractModels(t *testing.T) {
+	tests := []struct {
+		name     string
+		body     string
+		expr     string
+		expected []string
+		wantErr  bool
+	}{
+		{
+			name:     "OpenAI format",
+			body:     `{"data":[{"id":"gpt-4"},{"id":"gpt-3.5-turbo"}]}`,
+			expr:     ".data[].id",
+			expected: []string{"gpt-4", "gpt-3.5-turbo"},
+		},
+		{
+			name:     "Ollama format",
+			body:     `{"models":[{"name":"llama3.2:1b"},{"name":"mistral:7b"}]}`,
+			expr:     ".models[].name",
+			expected: []string{"llama3.2:1b", "mistral:7b"},
+		},
+		{
+			name:     "simple array",
+			body:     `["model-a","model-b"]`,
+			expr:     ".[]",
+			expected: []string{"model-a", "model-b"},
+		},
+		{
+			name:     "empty result",
+			body:     `{"data":[]}`,
+			expr:     ".data[].id",
+			expected: []string{},
+		},
+		{
+			name:    "invalid JSON",
+			body:    `not json`,
+			expr:    ".data[].id",
+			wantErr: true,
+		},
+		{
+			name:    "invalid jq expression",
+			body:    `{"data":[]}`,
+			expr:    ".[invalid",
+			wantErr: true,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			models, err := extractModels([]byte(tt.body), tt.expr)
+
+			if tt.wantErr {
+				assert.Error(t, err, "expected error")
+				return
+			}
+
+			require.NoError(t, err, "unexpected error")
+			assert.Equal(t, tt.expected, models)
+		})
+	}
+}
+
 func TestExtractPort(t *testing.T) {
 	tests := []struct {
 		name   string
