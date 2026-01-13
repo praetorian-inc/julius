@@ -212,3 +212,64 @@ func TestNewWriter_UnknownFormat(t *testing.T) {
 	assert.Error(t, err, "Should error for unknown format")
 	assert.Contains(t, err.Error(), "unknown format")
 }
+
+func TestTableWriterModelsAndErrors(t *testing.T) {
+	tests := []struct {
+		name           string
+		result         types.Result
+		expectInOutput []string
+	}{
+		{
+			name: "with models",
+			result: types.Result{
+				Target:       "https://example.com",
+				Service:      "ollama",
+				Confidence:   "high",
+				MatchedProbe: "/api/tags",
+				Category:     "self-hosted",
+				Models:       []string{"llama3.2:1b", "mistral:7b"},
+			},
+			expectInOutput: []string{"MODELS", "llama3.2:1b", "mistral:7b"},
+		},
+		{
+			name: "with errors",
+			result: types.Result{
+				Target:       "https://example.com",
+				Service:      "openai",
+				Confidence:   "high",
+				MatchedProbe: "/v1/chat",
+				Category:     "cloud-managed",
+				Errors:       []string{"401 unauthorized"},
+			},
+			expectInOutput: []string{"ERRORS", "401 unauthorized"},
+		},
+		{
+			name: "empty models and errors",
+			result: types.Result{
+				Target:       "https://example.com",
+				Service:      "test",
+				Confidence:   "medium",
+				MatchedProbe: "/health",
+				Category:     "test",
+				Models:       []string{},
+				Errors:       []string{},
+			},
+			expectInOutput: []string{"MODELS", "ERRORS"},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			var buf bytes.Buffer
+			writer := NewTableWriter(&buf)
+
+			err := writer.Write([]types.Result{tt.result})
+			require.NoError(t, err)
+
+			output := buf.String()
+			for _, expected := range tt.expectInOutput {
+				assert.Contains(t, output, expected, "expected %q in output", expected)
+			}
+		})
+	}
+}
