@@ -91,6 +91,46 @@ func (s *Scanner) Scan(target string, probes []*types.ProbeDefinition) *types.Re
 	return nil
 }
 
+func (s *Scanner) fetchModels(target string, cfg *types.ModelsConfig) ([]string, error) {
+	method := cfg.Method
+	if method == "" {
+		method = "GET"
+	}
+
+	url := target + cfg.Path
+
+	var bodyReader io.Reader
+	if cfg.Body != "" {
+		bodyReader = strings.NewReader(cfg.Body)
+	}
+
+	req, err := http.NewRequest(method, url, bodyReader)
+	if err != nil {
+		return nil, fmt.Errorf("creating models request: %w", err)
+	}
+
+	for key, value := range cfg.Headers {
+		req.Header.Set(key, value)
+	}
+
+	resp, err := s.client.Do(req)
+	if err != nil {
+		return nil, fmt.Errorf("models request failed: %w", err)
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode != http.StatusOK {
+		return nil, fmt.Errorf("models request returned %d", resp.StatusCode)
+	}
+
+	body, err := io.ReadAll(resp.Body)
+	if err != nil {
+		return nil, fmt.Errorf("reading models response: %w", err)
+	}
+
+	return extractModels(body, cfg.Extract)
+}
+
 func (s *Scanner) ScanAll(targets []string, probes []*types.ProbeDefinition) []types.Result {
 	var results []types.Result
 

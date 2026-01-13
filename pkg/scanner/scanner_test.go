@@ -279,6 +279,102 @@ func TestProbe_WithBodyAndHeaders(t *testing.T) {
 	assert.True(t, matched)
 }
 
+func TestFetchModels(t *testing.T) {
+	tests := []struct {
+		name           string
+		serverResponse string
+		serverStatus   int
+		config         *types.ModelsConfig
+		expected       []string
+		wantErr        bool
+	}{
+		{
+			name:           "successful fetch",
+			serverResponse: `{"data":[{"id":"gpt-4"},{"id":"gpt-3.5-turbo"}]}`,
+			serverStatus:   http.StatusOK,
+			config: &types.ModelsConfig{
+				Path:    "/v1/models",
+				Method:  "GET",
+				Extract: ".data[].id",
+			},
+			expected: []string{"gpt-4", "gpt-3.5-turbo"},
+		},
+		{
+			name:           "default GET method",
+			serverResponse: `{"models":[{"name":"llama"}]}`,
+			serverStatus:   http.StatusOK,
+			config: &types.ModelsConfig{
+				Path:    "/api/tags",
+				Extract: ".models[].name",
+			},
+			expected: []string{"llama"},
+		},
+		{
+			name:         "unauthorized error",
+			serverStatus: http.StatusUnauthorized,
+			config: &types.ModelsConfig{
+				Path:    "/v1/models",
+				Extract: ".data[].id",
+			},
+			wantErr: true,
+		},
+		{
+			name:         "not found error",
+			serverStatus: http.StatusNotFound,
+			config: &types.ModelsConfig{
+				Path:    "/v1/models",
+				Extract: ".data[].id",
+			},
+			wantErr: true,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+				w.WriteHeader(tt.serverStatus)
+				if tt.serverResponse != "" {
+					w.Write([]byte(tt.serverResponse))
+				}
+			}))
+			defer server.Close()
+
+			scanner := NewScanner(5 * time.Second)
+			models, err := scanner.fetchModels(server.URL, tt.config)
+
+			if tt.wantErr {
+				assert.Error(t, err)
+				return
+			}
+
+			require.NoError(t, err)
+			assert.Equal(t, tt.expected, models)
+		})
+	}
+}
+
+func TestFetchModelsWithHeaders(t *testing.T) {
+	var receivedAuth string
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		receivedAuth = r.Header.Get("Authorization")
+		w.WriteHeader(http.StatusOK)
+		w.Write([]byte(`{"data":[{"id":"model-1"}]}`))
+	}))
+	defer server.Close()
+
+	scanner := NewScanner(5 * time.Second)
+	cfg := &types.ModelsConfig{
+		Path:    "/v1/models",
+		Method:  "GET",
+		Headers: map[string]string{"Authorization": "Bearer test-token"},
+		Extract: ".data[].id",
+	}
+
+	_, err := scanner.fetchModels(server.URL, cfg)
+	require.NoError(t, err)
+	assert.Equal(t, "Bearer test-token", receivedAuth)
+}
+
 func TestExtractModels(t *testing.T) {
 	tests := []struct {
 		name     string
