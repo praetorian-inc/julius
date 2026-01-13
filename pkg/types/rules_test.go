@@ -51,3 +51,26 @@ func TestStatusRule_Match_WithNot(t *testing.T) {
 	resp.StatusCode = 404
 	assert.False(t, rule.Match(resp, nil), "StatusRule with Not=true should not match when status IS 404")
 }
+
+func TestBodyContainsRule_Match(t *testing.T) {
+	rule := &BodyContainsRule{Value: "models"}
+
+	body := []byte(`{"models": []}`)
+	assert.True(t, rule.Match(nil, body))
+
+	body = []byte(`{"error": "not found"}`)
+	assert.False(t, rule.Match(nil, body))
+}
+
+func TestBodyContainsRule_Match_WithNot(t *testing.T) {
+	rule := &BodyContainsRule{
+		BaseRule: BaseRule{Not: true},
+		Value:    "<!DOCTYPE html",
+	}
+
+	body := []byte(`OK`)
+	assert.True(t, rule.Match(nil, body)) // NOT contains html = true
+
+	body = []byte(`<!DOCTYPE html><body>OK</body>`)
+	assert.False(t, rule.Match(nil, body)) // NOT contains html = false
+}

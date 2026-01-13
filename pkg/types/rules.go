@@ -1,7 +1,10 @@
 // pkg/types/rules.go
 package types
 
-import "net/http"
+import (
+	"net/http"
+	"strings"
+)
 
 // Rule defines the interface for matching HTTP responses
 type Rule interface {
@@ -42,4 +45,19 @@ func (s StatusRule) Match(resp *http.Response, body []byte) bool {
 	}
 
 	return matches
+}
+
+// BodyContainsRule matches if response body contains a string value
+type BodyContainsRule struct {
+	BaseRule
+	Value string
+}
+
+// Match checks if the response body contains the specified string
+func (r BodyContainsRule) Match(resp *http.Response, body []byte) bool {
+	result := strings.Contains(string(body), r.Value)
+	if r.Not {
+		return !result
+	}
+	return result
 }
