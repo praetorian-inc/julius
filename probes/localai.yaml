@@ -1,0 +1,23 @@
+# probes/localai.yaml
+name: localai
+description: LocalAI - local OpenAI compatible API
+category: self-hosted
+port_hint: 8080
+api_docs: https://localai.io/api/
+
+probes:
+  - type: http
+    path: /readyz
+    method: GET
+    match:
+      status: 200
+    confidence: medium
+
+  - type: http
+    path: /v1/models
+    method: GET
+    match:
+      status: 200
+      body:
+        contains: '"object":"list"'
+    confidence: high

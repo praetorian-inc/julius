@@ -1,0 +1,25 @@
+# probes/ollama.yaml
+name: ollama
+description: Ollama local LLM server
+category: self-hosted
+port_hint: 11434
+api_docs: https://github.com/ollama/ollama/blob/main/docs/api.md
+
+probes:
+  - type: http
+    path: /api/tags
+    method: GET
+    match:
+      status: 200
+      body:
+        contains: '"models":'
+    confidence: high
+
+  - type: http
+    path: /
+    method: GET
+    match:
+      status: 200
+      body:
+        contains: "Ollama is running"
+    confidence: medium

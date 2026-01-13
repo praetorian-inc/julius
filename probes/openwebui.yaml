@@ -1,0 +1,24 @@
+# probes/openwebui.yaml
+name: open-webui
+description: Open WebUI - ChatGPT-style interface for LLMs
+category: rag-orchestration
+port_hint: 3000
+api_docs: https://docs.openwebui.com/
+
+probes:
+  - type: http
+    path: /
+    method: GET
+    match:
+      status: 200
+      header:
+        name: Server
+        contains: uvicorn
+    confidence: medium
+
+  - type: http
+    path: /api/health
+    method: GET
+    match:
+      status: 200
+    confidence: high

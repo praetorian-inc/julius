@@ -1,0 +1,16 @@
+# testdata/probes/valid_probe.yaml
+name: test-service
+description: Test service for unit tests
+category: self-hosted
+port_hint: 8080
+api_docs: https://example.com
+
+probes:
+  - type: http
+    path: /health
+    method: GET
+    match:
+      status: 200
+      body:
+        contains: "ok"
+    confidence: high

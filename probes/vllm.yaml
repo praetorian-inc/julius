@@ -1,0 +1,23 @@
+# probes/vllm.yaml
+name: vllm
+description: vLLM high-throughput LLM serving
+category: self-hosted
+port_hint: 8000
+api_docs: https://docs.vllm.ai/en/latest/serving/openai_compatible_server.html
+
+probes:
+  - type: http
+    path: /health
+    method: GET
+    match:
+      status: 200
+    confidence: medium
+
+  - type: http
+    path: /v1/models
+    method: GET
+    match:
+      status: 200
+      body:
+        contains: '"data":'
+    confidence: high
