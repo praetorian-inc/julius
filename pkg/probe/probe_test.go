@@ -117,3 +117,41 @@ func TestMatch_HeaderContains(t *testing.T) {
 
 	assert.True(t, Match(resp, rules), "Match() should return true for header contains")
 }
+
+func TestMatchRules_AllPass(t *testing.T) {
+	resp := &http.Response{
+		StatusCode: 200,
+		Header:     http.Header{"Server": []string{"uvicorn"}},
+	}
+	body := []byte(`{"models": []}`)
+
+	rules := []types.Rule{
+		&types.StatusRule{BaseRule: types.BaseRule{Type: "status"}, Status: 200},
+		&types.BodyContainsRule{BaseRule: types.BaseRule{Type: "body.contains"}, Value: "models"},
+	}
+
+	result := MatchRules(resp, body, rules)
+	assert.True(t, result)
+}
+
+func TestMatchRules_NegationRejects(t *testing.T) {
+	resp := &http.Response{
+		StatusCode: 200,
+		Header:     make(http.Header),
+	}
+	body := []byte(`<!DOCTYPE html><body>OK</body>`)
+
+	rules := []types.Rule{
+		&types.StatusRule{BaseRule: types.BaseRule{Type: "status"}, Status: 200},
+		&types.BodyContainsRule{BaseRule: types.BaseRule{Type: "body.contains", Not: true}, Value: "<!DOCTYPE html"},
+	}
+
+	result := MatchRules(resp, body, rules)
+	assert.False(t, result) // Should fail because body contains HTML (negated rule fails)
+}
+
+func TestMatchRules_EmptyRules(t *testing.T) {
+	resp := &http.Response{StatusCode: 200}
+	result := MatchRules(resp, nil, []types.Rule{})
+	assert.True(t, result) // Empty rules should pass (nothing to check)
+}

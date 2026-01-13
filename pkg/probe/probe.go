@@ -143,3 +143,13 @@ func Match(resp *http.Response, rules types.MatchRules) bool {
 
 	return true
 }
+
+// MatchRules checks if all rules match the response
+func MatchRules(resp *http.Response, body []byte, rules []types.Rule) bool {
+	for _, rule := range rules {
+		if !rule.Match(resp, body) {
+			return false
+		}
+	}
+	return true
+}
