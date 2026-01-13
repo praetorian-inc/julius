@@ -27,3 +27,8 @@ probes:
         header: Server
         value: "uvicorn"
     confidence: medium
+
+models:
+  path: /v1/models
+  method: GET
+  extract: ".data[].id"
