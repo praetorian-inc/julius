@@ -25,8 +25,6 @@ func NewScanner(timeout time.Duration) *Scanner {
 	}
 }
 
-const maxResponseBodySize = 10 * 1024 * 1024 // 10MB limit for security
-
 func (s *Scanner) Probe(target string, p types.Probe) (bool, error) {
 	url := target + p.Path
 
@@ -52,14 +50,11 @@ func (s *Scanner) Probe(target string, p types.Probe) (bool, error) {
 	}
 	defer resp.Body.Close()
 
-	// Read body with size limit (security)
-	limitedReader := io.LimitReader(resp.Body, maxResponseBodySize)
-	body, err := io.ReadAll(limitedReader)
+	body, err := io.ReadAll(resp.Body)
 	if err != nil {
 		return false, fmt.Errorf("reading response body: %w", err)
 	}
 
-	// Convert RawMatch to rules and check
 	rules, err := p.GetRules()
 	if err != nil {
 		return false, fmt.Errorf("parsing rules: %w", err)

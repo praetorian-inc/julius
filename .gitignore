@@ -1,2 +1,9 @@
 local/
 .claude/
+
+# Ignore files without extension (compiled binaries)
+*
+!*/
+!*.*
+!Makefile
+!Dockerfile
