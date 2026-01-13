@@ -16,6 +16,8 @@ probes:
       - type: status
         value: 400
       - type: body.contains
+        value: "errorCode"
+      - type: body.contains
         value: "<!DOCTYPE html"
         not: true
-    confidence: medium
+    confidence: high
