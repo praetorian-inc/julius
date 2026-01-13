@@ -1,10 +1,8 @@
 package probe
 
 import (
-	"io"
 	"net/http"
 	"os"
-	"strings"
 	"testing"
 
 	"github.com/praetorian-inc/julius/pkg/types"
@@ -66,56 +64,6 @@ func TestSortProbesByPortHint_NoMatch(t *testing.T) {
 	sorted := SortProbesByPortHint(probes, 11434)
 	// Order should be unchanged
 	assert.Len(t, sorted, 2)
-}
-
-func TestMatch_StatusCode(t *testing.T) {
-	resp := &http.Response{
-		StatusCode: 200,
-		Body:       io.NopCloser(strings.NewReader("")),
-		Header:     make(http.Header),
-	}
-	rules := types.MatchRules{Status: 200}
-
-	assert.True(t, Match(resp, rules), "Match() should return true for matching status")
-}
-
-func TestMatch_StatusCodeMismatch(t *testing.T) {
-	resp := &http.Response{
-		StatusCode: 404,
-		Body:       io.NopCloser(strings.NewReader("")),
-		Header:     make(http.Header),
-	}
-	rules := types.MatchRules{Status: 200}
-
-	assert.False(t, Match(resp, rules), "Match() should return false for mismatching status")
-}
-
-func TestMatch_BodyContains(t *testing.T) {
-	resp := &http.Response{
-		StatusCode: 200,
-		Body:       io.NopCloser(strings.NewReader(`{"models": []}`)),
-		Header:     make(http.Header),
-	}
-	rules := types.MatchRules{
-		Status: 200,
-		Body:   types.BodyMatch{Contains: "models"},
-	}
-
-	assert.True(t, Match(resp, rules), "Match() should return true for body contains")
-}
-
-func TestMatch_HeaderContains(t *testing.T) {
-	resp := &http.Response{
-		StatusCode: 200,
-		Body:       io.NopCloser(strings.NewReader("")),
-		Header:     http.Header{"Server": []string{"uvicorn"}},
-	}
-	rules := types.MatchRules{
-		Status: 200,
-		Header: types.HeaderMatch{Name: "Server", Contains: "uvicorn"},
-	}
-
-	assert.True(t, Match(resp, rules), "Match() should return true for header contains")
 }
 
 func TestMatchRules_AllPass(t *testing.T) {

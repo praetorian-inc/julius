@@ -3,7 +3,6 @@ package probe
 import (
 	"embed"
 	"fmt"
-	"io"
 	"net/http"
 	"os"
 	"path/filepath"
@@ -102,46 +101,6 @@ func SortProbesByPortHint(probes []*types.ProbeDefinition, targetPort int) []*ty
 	})
 
 	return sorted
-}
-
-func Match(resp *http.Response, rules types.MatchRules) bool {
-	if rules.Status != 0 && resp.StatusCode != rules.Status {
-		return false
-	}
-
-	var bodyStr string
-	if rules.Body.Contains != "" || rules.Body.Prefix != "" {
-		bodyBytes, err := io.ReadAll(resp.Body)
-		if err != nil {
-			return false
-		}
-		bodyStr = string(bodyBytes)
-	}
-
-	if rules.Body.Contains != "" && !strings.Contains(bodyStr, rules.Body.Contains) {
-		return false
-	}
-
-	if rules.Body.Prefix != "" && !strings.HasPrefix(bodyStr, rules.Body.Prefix) {
-		return false
-	}
-
-	if rules.Header.Name != "" {
-		headerVal := resp.Header.Get(rules.Header.Name)
-		if headerVal == "" {
-			return false
-		}
-
-		if rules.Header.Contains != "" && !strings.Contains(headerVal, rules.Header.Contains) {
-			return false
-		}
-
-		if rules.Header.Prefix != "" && !strings.HasPrefix(headerVal, rules.Header.Prefix) {
-			return false
-		}
-	}
-
-	return true
 }
 
 // MatchRules checks if all rules match the response
