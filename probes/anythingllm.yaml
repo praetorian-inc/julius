@@ -1,0 +1,16 @@
+# probes/anythingllm.yaml
+name: anythingllm
+description: AnythingLLM - All-in-one AI assistant with RAG
+category: rag-orchestration
+port_hint: 3001
+api_docs: https://docs.anythingllm.com/
+
+probes:
+  - type: http
+    path: /
+    method: GET
+    match:
+      status: 200
+      body:
+        contains: "AnythingLLM"
+    confidence: high

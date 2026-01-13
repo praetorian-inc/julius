@@ -1,0 +1,25 @@
+# probes/lm-studio.yaml
+name: lm-studio
+description: LM Studio local server
+category: self-hosted
+port_hint: 1234
+api_docs: https://lmstudio.ai/docs/api
+
+probes:
+  - type: http
+    path: /api/v0/models
+    method: GET
+    match:
+      status: 200
+      body:
+        contains: '"object":'
+    confidence: high
+
+  - type: http
+    path: /v1/models
+    method: GET
+    match:
+      status: 200
+      body:
+        contains: '"object":"list"'
+    confidence: medium

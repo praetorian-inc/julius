@@ -1,0 +1,16 @@
+# probes/betterchatgpt.yaml
+name: betterchatgpt
+description: Better ChatGPT - Enhanced ChatGPT UI clone
+category: rag-orchestration
+port_hint: 3000
+api_docs: https://github.com/ztjhz/BetterChatGPT
+
+probes:
+  - type: http
+    path: /
+    method: GET
+    match:
+      status: 200
+      body:
+        contains: "Better ChatGPT"
+    confidence: high

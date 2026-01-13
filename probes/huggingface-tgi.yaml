@@ -1,0 +1,16 @@
+# probes/huggingface-tgi.yaml
+name: huggingface-tgi
+description: HuggingFace Text Generation Inference
+category: self-hosted
+port_hint: 3000
+api_docs: https://huggingface.co/docs/text-generation-inference/
+
+probes:
+  - type: http
+    path: /info
+    method: GET
+    match:
+      status: 200
+      body:
+        contains: '"model_id":'
+    confidence: high

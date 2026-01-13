@@ -1,0 +1,16 @@
+# probes/sillytavern.yaml
+name: sillytavern
+description: SillyTavern - LLM frontend for roleplay/chat with character cards
+category: rag-orchestration
+port_hint: 8000
+api_docs: https://docs.sillytavern.app/
+
+probes:
+  - type: http
+    path: /
+    method: GET
+    match:
+      status: 200
+      body:
+        contains: "SillyTavern"
+    confidence: high

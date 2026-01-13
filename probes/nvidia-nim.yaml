@@ -1,0 +1,16 @@
+# probes/nvidia-nim.yaml
+name: nvidia-nim
+description: NVIDIA NIM enterprise containers
+category: self-hosted
+port_hint: 8000
+api_docs: https://docs.nvidia.com/nim/
+
+probes:
+  - type: http
+    path: /v1/health/ready
+    method: GET
+    match:
+      status: 200
+      body:
+        contains: '"status"'
+    confidence: high

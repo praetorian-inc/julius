@@ -1,0 +1,25 @@
+# probes/gradio.yaml
+name: gradio
+description: Gradio ML demo interfaces
+category: self-hosted
+port_hint: 7860
+api_docs: https://www.gradio.app/docs/
+
+probes:
+  - type: http
+    path: /
+    method: GET
+    match:
+      status: 200
+      body:
+        contains: "gradio"
+    confidence: high
+
+  - type: http
+    path: /config
+    method: GET
+    match:
+      status: 200
+      body:
+        contains: '"version":'
+    confidence: medium
