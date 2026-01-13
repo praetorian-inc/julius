@@ -6,6 +6,10 @@ import (
 	"strings"
 )
 
+func init() {
+	Register("header.contains", NewHeaderContainsRule)
+}
+
 // HeaderContainsRule matches if a header value contains a string
 type HeaderContainsRule struct {
 	BaseRule

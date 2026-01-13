@@ -5,6 +5,10 @@ import (
 	"net/http"
 )
 
+func init() {
+	Register("status", NewStatusRule)
+}
+
 // StatusRule matches HTTP status codes
 type StatusRule struct {
 	BaseRule

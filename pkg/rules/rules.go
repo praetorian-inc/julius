@@ -39,13 +39,12 @@ type RawRule struct {
 // Decoder converts a RawRule to a typed Rule
 type Decoder func(raw *RawRule) (Rule, error)
 
-// ruleDecoders maps type names to constructor functions
-var ruleDecoders = map[string]Decoder{
-	"status":          NewStatusRule,
-	"body.contains":   NewBodyContainsRule,
-	"body.prefix":     NewBodyPrefixRule,
-	"header.contains": NewHeaderContainsRule,
-	"header.prefix":   NewHeaderPrefixRule,
+// ruleDecoders maps type names to constructor functions (populated by init())
+var ruleDecoders = map[string]Decoder{}
+
+// Register adds a rule decoder to the registry (called by each rule's init)
+func Register(typeName string, decoder Decoder) {
+	ruleDecoders[typeName] = decoder
 }
 
 // ToRule converts RawRule to the appropriate Rule implementation

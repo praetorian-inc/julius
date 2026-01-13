@@ -6,13 +6,15 @@ import (
 	"strings"
 )
 
-// BodyContainsRule matches if response body contains a string value
+func init() {
+	Register("body.contains", NewBodyContainsRule)
+}
+
 type BodyContainsRule struct {
 	BaseRule
 	Value string
 }
 
-// Match checks if the response body contains the specified string
 func (r BodyContainsRule) Match(resp *http.Response, body []byte) bool {
 	result := strings.Contains(string(body), r.Value)
 	if r.Not {
@@ -21,7 +23,6 @@ func (r BodyContainsRule) Match(resp *http.Response, body []byte) bool {
 	return result
 }
 
-// NewBodyContainsRule creates a BodyContainsRule from a RawRule
 func NewBodyContainsRule(raw *RawRule) (Rule, error) {
 	val, err := toString(raw.Value)
 	if err != nil {

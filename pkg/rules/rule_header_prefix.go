@@ -6,6 +6,10 @@ import (
 	"strings"
 )
 
+func init() {
+	Register("header.prefix", NewHeaderPrefixRule)
+}
+
 // HeaderPrefixRule matches if a header value starts with a string
 type HeaderPrefixRule struct {
 	BaseRule

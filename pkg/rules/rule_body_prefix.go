@@ -6,6 +6,10 @@ import (
 	"strings"
 )
 
+func init() {
+	Register("body.prefix", NewBodyPrefixRule)
+}
+
 // BodyPrefixRule matches if response body starts with a string value
 type BodyPrefixRule struct {
 	BaseRule
