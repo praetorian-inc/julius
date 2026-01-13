@@ -76,3 +76,49 @@ func (r BodyPrefixRule) Match(resp *http.Response, body []byte) bool {
 	}
 	return result
 }
+
+// HeaderContainsRule matches if a header value contains a string
+type HeaderContainsRule struct {
+	BaseRule
+	Header string
+	Value  string
+}
+
+// Match checks if the header value contains the specified string
+func (r HeaderContainsRule) Match(resp *http.Response, body []byte) bool {
+	headerVal := resp.Header.Get(r.Header)
+	if headerVal == "" {
+		if r.Not {
+			return true // Header not present, NOT contains = true
+		}
+		return false
+	}
+	result := strings.Contains(headerVal, r.Value)
+	if r.Not {
+		return !result
+	}
+	return result
+}
+
+// HeaderPrefixRule matches if a header value starts with a string
+type HeaderPrefixRule struct {
+	BaseRule
+	Header string
+	Value  string
+}
+
+// Match checks if the header value starts with the specified string
+func (r HeaderPrefixRule) Match(resp *http.Response, body []byte) bool {
+	headerVal := resp.Header.Get(r.Header)
+	if headerVal == "" {
+		if r.Not {
+			return true
+		}
+		return false
+	}
+	result := strings.HasPrefix(headerVal, r.Value)
+	if r.Not {
+		return !result
+	}
+	return result
+}

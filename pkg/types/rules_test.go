@@ -97,3 +97,37 @@ func TestBodyPrefixRule_Match_WithNot(t *testing.T) {
 	body = []byte(`Error: something went wrong`)
 	assert.False(t, rule.Match(nil, body))
 }
+
+func TestHeaderContainsRule_Match(t *testing.T) {
+	rule := HeaderContainsRule{Header: "Server", Value: "uvicorn"}
+
+	resp := &http.Response{Header: http.Header{"Server": []string{"uvicorn/0.18.0"}}}
+	assert.True(t, rule.Match(resp, nil))
+
+	resp = &http.Response{Header: http.Header{"Server": []string{"nginx"}}}
+	assert.False(t, rule.Match(resp, nil))
+}
+
+func TestHeaderContainsRule_Match_WithNot(t *testing.T) {
+	rule := HeaderContainsRule{
+		BaseRule: BaseRule{Not: true},
+		Header:   "Content-Type",
+		Value:    "text/html",
+	}
+
+	resp := &http.Response{Header: http.Header{"Content-Type": []string{"application/json"}}}
+	assert.True(t, rule.Match(resp, nil))
+
+	resp = &http.Response{Header: http.Header{"Content-Type": []string{"text/html"}}}
+	assert.False(t, rule.Match(resp, nil))
+}
+
+func TestHeaderPrefixRule_Match(t *testing.T) {
+	rule := HeaderPrefixRule{Header: "Server", Value: "llama"}
+
+	resp := &http.Response{Header: http.Header{"Server": []string{"llama.cpp"}}}
+	assert.True(t, rule.Match(resp, nil))
+
+	resp = &http.Response{Header: http.Header{"Server": []string{"nginx"}}}
+	assert.False(t, rule.Match(resp, nil))
+}
