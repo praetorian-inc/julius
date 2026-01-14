@@ -5,9 +5,37 @@ import (
 	"fmt"
 	"net/url"
 	"strconv"
+	"strings"
 
 	"github.com/itchyny/gojq"
 )
+
+func NormalizeTarget(target string) string {
+	target = strings.TrimSpace(target)
+
+	if target == "" {
+		return ""
+	}
+
+	if !strings.HasPrefix(target, "http://") && !strings.HasPrefix(target, "https://") {
+		target = "https://" + target
+	}
+
+	target = strings.TrimRight(target, "/")
+
+	return target
+}
+
+func NormalizeTargets(targets []string) []string {
+	var normalized []string
+	for _, t := range targets {
+		n := NormalizeTarget(t)
+		if n != "" {
+			normalized = append(normalized, n)
+		}
+	}
+	return normalized
+}
 
 func ExtractPort(target string) int {
 	u, err := url.Parse(target)

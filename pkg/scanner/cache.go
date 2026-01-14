@@ -3,8 +3,8 @@ package scanner
 import (
 	"crypto/md5"
 	"encoding/hex"
-	"fmt"
 	"io"
+	"log/slog"
 	"net/http"
 	"sort"
 	"strings"
@@ -45,7 +45,7 @@ func (s *Scanner) cachedRequest(req *http.Request, body []byte) (*http.Response,
 
 	resp, err := s.client.Do(req)
 	if err != nil {
-		fmt.Printf("[cache] %s %s: %v\n", req.Method, req.URL.Path, err)
+		slog.Error("Getting response", "method", req.Method, "url", req.URL.String(), "err", err)
 		s.cache[key] = &CachedResponse{Err: err}
 		return nil, nil, err
 	}
@@ -53,7 +53,7 @@ func (s *Scanner) cachedRequest(req *http.Request, body []byte) (*http.Response,
 	respBody, err := io.ReadAll(resp.Body)
 	resp.Body.Close()
 	if err != nil {
-		fmt.Printf("[cache] %s %s: failed to read body: %v\n", req.Method, req.URL.Path, err)
+		slog.Error("Reading response body", "method", req.Method, "url", req.URL.String(), "err", err)
 		s.cache[key] = &CachedResponse{Err: err}
 		return nil, nil, err
 	}
