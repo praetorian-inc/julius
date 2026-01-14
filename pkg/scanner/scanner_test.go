@@ -555,6 +555,128 @@ func TestExtractModels(t *testing.T) {
 	}
 }
 
+func TestNormalizeTarget(t *testing.T) {
+	tests := []struct {
+		name   string
+		target string
+		want   string
+	}{
+		{
+			name:   "already normalized",
+			target: "https://example.com",
+			want:   "https://example.com",
+		},
+		{
+			name:   "trailing slash",
+			target: "https://example.com/",
+			want:   "https://example.com",
+		},
+		{
+			name:   "multiple trailing slashes",
+			target: "https://example.com///",
+			want:   "https://example.com",
+		},
+		{
+			name:   "trailing slash with path",
+			target: "https://example.com/api/v1/",
+			want:   "https://example.com/api/v1",
+		},
+		{
+			name:   "leading whitespace",
+			target: "  https://example.com",
+			want:   "https://example.com",
+		},
+		{
+			name:   "trailing whitespace",
+			target: "https://example.com  ",
+			want:   "https://example.com",
+		},
+		{
+			name:   "whitespace and trailing slash",
+			target: "  https://example.com/  ",
+			want:   "https://example.com",
+		},
+		{
+			name:   "http scheme preserved",
+			target: "http://example.com/",
+			want:   "http://example.com",
+		},
+		{
+			name:   "no scheme adds https",
+			target: "example.com",
+			want:   "https://example.com",
+		},
+		{
+			name:   "no scheme with port",
+			target: "example.com:8080",
+			want:   "https://example.com:8080",
+		},
+		{
+			name:   "no scheme with path and trailing slash",
+			target: "example.com/api/",
+			want:   "https://example.com/api",
+		},
+		{
+			name:   "empty string",
+			target: "",
+			want:   "",
+		},
+		{
+			name:   "whitespace only",
+			target: "   ",
+			want:   "",
+		},
+		{
+			name:   "with port",
+			target: "https://example.com:11434/",
+			want:   "https://example.com:11434",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got := NormalizeTarget(tt.target)
+			assert.Equal(t, tt.want, got)
+		})
+	}
+}
+
+func TestNormalizeTargets(t *testing.T) {
+	tests := []struct {
+		name    string
+		targets []string
+		want    []string
+	}{
+		{
+			name:    "mixed normalization needs",
+			targets: []string{"https://a.com/", "  https://b.com  ", "c.com"},
+			want:    []string{"https://a.com", "https://b.com", "https://c.com"},
+		},
+		{
+			name:    "filters empty entries",
+			targets: []string{"https://a.com", "", "  ", "https://b.com"},
+			want:    []string{"https://a.com", "https://b.com"},
+		},
+		{
+			name:    "empty input",
+			targets: []string{},
+			want:    nil,
+		},
+		{
+			name:    "all empty entries",
+			targets: []string{"", "  ", ""},
+			want:    nil,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got := NormalizeTargets(tt.targets)
+			assert.Equal(t, tt.want, got)
+		})
+	}
+}
+
 func TestExtractPort(t *testing.T) {
 	tests := []struct {
 		name   string

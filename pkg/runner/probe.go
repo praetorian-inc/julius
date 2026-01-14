@@ -42,6 +42,9 @@ func runProbe(cmd *cobra.Command, args []string) error {
 		return fmt.Errorf("loading targets: %w", err)
 	}
 
+	// Normalize all targets (trim whitespace, remove trailing slashes, add scheme if missing)
+	targets = scanner.NormalizeTargets(targets)
+
 	if len(targets) == 0 {
 		return fmt.Errorf("no targets specified. Use --help for usage information")
 	}
