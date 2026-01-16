@@ -3,6 +3,7 @@ package output
 import (
 	"bytes"
 	"encoding/json"
+	"strings"
 	"testing"
 
 	"github.com/praetorian-inc/julius/pkg/types"
@@ -211,6 +212,112 @@ func TestNewWriter_UnknownFormat(t *testing.T) {
 	_, err := NewWriter("xml", &bytes.Buffer{})
 	assert.Error(t, err, "Should error for unknown format")
 	assert.Contains(t, err.Error(), "unknown format")
+}
+
+func TestNewJSONLWriter(t *testing.T) {
+	buf := &bytes.Buffer{}
+	writer := NewJSONLWriter(buf)
+
+	require.NotNil(t, writer, "NewJSONLWriter should not return nil")
+}
+
+func TestJSONLWriter_WriteEmptyResults(t *testing.T) {
+	buf := &bytes.Buffer{}
+	writer := NewJSONLWriter(buf)
+
+	err := writer.Write([]types.Result{})
+	require.NoError(t, err, "Write should not fail")
+
+	output := buf.String()
+	assert.Empty(t, output, "Should return empty output for empty results")
+}
+
+func TestJSONLWriter_WriteSingleResult(t *testing.T) {
+	buf := &bytes.Buffer{}
+	writer := NewJSONLWriter(buf)
+
+	results := []types.Result{
+		{
+			Target:       "https://api.openai.com",
+			Service:      "OpenAI API",
+			Confidence:   "high",
+			MatchedProbe: "openai-completion",
+			Category:     "llm",
+		},
+	}
+
+	err := writer.Write(results)
+	require.NoError(t, err, "Write should not fail")
+
+	output := buf.String()
+	lines := strings.Split(strings.TrimSpace(output), "\n")
+	require.Len(t, lines, 1, "Should have 1 line")
+
+	var parsed types.Result
+	require.NoError(t, json.Unmarshal([]byte(lines[0]), &parsed), "Line should be valid JSON")
+
+	assert.Equal(t, "https://api.openai.com", parsed.Target)
+	assert.Equal(t, "OpenAI API", parsed.Service)
+	assert.Equal(t, "high", parsed.Confidence)
+}
+
+func TestJSONLWriter_WriteMultipleResults(t *testing.T) {
+	buf := &bytes.Buffer{}
+	writer := NewJSONLWriter(buf)
+
+	results := []types.Result{
+		{
+			Target:       "https://api.openai.com",
+			Service:      "OpenAI API",
+			Confidence:   "high",
+			MatchedProbe: "openai-completion",
+			Category:     "llm",
+		},
+		{
+			Target:       "https://api.anthropic.com",
+			Service:      "Anthropic API",
+			Confidence:   "high",
+			MatchedProbe: "anthropic-messages",
+			Category:     "llm",
+		},
+	}
+
+	err := writer.Write(results)
+	require.NoError(t, err, "Write should not fail")
+
+	output := buf.String()
+	lines := strings.Split(strings.TrimSpace(output), "\n")
+	require.Len(t, lines, 2, "Should have 2 lines")
+
+	var parsed1, parsed2 types.Result
+	require.NoError(t, json.Unmarshal([]byte(lines[0]), &parsed1), "Line 1 should be valid JSON")
+	require.NoError(t, json.Unmarshal([]byte(lines[1]), &parsed2), "Line 2 should be valid JSON")
+
+	assert.Equal(t, "OpenAI API", parsed1.Service)
+	assert.Equal(t, "Anthropic API", parsed2.Service)
+}
+
+func TestNewWriter_JSONL(t *testing.T) {
+	buf := &bytes.Buffer{}
+	writer, err := NewWriter("jsonl", buf)
+	require.NoError(t, err, "NewWriter should not fail")
+
+	require.NotNil(t, writer, "NewWriter should not return nil")
+
+	results := []types.Result{
+		{
+			Target:     "https://test.com",
+			Service:    "Test",
+			Confidence: "high",
+		},
+	}
+
+	err = writer.Write(results)
+	require.NoError(t, err, "Write should not fail")
+
+	output := buf.String()
+	lines := strings.Split(strings.TrimSpace(output), "\n")
+	require.Len(t, lines, 1, "Should have 1 line")
 }
 
 func TestTableWriterModelsAndError(t *testing.T) {

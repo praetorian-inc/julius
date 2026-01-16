@@ -20,7 +20,7 @@ and analyzing responses. It helps identify LLM platforms and available models.`,
 }
 
 func init() {
-	rootCmd.PersistentFlags().StringVarP(&outputFormat, "output", "o", "table", "Output format (table, json)")
+	rootCmd.PersistentFlags().StringVarP(&outputFormat, "output", "o", "table", "Output format (table, json, jsonl)")
 	rootCmd.PersistentFlags().StringVarP(&probesDir, "probes-dir", "p", "", "Override probe definitions directory")
 	rootCmd.PersistentFlags().IntVarP(&timeout, "timeout", "t", 5, "HTTP timeout in seconds")
 	rootCmd.PersistentFlags().BoolVarP(&verbose, "verbose", "v", false, "Verbose output")
