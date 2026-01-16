@@ -66,12 +66,32 @@ func (jw *JSONWriter) Write(results []types.Result) error {
 	return encoder.Encode(results)
 }
 
+type JSONLWriter struct {
+	writer io.Writer
+}
+
+func NewJSONLWriter(w io.Writer) types.OutputWriter {
+	return &JSONLWriter{writer: w}
+}
+
+func (jw *JSONLWriter) Write(results []types.Result) error {
+	encoder := json.NewEncoder(jw.writer)
+	for _, result := range results {
+		if err := encoder.Encode(result); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
 func NewWriter(format string, w io.Writer) (types.OutputWriter, error) {
 	switch format {
 	case "table":
 		return NewTableWriter(w), nil
 	case "json":
 		return NewJSONWriter(w), nil
+	case "jsonl":
+		return NewJSONLWriter(w), nil
 	default:
 		return nil, fmt.Errorf("unknown format: %s", format)
 	}
