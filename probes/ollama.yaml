@@ -30,3 +30,10 @@ models:
   path: /api/tags
   method: GET
   extract: ".models[].name"
+
+augustus:
+  generator: ollama
+  config_template:
+    host: "$TARGET"
+    model: "$MODEL"
+    timeout: 180

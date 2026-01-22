@@ -20,3 +20,11 @@ models:
   path: /v1/models
   method: GET
   extract: ".data[].id"
+
+augustus:
+  generator: openai
+  config_template:
+    base_url: "$TARGET/v1"
+    model: "$MODEL"
+    api_key: "not-needed"
+    timeout: 180
