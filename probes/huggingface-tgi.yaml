@@ -24,11 +24,9 @@ models:
 augustus:
   generator: rest
   config_template:
-    uri: "$TARGET/generate"
+    endpoint: "$TARGET/generate"
     method: POST
     headers:
       Content-Type: application/json
-    req_template: '{"inputs": "$INPUT", "parameters": {"max_new_tokens": 512}}'
-    response_json: true
-    response_json_field: "$.generated_text"
-    request_timeout: 180
+    body: '{"inputs": "$PROMPT", "parameters": {"max_new_tokens": 512}}'
+    response_path: "generated_text"

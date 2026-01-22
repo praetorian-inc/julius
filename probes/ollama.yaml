@@ -34,6 +34,6 @@ models:
 augustus:
   generator: ollama
   config_template:
-    host: "$TARGET"
+    endpoint: "$TARGET"
     model: "$MODEL"
     timeout: 180

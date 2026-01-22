@@ -1,38 +1,33 @@
 package types
 
 import (
-	"encoding/json"
 	"fmt"
 	"strings"
 
+	"github.com/praetorian-inc/augustus/pkg/generator"
 	"github.com/praetorian-inc/julius/pkg/rules"
 )
 
-// GeneratorConfig contains everything needed to run Augustus against an LLM endpoint.
-type GeneratorConfig struct {
-	Generator string         `json:"generator"`
-	Config    map[string]any `json:"config"`
-}
-
 type Result struct {
-	Target           string            `json:"target"`
-	Service          string            `json:"service"`
-	Confidence       string            `json:"confidence"`
-	MatchedProbe     string            `json:"matched_probe"`
-	Category         string            `json:"category"`
-	Models           []string          `json:"models,omitempty"`
-	GeneratorConfigs []GeneratorConfig `json:"generator_configs,omitempty"`
-	Error            string            `json:"error,omitempty"`
+	Target           string             `json:"target"`
+	Service          string             `json:"service"`
+	Confidence       string             `json:"confidence"`
+	MatchedProbe     string             `json:"matched_probe"`
+	Category         string             `json:"category"`
+	Models           []string           `json:"models,omitempty"`
+	GeneratorConfigs []generator.Config `json:"generator_configs,omitempty"`
+	Error            string             `json:"error,omitempty"`
 }
 
 type OutputWriter interface {
 	Write(results []Result) error
 }
 
-// AugustusConfig defines how to scan this service with Augustus
+// AugustusConfig defines how to scan this service with Augustus.
+// ConfigTemplate uses $TARGET and $MODEL placeholders that get resolved at runtime.
 type AugustusConfig struct {
-	Generator      string         `yaml:"generator"`
-	ConfigTemplate map[string]any `yaml:"config_template"`
+	Generator      string           `yaml:"generator"`
+	ConfigTemplate generator.Config `yaml:"config_template"`
 }
 
 type ProbeDefinition struct {
@@ -46,72 +41,50 @@ type ProbeDefinition struct {
 	Augustus    *AugustusConfig `yaml:"augustus,omitempty"`
 }
 
-// BuildGeneratorConfigs creates Augustus GeneratorConfigs from the template.
-// It resolves $TARGET and $MODEL variables, leaving $INPUT for Augustus to handle.
-func (p *ProbeDefinition) BuildGeneratorConfigs(target string, models []string) []GeneratorConfig {
+func (p *ProbeDefinition) BuildGeneratorConfigs(target string, models []string) []generator.Config {
 	if p.Augustus == nil {
 		return nil
 	}
 
-	// If no models discovered, emit single config (remove $MODEL references)
 	if len(models) == 0 {
-		config := resolveConfigTemplate(p.Augustus.ConfigTemplate, target, "")
-		return []GeneratorConfig{{
-			Generator: p.Augustus.Generator,
-			Config:    config,
-		}}
+		config := resolveGeneratorConfig(p.Augustus.ConfigTemplate, p.Augustus.Generator, target, "")
+		return []generator.Config{config}
 	}
 
-	// One config per model
-	configs := make([]GeneratorConfig, 0, len(models))
+	configs := make([]generator.Config, 0, len(models))
 	for _, model := range models {
-		config := resolveConfigTemplate(p.Augustus.ConfigTemplate, target, model)
-		configs = append(configs, GeneratorConfig{
-			Generator: p.Augustus.Generator,
-			Config:    config,
-		})
+		config := resolveGeneratorConfig(p.Augustus.ConfigTemplate, p.Augustus.Generator, target, model)
+		configs = append(configs, config)
 	}
 	return configs
 }
 
-// resolveConfigTemplate deep copies the template and resolves $TARGET and $MODEL variables.
-// $INPUT is left as-is for Augustus/generator to resolve at probe time.
-func resolveConfigTemplate(template map[string]any, target, model string) map[string]any {
-	// Deep copy via JSON round-trip
-	data, _ := json.Marshal(template)
-	var result map[string]any
-	json.Unmarshal(data, &result)
+func resolveGeneratorConfig(cfg generator.Config, genType, target, model string) generator.Config {
+	cfg.Type = genType
+	cfg.Endpoint = resolveVars(cfg.Endpoint, target, model)
+	cfg.APIKey = resolveVars(cfg.APIKey, target, model)
+	cfg.Model = resolveVars(cfg.Model, target, model)
+	cfg.Body = resolveVars(cfg.Body, target, model)
+	cfg.ResponsePath = resolveVars(cfg.ResponsePath, target, model)
+	cfg.Proxy = resolveVars(cfg.Proxy, target, model)
 
-	// Resolve variables in all string values
-	resolveVariables(result, target, model)
-	return result
+	if cfg.Headers != nil {
+		resolved := make(map[string]string, len(cfg.Headers))
+		for k, v := range cfg.Headers {
+			resolved[k] = resolveVars(v, target, model)
+		}
+		cfg.Headers = resolved
+	}
+
+	return cfg
 }
 
-func resolveVariables(m map[string]any, target, model string) {
-	for k, v := range m {
-		switch val := v.(type) {
-		case string:
-			resolved := strings.ReplaceAll(val, "$TARGET", target)
-			if model != "" {
-				resolved = strings.ReplaceAll(resolved, "$MODEL", model)
-			}
-			m[k] = resolved
-		case map[string]any:
-			resolveVariables(val, target, model)
-		case []any:
-			for i, item := range val {
-				if str, ok := item.(string); ok {
-					resolved := strings.ReplaceAll(str, "$TARGET", target)
-					if model != "" {
-						resolved = strings.ReplaceAll(resolved, "$MODEL", model)
-					}
-					val[i] = resolved
-				} else if nested, ok := item.(map[string]any); ok {
-					resolveVariables(nested, target, model)
-				}
-			}
-		}
+func resolveVars(s, target, model string) string {
+	s = strings.ReplaceAll(s, "$TARGET", target)
+	if model != "" {
+		s = strings.ReplaceAll(s, "$MODEL", model)
 	}
+	return s
 }
 
 type ModelsConfig struct {
