@@ -11,17 +11,8 @@ jobs:
     name: Test
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout Julius
+      - name: Checkout code
         uses: actions/checkout@v4
-        with:
-          path: julius
-
-      - name: Checkout Augustus
-        uses: actions/checkout@v4
-        with:
-          repository: praetorian-inc/augustus
-          path: augustus
-          token: ${{ secrets.WORKFLOW_PAT }}
 
       - name: Set up Go
         uses: actions/setup-go@v5
@@ -29,18 +20,16 @@ jobs:
           go-version: "1.25"
           cache: true
 
-      - name: Use local Augustus
+      - name: Configure Git for private repos
         run: |
-          cd julius
-          echo 'replace github.com/praetorian-inc/augustus => ../augustus' >> go.mod
-          go mod tidy
+          git config --global url."https://${{ secrets.WORKFLOW_PAT }}:x-oauth-basic@github.com/".insteadOf "https://github.com/"
 
       - name: Build
-        run: |
-          cd julius
-          go build -v ./...
+        run: go build -v ./...
+        env:
+          GOPRIVATE: github.com/praetorian-inc/*
 
       - name: Run tests
-        run: |
-          cd julius
-          go test -v ./...
+        run: go test -v ./...
+        env:
+          GOPRIVATE: github.com/praetorian-inc/*

@@ -13,32 +13,27 @@ jobs:
     steps:
       - name: Checkout Julius
         uses: actions/checkout@v4
-        with:
-          path: julius
-
-      - name: Checkout Augustus (latest main)
-        uses: actions/checkout@v4
-        with:
-          repository: praetorian-inc/augustus
-          ref: main
-          path: augustus
-          token: ${{ secrets.WORKFLOW_PAT }}
 
       - name: Setup Go
         uses: actions/setup-go@v5
         with:
           go-version: '1.25'
 
-      - name: Use local Augustus
+      - name: Configure Git for private repos
         run: |
-          cd julius
-          echo 'replace github.com/praetorian-inc/augustus => ../augustus' >> go.mod
+          git config --global url."https://${{ secrets.WORKFLOW_PAT }}:x-oauth-basic@github.com/".insteadOf "https://github.com/"
+
+      - name: Update to latest Augustus
+        run: |
+          go get github.com/praetorian-inc/augustus@main
           go mod tidy
+        env:
+          GOPRIVATE: github.com/praetorian-inc/*
 
       - name: Run tests
-        run: |
-          cd julius
-          go test -v ./...
+        run: go test -v ./...
+        env:
+          GOPRIVATE: github.com/praetorian-inc/*
 
       - name: Create issue on failure
         if: failure()
