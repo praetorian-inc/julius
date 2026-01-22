@@ -111,12 +111,13 @@ func TestScan_FirstMatch(t *testing.T) {
 		},
 	}
 
-	result := s.Scan(server.URL, probes)
+	result := s.Scan(server.URL, probes, false)
 
 	require.NotNil(t, result, "Scan should return result")
 	assert.Equal(t, "OpenAI", result.Service)
 	assert.Equal(t, "LLM", result.Category)
-	assert.Equal(t, server.URL, result.Target)
+	assert.Equal(t, server.URL+"/v1/chat/completions", result.Target)
+	assert.Equal(t, "/v1/chat/completions", result.MatchedProbe)
 }
 
 func TestScan_NoMatch(t *testing.T) {
@@ -144,7 +145,7 @@ func TestScan_NoMatch(t *testing.T) {
 		},
 	}
 
-	result := s.Scan(server.URL, probes)
+	result := s.Scan(server.URL, probes, false)
 
 	assert.Nil(t, result, "Scan should return nil when no match")
 }
@@ -194,17 +195,19 @@ func TestScanAll(t *testing.T) {
 		},
 	}
 
-	results := s.ScanAll(targets, probes)
+	results := s.ScanAll(targets, probes, false)
 
 	require.Len(t, results, 2, "ScanAll should return 2 results")
 
 	// Check first result
 	assert.Equal(t, "OpenAI", results[0].Service)
-	assert.Equal(t, server1.URL, results[0].Target)
+	assert.Equal(t, server1.URL+"/v1/chat/completions", results[0].Target)
+	assert.Equal(t, "/v1/chat/completions", results[0].MatchedProbe)
 
 	// Check second result
 	assert.Equal(t, "Claude", results[1].Service)
-	assert.Equal(t, server2.URL, results[1].Target)
+	assert.Equal(t, server2.URL+"/v1/messages", results[1].Target)
+	assert.Equal(t, "/v1/messages", results[1].MatchedProbe)
 }
 
 func TestScanAll_SomeNoMatch(t *testing.T) {
@@ -239,7 +242,7 @@ func TestScanAll_SomeNoMatch(t *testing.T) {
 		},
 	}
 
-	results := s.ScanAll(targets, probes)
+	results := s.ScanAll(targets, probes, false)
 
 	require.Len(t, results, 1, "ScanAll should return 1 result")
 	assert.Equal(t, "OpenAI", results[0].Service)
@@ -348,7 +351,7 @@ func TestScanWithModels(t *testing.T) {
 				},
 			}
 
-			result := scanner.Scan(server.URL, probes)
+			result := scanner.Scan(server.URL, probes, false)
 			require.NotNil(t, result, "expected result")
 
 			assert.Equal(t, "ollama", result.Service)
@@ -390,7 +393,7 @@ func TestScanWithoutModelsConfig(t *testing.T) {
 		},
 	}
 
-	result := scanner.Scan(server.URL, probes)
+	result := scanner.Scan(server.URL, probes, false)
 	require.NotNil(t, result)
 
 	assert.Equal(t, "test-service", result.Service)

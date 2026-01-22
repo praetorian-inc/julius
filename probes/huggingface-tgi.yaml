@@ -20,3 +20,13 @@ models:
   path: /info
   method: GET
   extract: "[.model_id]"
+
+augustus:
+  generator: rest
+  config_template:
+    endpoint: "$TARGET/generate"
+    method: POST
+    headers:
+      Content-Type: application/json
+    body: '{"inputs": "$PROMPT", "parameters": {"max_new_tokens": 512}}'
+    response_path: "generated_text"

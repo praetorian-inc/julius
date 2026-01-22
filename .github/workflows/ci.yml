@@ -17,11 +17,19 @@ jobs:
       - name: Set up Go
         uses: actions/setup-go@v5
         with:
-          go-version: "1.24"
+          go-version: "1.25"
           cache: true
+
+      - name: Configure Git for private repos
+        run: |
+          git config --global url."https://${{ secrets.WORKFLOW_PAT }}:x-oauth-basic@github.com/".insteadOf "https://github.com/"
 
       - name: Build
         run: go build -v ./...
+        env:
+          GOPRIVATE: github.com/praetorian-inc/*
 
       - name: Run tests
         run: go test -v ./...
+        env:
+          GOPRIVATE: github.com/praetorian-inc/*

@@ -25,11 +25,11 @@ func NewScanner(timeout time.Duration) *Scanner {
 	}
 }
 
-func (s *Scanner) ScanAll(targets []string, probes []*types.ProbeDefinition) []types.Result {
+func (s *Scanner) ScanAll(targets []string, probes []*types.ProbeDefinition, augustus bool) []types.Result {
 	var results []types.Result
 
 	for _, target := range targets {
-		result := s.Scan(target, probes)
+		result := s.Scan(target, probes, augustus)
 		if result != nil {
 			results = append(results, *result)
 		}
@@ -38,7 +38,7 @@ func (s *Scanner) ScanAll(targets []string, probes []*types.ProbeDefinition) []t
 	return results
 }
 
-func (s *Scanner) Scan(target string, probes []*types.ProbeDefinition) *types.Result {
+func (s *Scanner) Scan(target string, probes []*types.ProbeDefinition, augustus bool) *types.Result {
 	for _, pd := range probes {
 		for _, p := range pd.Probes {
 			p.ApplyDefaults()
@@ -53,21 +53,27 @@ func (s *Scanner) Scan(target string, probes []*types.ProbeDefinition) *types.Re
 			}
 
 			result := &types.Result{
-				Target:       target,
+				Target:       target + p.Path,
 				Service:      pd.Name,
 				Confidence:   p.Confidence,
 				MatchedProbe: p.Path,
 				Category:     pd.Category,
 			}
 
-			if pd.Models == nil {
-				return result
+			// Fetch models if config exists
+			var models []string
+			if pd.Models != nil {
+				models, err = s.fetchModels(target, pd.Models)
+				if err != nil {
+					result.Error = err.Error()
+				}
+				result.Models = models
 			}
-			models, err := s.fetchModels(target, pd.Models)
-			if err != nil {
-				result.Error = err.Error()
+
+			// Build Augustus generator configs if flag is set
+			if augustus {
+				result.GeneratorConfigs = pd.BuildGeneratorConfigs(target, models)
 			}
-			result.Models = models
 
 			return result
 		}

@@ -15,7 +15,8 @@ import (
 )
 
 var (
-	targetsFile string
+	targetsFile   string
+	augustusFlag  bool
 )
 
 var probeCmd = &cobra.Command{
@@ -74,7 +75,7 @@ func runProbe(cmd *cobra.Command, args []string) error {
 		targetPort := scanner.ExtractPort(target)
 		sortedProbes := probe.SortProbesByPortHint(loadedProbes, targetPort)
 
-		result := s.Scan(target, sortedProbes)
+		result := s.Scan(target, sortedProbes, augustusFlag)
 		if result != nil {
 			results = append(results, *result)
 		} else if !quiet {
@@ -146,4 +147,5 @@ func readTargetsFromReader(r *os.File) ([]string, error) {
 func init() {
 	rootCmd.AddCommand(probeCmd)
 	probeCmd.Flags().StringVarP(&targetsFile, "file", "f", "", "Read targets from file")
+	probeCmd.Flags().BoolVar(&augustusFlag, "augustus", false, "Include Augustus generator configs in output")
 }
