@@ -6,7 +6,7 @@ require (
 	github.com/goccy/go-yaml v1.19.2
 	github.com/itchyny/gojq v0.12.18
 	github.com/olekukonko/tablewriter v0.0.5
-	github.com/praetorian-inc/augustus v0.0.0-20260112142920-308415db4075
+	github.com/praetorian-inc/augustus v0.0.0-20260122161816-4bd1cf646f1d
 	github.com/spf13/cobra v1.9.1
 	github.com/stretchr/testify v1.11.1
 	gopkg.in/yaml.v3 v3.0.1
@@ -25,5 +25,3 @@ require (
 	github.com/tidwall/match v1.1.1 // indirect
 	github.com/tidwall/pretty v1.2.0 // indirect
 )
-
-replace github.com/praetorian-inc/augustus => ../augustus
