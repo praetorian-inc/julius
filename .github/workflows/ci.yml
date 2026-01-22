@@ -11,17 +11,36 @@ jobs:
     name: Test
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout code
+      - name: Checkout Julius
         uses: actions/checkout@v4
+        with:
+          path: julius
+
+      - name: Checkout Augustus
+        uses: actions/checkout@v4
+        with:
+          repository: praetorian-inc/augustus
+          path: augustus
+          token: ${{ secrets.WORKFLOW_PAT }}
 
       - name: Set up Go
         uses: actions/setup-go@v5
         with:
-          go-version: "1.24"
+          go-version: "1.25"
           cache: true
 
+      - name: Use local Augustus
+        run: |
+          cd julius
+          echo 'replace github.com/praetorian-inc/augustus => ../augustus' >> go.mod
+          go mod tidy
+
       - name: Build
-        run: go build -v ./...
+        run: |
+          cd julius
+          go build -v ./...
 
       - name: Run tests
-        run: go test -v ./...
+        run: |
+          cd julius
+          go test -v ./...

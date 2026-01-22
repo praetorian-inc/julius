@@ -3,8 +3,8 @@ name: Upstream Compatibility
 on:
   schedule:
     # Run daily at 6am UTC to catch Augustus breaking changes
-    - cron: "0 6 * * *"
-  workflow_dispatch: # Allow manual trigger
+    - cron: '0 6 * * *'
+  workflow_dispatch:  # Allow manual trigger
 
 jobs:
   test-latest-augustus:
@@ -13,19 +13,32 @@ jobs:
     steps:
       - name: Checkout Julius
         uses: actions/checkout@v4
+        with:
+          path: julius
+
+      - name: Checkout Augustus (latest main)
+        uses: actions/checkout@v4
+        with:
+          repository: praetorian-inc/augustus
+          ref: main
+          path: augustus
+          token: ${{ secrets.WORKFLOW_PAT }}
 
       - name: Setup Go
         uses: actions/setup-go@v5
         with:
-          go-version: "1.25"
+          go-version: '1.25'
 
-      - name: Update to latest Augustus
+      - name: Use local Augustus
         run: |
-          go get github.com/praetorian-inc/augustus@main
+          cd julius
+          echo 'replace github.com/praetorian-inc/augustus => ../augustus' >> go.mod
           go mod tidy
 
-      - name: Test Augustus config compatibility
-        run: go test ./pkg/probe/... -v -run TestAllProbesValidAugustusConfig
+      - name: Run tests
+        run: |
+          cd julius
+          go test -v ./...
 
       - name: Create issue on failure
         if: failure()
@@ -34,13 +47,13 @@ jobs:
           script: |
             const title = 'Augustus compatibility check failed';
             const body = `The daily Augustus compatibility check failed.
-
+            
             This likely means Augustus made breaking changes to \`generator.Config\`.
-
+            
             **Action required:** Update Julius to be compatible with latest Augustus.
-
+            
             Workflow run: ${context.serverUrl}/${context.repo.owner}/${context.repo.repo}/actions/runs/${context.runId}`;
-
+            
             // Check if issue already exists
             const issues = await github.rest.issues.listForRepo({
               owner: context.repo.owner,
@@ -48,7 +61,7 @@ jobs:
               state: 'open',
               labels: 'upstream-compat'
             });
-
+            
             if (issues.data.length === 0) {
               await github.rest.issues.create({
                 owner: context.repo.owner,
