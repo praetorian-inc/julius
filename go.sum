@@ -20,8 +20,8 @@ github.com/olekukonko/tablewriter v0.0.5 h1:P2Ga83D34wi1o9J6Wh1mRuqd4mF/x/lgBS7N
 github.com/olekukonko/tablewriter v0.0.5/go.mod h1:hPp6KlRPjbx+hW8ykQs1w3UBbZlj6HuIJcUGPhkA7kY=
 github.com/pmezard/go-difflib v1.0.1-0.20181226105442-5d4384ee4fb2 h1:Jamvg5psRIccs7FGNTlIRMkT8wgtp5eCXdBlqhYGL6U=
 github.com/pmezard/go-difflib v1.0.1-0.20181226105442-5d4384ee4fb2/go.mod h1:iKH77koFhYxTK1pcRnkKkqfTogsbg7gZNVY4sRDYZ/4=
-github.com/praetorian-inc/augustus v0.0.0-20260122162129-9fc9bbc663e4 h1:W9ao7So3uS5yP/w8PreoRHGYWBf5gKFjysY5IgjuYYc=
-github.com/praetorian-inc/augustus v0.0.0-20260122162129-9fc9bbc663e4/go.mod h1:0uufQG5LYEH1b5C0lysws0ivVwow/FCwo6uOo3xy23s=
+github.com/praetorian-inc/augustus v0.0.0-20260122183336-122e118ec133 h1:nk1lKzollauzGXJ49c9Fflwlwh3cnShCALhxlw4YoGA=
+github.com/praetorian-inc/augustus v0.0.0-20260122183336-122e118ec133/go.mod h1:0uufQG5LYEH1b5C0lysws0ivVwow/FCwo6uOo3xy23s=
 github.com/russross/blackfriday/v2 v2.1.0/go.mod h1:+Rmxgy9KzJVeS9/2gXHxylqXiyQDYRxCVz55jmeOWTM=
 github.com/spf13/cobra v1.9.1 h1:CXSaggrXdbHK9CF+8ywj8Amf7PBRmPCOJugH954Nnlo=
 github.com/spf13/cobra v1.9.1/go.mod h1:nDyEzZ8ogv936Cinf6g1RU9MRY64Ir93oCnqb9wxYW0=
