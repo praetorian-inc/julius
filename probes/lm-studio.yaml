@@ -1,9 +1,10 @@
 # probes/lm-studio.yaml
+# Reference: https://lmstudio.ai/docs/api/server
 name: lm-studio
 description: LM Studio local server
 category: self-hosted
 port_hint: 1234
-api_docs: https://lmstudio.ai/docs/api
+api_docs: https://lmstudio.ai/docs/api/server
 
 probes:
   - type: http
@@ -13,7 +14,15 @@ probes:
       - type: status
         value: 200
       - type: body.contains
-        value: '"object":'
+        value: '"object"'
+      - type: body.contains
+        value: '"data"'
+      - type: body.contains
+        not: true
+        value: "<!DOCTYPE"
+      - type: body.contains
+        not: true
+        value: "<html"
     confidence: high
 
   - type: http
@@ -24,6 +33,14 @@ probes:
         value: 200
       - type: body.contains
         value: '"object":"list"'
+      - type: body.contains
+        value: '"data"'
+      - type: body.contains
+        not: true
+        value: "<!DOCTYPE"
+      - type: body.contains
+        not: true
+        value: "<html"
     confidence: medium
 
 models:

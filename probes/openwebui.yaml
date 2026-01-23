@@ -1,26 +1,70 @@
 # probes/openwebui.yaml
+# Reference: https://docs.openwebui.com/getting-started/api-endpoints/
 name: open-webui
 description: Open WebUI - ChatGPT-style interface for LLMs
 category: rag-orchestration
 port_hint: 3000
-api_docs: https://docs.openwebui.com/
+api_docs: https://docs.openwebui.com/getting-started/api-endpoints/
 
 probes:
+  - type: http
+    path: /api/config
+    method: GET
+    match:
+      - type: status
+        value: 200
+      - type: body.contains
+        value: '"name":"Open WebUI"'
+    confidence: high
+
+  - type: http
+    path: /api/config
+    method: GET
+    match:
+      - type: status
+        value: 200
+      - type: body.contains
+        value: '"features":'
+      - type: body.contains
+        value: '"enable_signup"'
+      - type: body.contains
+        not: true
+        value: "<!DOCTYPE"
+    confidence: high
+
+  - type: http
+    path: /api/version
+    method: GET
+    match:
+      - type: status
+        value: 200
+      - type: body.contains
+        value: '"version"'
+      - type: body.contains
+        value: '"deployment_id"'
+    confidence: high
+
   - type: http
     path: /
     method: GET
     match:
       - type: status
         value: 200
-      - type: header.contains
-        header: Server
-        value: uvicorn
+      - type: body.contains
+        value: "/static/favicon.png"
+      - type: body.contains
+        value: "open-webui"
     confidence: medium
 
-  - type: http
-    path: /api/health
-    method: GET
-    match:
-      - type: status
-        value: 200
-    confidence: high
+models:
+  path: /api/models
+  method: GET
+  extract: ".data[].id"
+
+augustus:
+  generator: openai
+  config_template:
+    endpoint: "$TARGET/api"
+    model: "$MODEL"
+    api_key: "not-needed"
+    timeout: 180
