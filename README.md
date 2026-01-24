@@ -1,5 +1,5 @@
+<img width="2752" height="1536" alt="julius" src="https://github.com/user-attachments/assets/81c21177-f45b-46a0-bf5f-f4b5e01206d3" />
 # Julius
-
 LLM service fingerprinting tool.
 
 ## Quick Start
