@@ -1,4 +1,4 @@
-<img width="2752" height="1536" alt="julius" src="https://github.com/user-attachments/assets/81c21177-f45b-46a0-bf5f-f4b5e01206d3" />
+<img width="2752" height="1536" alt="julius" src="https://github.com/user-attachments/assets/aca4e0d4-313e-4428-8856-06f07599d283" />
 # Julius
 LLM service fingerprinting tool.
 
