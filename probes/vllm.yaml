@@ -1,22 +1,12 @@
 # probes/vllm.yaml
+# Reference: https://docs.vllm.ai/en/stable/serving/openai_compatible_server.html
 name: vllm
 description: vLLM high-throughput LLM serving
 category: self-hosted
 port_hint: 8000
-api_docs: https://docs.vllm.ai/en/latest/serving/openai_compatible_server.html
+api_docs: https://docs.vllm.ai/en/stable/serving/openai_compatible_server.html
 
 probes:
-  - type: http
-    path: /health
-    method: GET
-    match:
-      - type: status
-        value: 200
-      - type: header.contains
-        header: Server
-        value: "uvicorn"
-    confidence: high
-
   - type: http
     path: /v1/models
     method: GET
@@ -26,7 +16,33 @@ probes:
       - type: header.contains
         header: Server
         value: "uvicorn"
-    confidence: medium
+      - type: body.contains
+        value: '"object":"list"'
+      - type: body.contains
+        value: '"data"'
+      - type: body.contains
+        not: true
+        value: "<html"
+      - type: body.contains
+        not: true
+        value: "<!doctype"
+    confidence: high
+
+  - type: http
+    path: /version
+    method: GET
+    match:
+      - type: status
+        value: 200
+      - type: body.contains
+        value: '"version"'
+      - type: body.contains
+        not: true
+        value: "<html"
+      - type: body.contains
+        not: true
+        value: '"deployment_id"'
+    confidence: high
 
 models:
   path: /v1/models

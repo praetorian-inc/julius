@@ -1,4 +1,5 @@
 # probes/gradio.yaml
+# Reference: https://www.gradio.app/docs/gradio/blocks#blocks-api-page
 name: gradio
 description: Gradio ML demo interfaces
 category: self-hosted
@@ -7,21 +8,52 @@ api_docs: https://www.gradio.app/docs/
 
 probes:
   - type: http
-    path: /
-    method: GET
-    match:
-      - type: status
-        value: 200
-      - type: body.contains
-        value: "gradio"
-    confidence: high
-
-  - type: http
     path: /config
     method: GET
     match:
       - type: status
         value: 200
       - type: body.contains
-        value: '"version":'
+        value: '"mode"'
+      - type: body.contains
+        value: '"components"'
+      - type: body.contains
+        not: true
+        value: "<!DOCTYPE"
+      - type: body.contains
+        not: true
+        value: "Index of"
+    confidence: high
+
+  - type: http
+    path: /info
+    method: GET
+    match:
+      - type: status
+        value: 200
+      - type: body.contains
+        value: '"version"'
+      - type: body.contains
+        not: true
+        value: "<html"
     confidence: medium
+
+  - type: http
+    path: /
+    method: GET
+    match:
+      - type: status
+        value: 200
+      - type: body.contains
+        value: "gradio-app"
+    confidence: medium
+
+  - type: http
+    path: /api/
+    method: GET
+    match:
+      - type: status
+        value: 200
+      - type: body.contains
+        value: '"named_endpoints"'
+    confidence: high

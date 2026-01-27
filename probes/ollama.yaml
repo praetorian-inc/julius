@@ -1,4 +1,5 @@
 # probes/ollama.yaml
+# Reference: https://github.com/ollama/ollama/blob/main/docs/api.md
 name: ollama
 description: Ollama local LLM server
 category: self-hosted
@@ -13,7 +14,20 @@ probes:
       - type: status
         value: 200
       - type: body.contains
-        value: '"models":'
+        value: '"models"'
+      - type: body.contains
+        value: '"name"'
+      - type: body.contains
+        value: '"model"'
+      - type: body.contains
+        not: true
+        value: "<!DOCTYPE"
+      - type: body.contains
+        not: true
+        value: "<html"
+      - type: body.contains
+        not: true
+        value: "<head>"
     confidence: high
 
   - type: http

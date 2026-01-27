@@ -1,25 +1,57 @@
 # probes/nvidia-nim-rag.yaml
+# Reference: https://docs.nvidia.com/nim/blueprints/rag/latest/index.html
 name: nvidia-nim-rag
 description: NVIDIA AI Blueprints RAG (NIM-based)
 category: rag-orchestration
 port_hint: 8081
-api_docs: https://developer.nvidia.com/ai-enterprise
+api_docs: https://docs.nvidia.com/nim/blueprints/rag/latest/index.html
 
 probes:
   - type: http
-    path: /
-    method: GET
+    path: /generate
+    method: POST
+    headers:
+      Content-Type: application/json
+    body: '{"messages":[{"role":"user","content":"test"}]}'
     match:
       - type: status
         value: 200
       - type: body.contains
-        value: "NVIDIA"
-    confidence: medium
+        value: '"content"'
+      - type: body.contains
+        value: '"message"'
+      - type: body.contains
+        not: true
+        value: "<!DOCTYPE"
+      - type: body.contains
+        not: true
+        value: "<!doctype"
+      - type: body.contains
+        not: true
+        value: "<html"
+      - type: body.contains
+        not: true
+        value: '"uptime"'
+    confidence: high
 
   - type: http
-    path: /generate
-    method: GET
+    path: /v1/chat/completions
+    method: POST
+    headers:
+      Content-Type: application/json
+    body: '{"model":"","messages":[{"role":"user","content":"test"}]}'
     match:
       - type: status
-        value: 405
-    confidence: low
+        value: 200
+      - type: body.contains
+        value: '"choices"'
+      - type: body.contains
+        not: true
+        value: "<!DOCTYPE"
+      - type: body.contains
+        not: true
+        value: "<html"
+      - type: body.contains
+        not: true
+        value: '"uptime"'
+    confidence: medium

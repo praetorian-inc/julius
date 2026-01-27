@@ -1,9 +1,10 @@
 # probes/nvidia-nim.yaml
+# Reference: https://docs.nvidia.com/nim/large-language-models/latest/api-reference.html
 name: nvidia-nim
 description: NVIDIA NIM enterprise containers
 category: self-hosted
 port_hint: 8000
-api_docs: https://docs.nvidia.com/nim/
+api_docs: https://docs.nvidia.com/nim/large-language-models/latest/api-reference.html
 
 probes:
   - type: http
@@ -14,7 +15,33 @@ probes:
         value: 200
       - type: body.contains
         value: '"status"'
+      - type: body.contains
+        value: "ready"
+      - type: body.contains
+        not: true
+        value: "<!DOCTYPE"
+      - type: body.contains
+        not: true
+        value: "<html"
     confidence: high
+
+  - type: http
+    path: /v1/models
+    method: GET
+    match:
+      - type: status
+        value: 200
+      - type: body.contains
+        value: '"object":"list"'
+      - type: body.contains
+        value: '"data"'
+      - type: body.contains
+        not: true
+        value: "<!DOCTYPE"
+      - type: body.contains
+        not: true
+        value: "<html"
+    confidence: medium
 
 models:
   path: /v1/models
