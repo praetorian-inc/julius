@@ -8,7 +8,6 @@ specificity: 85
 api_docs: https://docs.litellm.ai/docs/
 
 requests:
-  # /health endpoint returns healthy_endpoints/unhealthy_endpoints
   - type: http
     path: /health
     method: GET
@@ -19,10 +18,7 @@ requests:
         value: application/json
       - type: body.contains
         value: '"healthy_endpoints"'
-      - type: body.contains
-        value: '"unhealthy_endpoints"'
 
-  # /health with litellm_metadata marker
   - type: http
     path: /health
     method: GET
@@ -34,9 +30,8 @@ requests:
       - type: body.contains
         value: '"litellm_metadata"'
 
-  # /health/liveliness endpoint (LiteLLM specific)
   - type: http
-    path: /health/liveliness
+    path: /health
     method: GET
     match:
       - type: status
@@ -44,19 +39,7 @@ requests:
       - type: content-type
         value: application/json
       - type: body.contains
-        value: '"status"'
-
-  # /health/readiness endpoint (LiteLLM specific)
-  - type: http
-    path: /health/readiness
-    method: GET
-    match:
-      - type: status
-        value: 200
-      - type: content-type
-        value: application/json
-      - type: body.contains
-        value: '"status"'
+        value: '"unhealthy_endpoints"'
 
 models:
   path: /v1/models
