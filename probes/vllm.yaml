@@ -25,7 +25,6 @@ requests:
       - type: body.contains
         not: true
         value: "<html"
-    confidence: high
 
   - type: http
     path: /version
@@ -41,7 +40,6 @@ requests:
       - type: body.contains
         not: true
         value: '"deployment_id"'
-    confidence: high
 
 models:
   path: /v1/models

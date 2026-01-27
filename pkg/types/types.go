@@ -20,7 +20,6 @@ const (
 type Result struct {
 	Target           string             `json:"target"`
 	Service          string             `json:"service"`
-	Confidence       string             `json:"confidence"`
 	MatchedRequest   string             `json:"matched_request"`
 	Category         string             `json:"category"`
 	Specificity      int                `json:"specificity"`
@@ -127,13 +126,12 @@ type ModelsConfig struct {
 
 // Request defines a single HTTP request within a probe
 type Request struct {
-	Type       string            `yaml:"type"`
-	Path       string            `yaml:"path"`
-	Method     string            `yaml:"method"`
-	Body       string            `yaml:"body,omitempty"`
-	Headers    map[string]string `yaml:"headers,omitempty"`
-	RawMatch   []rules.RawRule   `yaml:"match"`
-	Confidence string            `yaml:"confidence"`
+	Type     string            `yaml:"type"`
+	Path     string            `yaml:"path"`
+	Method   string            `yaml:"method"`
+	Body     string            `yaml:"body,omitempty"`
+	Headers  map[string]string `yaml:"headers,omitempty"`
+	RawMatch []rules.RawRule   `yaml:"match"`
 }
 
 func (r *Request) ApplyDefaults() {
@@ -142,9 +140,6 @@ func (r *Request) ApplyDefaults() {
 	}
 	if r.Method == "" {
 		r.Method = "GET"
-	}
-	if r.Confidence == "" {
-		r.Confidence = "medium"
 	}
 }
 

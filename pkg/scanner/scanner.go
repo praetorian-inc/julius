@@ -72,7 +72,6 @@ func (s *Scanner) Scan(target string, probes []*types.Probe, augustus bool) []ty
 			result := types.Result{
 				Target:         target + matchedReq.Path,
 				Service:        p.Name,
-				Confidence:     matchedReq.Confidence,
 				MatchedRequest: matchedReq.Path,
 				Category:       p.Category,
 				Specificity:    p.GetSpecificity(),

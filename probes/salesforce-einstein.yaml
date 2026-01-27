@@ -24,7 +24,6 @@ requests:
       - type: body.contains
         not: true
         value: "<!DOCTYPE"
-    confidence: high
 
   - type: http
     path: /iamessage/api/v2/authorization/unauthenticated/access-token
@@ -39,4 +38,3 @@ requests:
         value: '"message"'
       - type: body.contains
         value: "Embedded Service"
-    confidence: high

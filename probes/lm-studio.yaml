@@ -25,7 +25,6 @@ requests:
       - type: body.contains
         not: true
         value: "<html"
-    confidence: high
 
 models:
   path: /v1/models

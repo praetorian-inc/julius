@@ -26,7 +26,6 @@ requests:
       - type: body.contains
         not: true
         value: "<HTML"
-    confidence: low
 
   - type: http
     path: /v1/models
@@ -39,7 +38,6 @@ requests:
       - type: body.contains
         not: true
         value: "<html"
-    confidence: low
 
   - type: http
     path: /v1/models
@@ -52,7 +50,6 @@ requests:
       - type: body.contains
         not: true
         value: "<html"
-    confidence: low
 
   - type: http
     path: /v1/chat/completions
@@ -65,7 +62,6 @@ requests:
         value: 401
       - type: body.contains
         value: '"error"'
-    confidence: low
 
   - type: http
     path: /v1/chat/completions
@@ -76,7 +72,6 @@ requests:
     match:
       - type: status
         value: 422
-    confidence: low
 
   - type: http
     path: /v1/completions
@@ -89,7 +84,6 @@ requests:
         value: 401
       - type: body.contains
         value: '"error"'
-    confidence: low
 
   - type: http
     path: /v1/embeddings
@@ -102,7 +96,6 @@ requests:
         value: 401
       - type: body.contains
         value: '"error"'
-    confidence: low
 
   - type: http
     path: /v1/embeddings
@@ -113,7 +106,6 @@ requests:
     match:
       - type: status
         value: 422
-    confidence: low
 
 models:
   path: /v1/models

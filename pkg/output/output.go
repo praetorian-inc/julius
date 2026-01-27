@@ -25,7 +25,7 @@ func (tw *TableWriter) Write(results []types.Result) error {
 	}
 
 	table := tablewriter.NewWriter(tw.writer)
-	table.SetHeader([]string{"TARGET", "SERVICE", "CONFIDENCE", "SPECIFICITY", "CATEGORY", "MODELS", "ERROR"})
+	table.SetHeader([]string{"TARGET", "SERVICE", "SPECIFICITY", "CATEGORY", "MODELS", "ERROR"})
 	table.SetBorder(false)
 	table.SetHeaderAlignment(tablewriter.ALIGN_LEFT)
 	table.SetAlignment(tablewriter.ALIGN_LEFT)
@@ -36,7 +36,6 @@ func (tw *TableWriter) Write(results []types.Result) error {
 		table.Append([]string{
 			result.Target,
 			result.Service,
-			result.Confidence,
 			fmt.Sprintf("%d", result.Specificity),
 			result.Category,
 			models,

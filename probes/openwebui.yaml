@@ -16,7 +16,6 @@ requests:
         value: 200
       - type: body.contains
         value: '"name":"Open WebUI"'
-    confidence: high
 
   - type: http
     path: /api/config
@@ -31,7 +30,6 @@ requests:
       - type: body.contains
         not: true
         value: "<!DOCTYPE"
-    confidence: high
 
   - type: http
     path: /api/version
@@ -43,7 +41,6 @@ requests:
         value: '"version"'
       - type: body.contains
         value: '"deployment_id"'
-    confidence: high
 
   - type: http
     path: /
@@ -55,7 +52,6 @@ requests:
         value: "/static/favicon.png"
       - type: body.contains
         value: "open-webui"
-    confidence: medium
 
 models:
   path: /api/models

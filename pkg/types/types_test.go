@@ -13,7 +13,6 @@ func TestResult_JSONMarshal(t *testing.T) {
 	r := Result{
 		Target:         "10.0.1.5:11434",
 		Service:        "ollama",
-		Confidence:     "high",
 		MatchedRequest: "/api/tags",
 		Category:       "self-hosted",
 		Specificity:    100,
@@ -73,7 +72,6 @@ func TestRequest_DefaultMethod(t *testing.T) {
 
 	assert.Equal(t, "GET", r.Method)
 	assert.Equal(t, "http", r.Type)
-	assert.Equal(t, "medium", r.Confidence)
 }
 
 func TestRequest_NewFields(t *testing.T) {
@@ -214,7 +212,6 @@ func TestResultFields(t *testing.T) {
 			result := Result{
 				Target:      "https://example.com",
 				Service:     "openai",
-				Confidence:  "high",
 				Specificity: 50,
 				Models:      tt.models,
 				Error:       tt.err,

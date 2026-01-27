@@ -24,7 +24,6 @@ requests:
       - type: body.contains
         not: true
         value: "<html"
-    confidence: high
 
   - type: http
     path: /health
@@ -37,7 +36,6 @@ requests:
       - type: body.contains
         not: true
         value: "<!DOCTYPE"
-    confidence: high
 
   - type: http
     path: /health/liveliness
@@ -50,7 +48,6 @@ requests:
       - type: body.contains
         not: true
         value: "<!DOCTYPE"
-    confidence: medium
 
   - type: http
     path: /health/readiness
@@ -63,7 +60,6 @@ requests:
       - type: body.contains
         not: true
         value: "<!DOCTYPE"
-    confidence: medium
 
 models:
   path: /v1/models

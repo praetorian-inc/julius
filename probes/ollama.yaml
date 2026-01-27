@@ -29,7 +29,6 @@ requests:
       - type: body.contains
         not: true
         value: "<head>"
-    confidence: high
 
   - type: http
     path: /
@@ -39,7 +38,6 @@ requests:
         value: 200
       - type: body.contains
         value: "Ollama is running"
-    confidence: medium
 
 models:
   path: /api/tags

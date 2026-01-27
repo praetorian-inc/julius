@@ -14,7 +14,6 @@ requests:
         value: 200
       - type: body.contains
         value: "LibreChat"
-    confidence: high
 
   - type: http
     path: /api/endpoints
@@ -24,4 +23,3 @@ requests:
         value: 200
       - type: body.contains
         value: '"openAI"'
-    confidence: high

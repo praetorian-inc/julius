@@ -368,7 +368,6 @@ func TestScanWithModels(t *testing.T) {
 							RawMatch: []rules.RawRule{
 								{Type: "status", Value: 200},
 							},
-							Confidence: "high",
 						},
 					},
 					Models: &types.ModelsConfig{
@@ -414,7 +413,6 @@ func TestScanWithoutModelsConfig(t *testing.T) {
 					RawMatch: []rules.RawRule{
 						{Type: "status", Value: 200},
 					},
-					Confidence: "medium",
 				},
 			},
 			// No Models config

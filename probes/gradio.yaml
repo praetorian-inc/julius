@@ -24,7 +24,6 @@ requests:
       - type: body.contains
         not: true
         value: "Index of"
-    confidence: high
 
   - type: http
     path: /info
@@ -37,7 +36,6 @@ requests:
       - type: body.contains
         not: true
         value: "<html"
-    confidence: medium
 
   - type: http
     path: /
@@ -47,7 +45,6 @@ requests:
         value: 200
       - type: body.contains
         value: "gradio-app"
-    confidence: medium
 
   - type: http
     path: /api/
@@ -57,4 +54,3 @@ requests:
         value: 200
       - type: body.contains
         value: '"named_endpoints"'
-    confidence: high

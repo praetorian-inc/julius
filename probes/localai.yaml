@@ -21,7 +21,6 @@ requests:
         value: "# TYPE"
       - type: body.contains
         value: "LocalAI"
-    confidence: high
 
   # LocalAI-specific: metrics with localai_ prefix
   - type: http
@@ -32,7 +31,6 @@ requests:
         value: 200
       - type: body.contains
         value: "localai_"
-    confidence: high
 
 models:
   path: /v1/models

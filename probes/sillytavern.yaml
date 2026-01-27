@@ -14,4 +14,3 @@ requests:
         value: 200
       - type: body.contains
         value: "SillyTavern"
-    confidence: high

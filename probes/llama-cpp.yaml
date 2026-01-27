@@ -15,7 +15,6 @@ requests:
         value: 200
       - type: body.contains
         value: '"owned_by":"llamacpp"'
-    confidence: high
 
   - type: http
     path: /health
@@ -26,7 +25,6 @@ requests:
       - type: header.contains
         header: Server
         value: "llama.cpp"
-    confidence: high
 
 models:
   path: /v1/models

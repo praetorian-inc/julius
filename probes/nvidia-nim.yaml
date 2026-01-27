@@ -22,7 +22,6 @@ requests:
       - type: body.contains
         not: true
         value: "<html"
-    confidence: high
 
   - type: http
     path: /v1/metadata
@@ -40,7 +39,6 @@ requests:
       - type: body.contains
         not: true
         value: "<html"
-    confidence: high
 
   - type: http
     path: /v1/health/ready
@@ -58,7 +56,6 @@ requests:
       - type: body.contains
         not: true
         value: "<html"
-    confidence: medium
 
 models:
   path: /v1/models

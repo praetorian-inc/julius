@@ -15,7 +15,6 @@ requests:
         value: 200
       - type: body.contains
         value: '"model_id":'
-    confidence: high
 
 models:
   path: /info

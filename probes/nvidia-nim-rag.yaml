@@ -33,7 +33,6 @@ requests:
       - type: body.contains
         not: true
         value: '"uptime"'
-    confidence: high
 
   - type: http
     path: /v1/chat/completions
@@ -55,4 +54,3 @@ requests:
       - type: body.contains
         not: true
         value: '"uptime"'
-    confidence: medium
