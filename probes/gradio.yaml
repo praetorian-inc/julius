@@ -4,26 +4,22 @@ name: gradio
 description: Gradio ML demo interfaces
 category: self-hosted
 port_hint: 7860
+specificity: 75
 api_docs: https://www.gradio.app/docs/
 
-probes:
+requests:
   - type: http
     path: /config
     method: GET
     match:
       - type: status
         value: 200
+      - type: content-type
+        value: application/json
       - type: body.contains
         value: '"mode"'
       - type: body.contains
         value: '"components"'
-      - type: body.contains
-        not: true
-        value: "<!DOCTYPE"
-      - type: body.contains
-        not: true
-        value: "Index of"
-    confidence: high
 
   - type: http
     path: /info
@@ -31,12 +27,10 @@ probes:
     match:
       - type: status
         value: 200
+      - type: content-type
+        value: application/json
       - type: body.contains
         value: '"version"'
-      - type: body.contains
-        not: true
-        value: "<html"
-    confidence: medium
 
   - type: http
     path: /
@@ -46,7 +40,6 @@ probes:
         value: 200
       - type: body.contains
         value: "gradio-app"
-    confidence: medium
 
   - type: http
     path: /api/
@@ -54,6 +47,7 @@ probes:
     match:
       - type: status
         value: 200
+      - type: content-type
+        value: application/json
       - type: body.contains
         value: '"named_endpoints"'
-    confidence: high

@@ -5,7 +5,7 @@ category: self-hosted
 port_hint: 8080
 api_docs: https://example.com
 
-probes:
+requests:
   - type: http
     path: /health
     method: GET
@@ -14,4 +14,3 @@ probes:
         value: 200
       - type: body.contains
         value: "ok"
-    confidence: high

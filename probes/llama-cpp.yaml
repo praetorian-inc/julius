@@ -3,18 +3,20 @@ name: llama-cpp
 description: llama.cpp HTTP server
 category: self-hosted
 port_hint: 8080
+specificity: 50
 api_docs: https://github.com/ggerganov/llama.cpp/blob/master/examples/server/README.md
 
-probes:
+requests:
   - type: http
     path: /v1/models
     method: GET
     match:
       - type: status
         value: 200
+      - type: content-type
+        value: application/json
       - type: body.contains
         value: '"owned_by":"llamacpp"'
-    confidence: high
 
   - type: http
     path: /health
@@ -25,7 +27,6 @@ probes:
       - type: header.contains
         header: Server
         value: "llama.cpp"
-    confidence: high
 
 models:
   path: /v1/models

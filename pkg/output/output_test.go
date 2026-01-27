@@ -35,11 +35,11 @@ func TestTableWriter_WriteSingleResult(t *testing.T) {
 
 	results := []types.Result{
 		{
-			Target:       "https://api.openai.com",
-			Service:      "OpenAI API",
-			Confidence:   "high",
-			MatchedProbe: "openai-completion",
-			Category:     "llm",
+			Target:         "https://api.openai.com",
+			Service:        "OpenAI API",
+			MatchedRequest: "openai-completion",
+			Category:       "llm",
+			Specificity:    75,
 		},
 	}
 
@@ -49,11 +49,11 @@ func TestTableWriter_WriteSingleResult(t *testing.T) {
 	output := buf.String()
 	assert.Contains(t, output, "TARGET")
 	assert.Contains(t, output, "SERVICE")
-	assert.Contains(t, output, "CONFIDENCE")
+	assert.Contains(t, output, "SPECIFICITY")
 
 	assert.Contains(t, output, "https://api.openai.com")
 	assert.Contains(t, output, "OpenAI API")
-	assert.Contains(t, output, "high")
+	assert.Contains(t, output, "75")
 }
 
 func TestTableWriter_WriteMultipleResults(t *testing.T) {
@@ -62,18 +62,18 @@ func TestTableWriter_WriteMultipleResults(t *testing.T) {
 
 	results := []types.Result{
 		{
-			Target:       "https://api.openai.com",
-			Service:      "OpenAI API",
-			Confidence:   "high",
-			MatchedProbe: "openai-completion",
-			Category:     "llm",
+			Target:         "https://api.openai.com",
+			Service:        "OpenAI API",
+			MatchedRequest: "openai-completion",
+			Category:       "llm",
+			Specificity:    75,
 		},
 		{
-			Target:       "https://api.anthropic.com",
-			Service:      "Anthropic API",
-			Confidence:   "high",
-			MatchedProbe: "anthropic-messages",
-			Category:     "llm",
+			Target:         "https://api.anthropic.com",
+			Service:        "Anthropic API",
+			MatchedRequest: "anthropic-messages",
+			Category:       "llm",
+			Specificity:    75,
 		},
 	}
 
@@ -113,11 +113,11 @@ func TestJSONWriter_WriteSingleResult(t *testing.T) {
 
 	results := []types.Result{
 		{
-			Target:       "https://api.openai.com",
-			Service:      "OpenAI API",
-			Confidence:   "high",
-			MatchedProbe: "openai-completion",
-			Category:     "llm",
+			Target:         "https://api.openai.com",
+			Service:        "OpenAI API",
+			MatchedRequest: "openai-completion",
+			Category:       "llm",
+			Specificity:    75,
 		},
 	}
 
@@ -131,7 +131,6 @@ func TestJSONWriter_WriteSingleResult(t *testing.T) {
 	require.Len(t, parsed, 1, "Should return 1 result")
 	assert.Equal(t, "https://api.openai.com", parsed[0].Target)
 	assert.Equal(t, "OpenAI API", parsed[0].Service)
-	assert.Equal(t, "high", parsed[0].Confidence)
 }
 
 func TestJSONWriter_WriteMultipleResults(t *testing.T) {
@@ -140,18 +139,18 @@ func TestJSONWriter_WriteMultipleResults(t *testing.T) {
 
 	results := []types.Result{
 		{
-			Target:       "https://api.openai.com",
-			Service:      "OpenAI API",
-			Confidence:   "high",
-			MatchedProbe: "openai-completion",
-			Category:     "llm",
+			Target:         "https://api.openai.com",
+			Service:        "OpenAI API",
+			MatchedRequest: "openai-completion",
+			Category:       "llm",
+			Specificity:    75,
 		},
 		{
-			Target:       "https://api.anthropic.com",
-			Service:      "Anthropic API",
-			Confidence:   "high",
-			MatchedProbe: "anthropic-messages",
-			Category:     "llm",
+			Target:         "https://api.anthropic.com",
+			Service:        "Anthropic API",
+			MatchedRequest: "anthropic-messages",
+			Category:       "llm",
+			Specificity:    75,
 		},
 	}
 
@@ -178,7 +177,6 @@ func TestNewWriter_Table(t *testing.T) {
 		{
 			Target:     "https://api.openai.com",
 			Service:    "OpenAI API",
-			Confidence: "high",
 		},
 	}
 
@@ -200,7 +198,6 @@ func TestNewWriter_JSON(t *testing.T) {
 		{
 			Target:     "https://test.com",
 			Service:    "Test",
-			Confidence: "high",
 		},
 	}
 
@@ -238,11 +235,11 @@ func TestJSONLWriter_WriteSingleResult(t *testing.T) {
 
 	results := []types.Result{
 		{
-			Target:       "https://api.openai.com",
-			Service:      "OpenAI API",
-			Confidence:   "high",
-			MatchedProbe: "openai-completion",
-			Category:     "llm",
+			Target:         "https://api.openai.com",
+			Service:        "OpenAI API",
+			MatchedRequest: "openai-completion",
+			Category:       "llm",
+			Specificity:    75,
 		},
 	}
 
@@ -258,7 +255,6 @@ func TestJSONLWriter_WriteSingleResult(t *testing.T) {
 
 	assert.Equal(t, "https://api.openai.com", parsed.Target)
 	assert.Equal(t, "OpenAI API", parsed.Service)
-	assert.Equal(t, "high", parsed.Confidence)
 }
 
 func TestJSONLWriter_WriteMultipleResults(t *testing.T) {
@@ -267,18 +263,18 @@ func TestJSONLWriter_WriteMultipleResults(t *testing.T) {
 
 	results := []types.Result{
 		{
-			Target:       "https://api.openai.com",
-			Service:      "OpenAI API",
-			Confidence:   "high",
-			MatchedProbe: "openai-completion",
-			Category:     "llm",
+			Target:         "https://api.openai.com",
+			Service:        "OpenAI API",
+			MatchedRequest: "openai-completion",
+			Category:       "llm",
+			Specificity:    75,
 		},
 		{
-			Target:       "https://api.anthropic.com",
-			Service:      "Anthropic API",
-			Confidence:   "high",
-			MatchedProbe: "anthropic-messages",
-			Category:     "llm",
+			Target:         "https://api.anthropic.com",
+			Service:        "Anthropic API",
+			MatchedRequest: "anthropic-messages",
+			Category:       "llm",
+			Specificity:    75,
 		},
 	}
 
@@ -308,7 +304,6 @@ func TestNewWriter_JSONL(t *testing.T) {
 		{
 			Target:     "https://test.com",
 			Service:    "Test",
-			Confidence: "high",
 		},
 	}
 
@@ -329,35 +324,35 @@ func TestTableWriterModelsAndError(t *testing.T) {
 		{
 			name: "with models",
 			result: types.Result{
-				Target:       "https://example.com",
-				Service:      "ollama",
-				Confidence:   "high",
-				MatchedProbe: "/api/tags",
-				Category:     "self-hosted",
-				Models:       []string{"llama3.2:1b", "mistral:7b"},
+				Target:         "https://example.com",
+				Service:        "ollama",
+				MatchedRequest: "/api/tags",
+				Category:       "self-hosted",
+				Specificity:    100,
+				Models:         []string{"llama3.2:1b", "mistral:7b"},
 			},
 			expectInOutput: []string{"MODELS", "llama3.2:1b", "mistral:7b"},
 		},
 		{
 			name: "with error",
 			result: types.Result{
-				Target:       "https://example.com",
-				Service:      "openai",
-				Confidence:   "high",
-				MatchedProbe: "/v1/chat",
-				Category:     "cloud-managed",
-				Error:        "401 unauthorized",
+				Target:         "https://example.com",
+				Service:        "openai",
+				MatchedRequest: "/v1/chat",
+				Category:       "cloud-managed",
+				Specificity:    75,
+				Error:          "401 unauthorized",
 			},
 			expectInOutput: []string{"ERROR", "401 unauthorized"},
 		},
 		{
 			name: "empty models and error",
 			result: types.Result{
-				Target:       "https://example.com",
-				Service:      "test",
-				Confidence:   "medium",
-				MatchedProbe: "/health",
-				Category:     "test",
+				Target:         "https://example.com",
+				Service:        "test",
+				MatchedRequest: "/health",
+				Category:       "test",
+				Specificity:    50,
 			},
 			expectInOutput: []string{"MODELS", "ERROR"},
 		},

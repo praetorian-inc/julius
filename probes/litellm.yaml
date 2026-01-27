@@ -1,0 +1,55 @@
+# probes/litellm.yaml
+# Reference: https://docs.litellm.ai/docs/proxy/health
+name: litellm
+description: LiteLLM Proxy - unified API gateway for multiple LLM providers
+category: gateway
+port_hint: 4000
+specificity: 85
+api_docs: https://docs.litellm.ai/docs/
+
+requests:
+  - type: http
+    path: /health
+    method: GET
+    match:
+      - type: status
+        value: 200
+      - type: content-type
+        value: application/json
+      - type: body.contains
+        value: '"healthy_endpoints"'
+
+  - type: http
+    path: /health
+    method: GET
+    match:
+      - type: status
+        value: 200
+      - type: content-type
+        value: application/json
+      - type: body.contains
+        value: '"litellm_metadata"'
+
+  - type: http
+    path: /health
+    method: GET
+    match:
+      - type: status
+        value: 200
+      - type: content-type
+        value: application/json
+      - type: body.contains
+        value: '"unhealthy_endpoints"'
+
+models:
+  path: /v1/models
+  method: GET
+  extract: ".data[].id"
+
+augustus:
+  generator: openai
+  config_template:
+    endpoint: "$TARGET/v1"
+    model: "$MODEL"
+    api_key: "$API_KEY"
+    timeout: 180

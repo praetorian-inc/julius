@@ -4,29 +4,11 @@ name: localai
 description: LocalAI - local OpenAI compatible API
 category: self-hosted
 port_hint: 8080
+specificity: 75
 api_docs: https://localai.io/api/
 
-probes:
-  - type: http
-    path: /v1/models
-    method: GET
-    match:
-      - type: status
-        value: 200
-      - type: body.contains
-        value: '"object"'
-      - type: body.contains
-        value: '"data"'
-      - type: body.contains
-        value: '"id"'
-      - type: body.contains
-        not: true
-        value: "<!DOCTYPE"
-      - type: body.contains
-        not: true
-        value: "<html"
-    confidence: high
-
+requests:
+  # LocalAI-specific: metrics endpoint with LocalAI markers
   - type: http
     path: /metrics
     method: GET
@@ -38,8 +20,17 @@ probes:
       - type: body.contains
         value: "# TYPE"
       - type: body.contains
+        value: "LocalAI"
+
+  # LocalAI-specific: metrics with localai_ prefix
+  - type: http
+    path: /metrics
+    method: GET
+    match:
+      - type: status
+        value: 200
+      - type: body.contains
         value: "localai_"
-    confidence: high
 
 models:
   path: /v1/models

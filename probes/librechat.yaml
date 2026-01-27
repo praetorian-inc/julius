@@ -5,7 +5,7 @@ category: rag-orchestration
 port_hint: 3080
 api_docs: https://www.librechat.ai/docs
 
-probes:
+requests:
   - type: http
     path: /
     method: GET
@@ -14,7 +14,6 @@ probes:
         value: 200
       - type: body.contains
         value: "LibreChat"
-    confidence: high
 
   - type: http
     path: /api/endpoints
@@ -24,4 +23,3 @@ probes:
         value: 200
       - type: body.contains
         value: '"openAI"'
-    confidence: high

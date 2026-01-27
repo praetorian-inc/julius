@@ -7,6 +7,7 @@ import (
 	"strings"
 
 	"github.com/praetorian-inc/julius/pkg/probe"
+	"github.com/praetorian-inc/julius/pkg/types"
 	"github.com/spf13/cobra"
 )
 
@@ -53,9 +54,19 @@ func runValidate(cmd *cobra.Command, args []string) error {
 			continue
 		}
 
-		_, err = probe.ParseProbe(data)
+		p, err := probe.ParseProbe(data)
 		if err != nil {
 			fmt.Printf("ERROR: %s - invalid YAML: %v\n", filename, err)
+			hasErrors = true
+			errorCount++
+			continue
+		}
+
+		errs := validateProbe(p)
+		if len(errs) > 0 {
+			for _, e := range errs {
+				fmt.Printf("ERROR: %s - %s\n", filename, e)
+			}
 			hasErrors = true
 			errorCount++
 			continue
@@ -72,6 +83,37 @@ func runValidate(cmd *cobra.Command, args []string) error {
 	}
 
 	return nil
+}
+
+func validateProbe(p *types.Probe) []string {
+	var errors []string
+
+	if p.Name == "" {
+		errors = append(errors, "name is required")
+	}
+
+	if len(p.Requests) == 0 {
+		errors = append(errors, "probe must have at least one request")
+	}
+
+	if p.Specificity < 0 || p.Specificity > 100 {
+		errors = append(errors, fmt.Sprintf("specificity must be 0-100, got %d", p.Specificity))
+	}
+
+	if p.Require != "" && p.Require != types.RequireAny && p.Require != types.RequireAll {
+		errors = append(errors, fmt.Sprintf("require must be '%s' or '%s', got '%s'", types.RequireAny, types.RequireAll, p.Require))
+	}
+
+	for i, req := range p.Requests {
+		if req.Path == "" {
+			errors = append(errors, fmt.Sprintf("request %d: path is required", i))
+		}
+		if len(req.RawMatch) == 0 {
+			errors = append(errors, fmt.Sprintf("request %d: at least one match rule is required", i))
+		}
+	}
+
+	return errors
 }
 
 func init() {

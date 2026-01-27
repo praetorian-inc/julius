@@ -39,27 +39,49 @@ func cacheKey(method, url string, headers http.Header, body []byte) string {
 func (s *Scanner) cachedRequest(req *http.Request, body []byte) (*http.Response, []byte, error) {
 	key := cacheKey(req.Method, req.URL.String(), req.Header, body)
 
-	if cached, ok := s.cache[key]; ok {
-		return cached.Response, cached.Body, cached.Err
-	}
+	// Use singleflight to deduplicate concurrent requests
+	result, err, _ := s.inflight.Do(key, func() (any, error) {
+		if cached, ok := s.cache.Load(key); ok {
+			return cached, nil
+		}
 
-	resp, err := s.client.Do(req)
+		reqCopy := req.Clone(req.Context())
+		if body != nil {
+			reqCopy.Body = io.NopCloser(strings.NewReader(string(body)))
+		}
+
+		resp, err := s.client.Do(reqCopy)
+		if err != nil {
+			slog.Error("Getting response", "method", req.Method, "url", req.URL.String(), "err", err)
+			cached := &CachedResponse{Err: err}
+			s.cache.Store(key, cached)
+			return cached, nil
+		}
+
+		respBody, err := io.ReadAll(resp.Body)
+		resp.Body.Close()
+		if err != nil {
+			slog.Error("Reading response body", "method", req.Method, "url", req.URL.String(), "err", err)
+			cached := &CachedResponse{Err: err}
+			s.cache.Store(key, cached)
+			return cached, nil
+		}
+
+		resp.Body = nil // Clear to make it obvious this shouldn't be read
+
+		cached := &CachedResponse{Response: resp, Body: respBody}
+		s.cache.Store(key, cached)
+
+		return cached, nil
+	})
+
 	if err != nil {
-		slog.Error("Getting response", "method", req.Method, "url", req.URL.String(), "err", err)
-		s.cache[key] = &CachedResponse{Err: err}
 		return nil, nil, err
 	}
 
-	respBody, err := io.ReadAll(resp.Body)
-	resp.Body.Close()
-	if err != nil {
-		slog.Error("Reading response body", "method", req.Method, "url", req.URL.String(), "err", err)
-		s.cache[key] = &CachedResponse{Err: err}
-		return nil, nil, err
+	cached := result.(*CachedResponse)
+	if cached.Err != nil {
+		return nil, nil, cached.Err
 	}
-
-	resp.Body = nil // Clear to make it obvious this shouldn't be read
-
-	s.cache[key] = &CachedResponse{Response: resp, Body: respBody}
-	return resp, respBody, nil
+	return cached.Response, cached.Body, nil
 }

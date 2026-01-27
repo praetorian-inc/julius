@@ -1,0 +1,127 @@
+# probes/openai-compatible.yaml
+# Generic detector for any OpenAI API-compatible endpoint
+# Specificity 1 = lowest priority, fallback detection only
+name: openai-compatible
+description: Generic OpenAI-compatible API endpoint (fallback detection)
+category: generic
+specificity: 1
+api_docs: https://platform.openai.com/docs/api-reference
+
+requests:
+  # /v1/models returns valid OpenAI-format response
+  - type: http
+    path: /v1/models
+    method: GET
+    match:
+      - type: status
+        value: 200
+      - type: content-type
+        value: application/json
+      - type: body.contains
+        value: '"object"'
+      - type: body.contains
+        value: '"data"'
+
+  # /v1/models requires authentication (401)
+  - type: http
+    path: /v1/models
+    method: GET
+    match:
+      - type: status
+        value: 401
+      - type: content-type
+        value: application/json
+      - type: body.contains
+        value: '"error"'
+
+  # /v1/models forbidden (403)
+  - type: http
+    path: /v1/models
+    method: GET
+    match:
+      - type: status
+        value: 403
+      - type: content-type
+        value: application/json
+      - type: body.contains
+        value: '"error"'
+
+  # /v1/chat/completions auth required
+  - type: http
+    path: /v1/chat/completions
+    method: POST
+    headers:
+      Content-Type: application/json
+    body: '{"model":"test","messages":[{"role":"user","content":"test"}]}'
+    match:
+      - type: status
+        value: 401
+      - type: content-type
+        value: application/json
+      - type: body.contains
+        value: '"error"'
+
+  # /v1/chat/completions validation error (endpoint exists)
+  - type: http
+    path: /v1/chat/completions
+    method: POST
+    headers:
+      Content-Type: application/json
+    body: '{"model":"test","messages":[{"role":"user","content":"test"}]}'
+    match:
+      - type: status
+        value: 422
+
+  # /v1/completions legacy endpoint
+  - type: http
+    path: /v1/completions
+    method: POST
+    headers:
+      Content-Type: application/json
+    body: '{"model":"test","prompt":"test"}'
+    match:
+      - type: status
+        value: 401
+      - type: content-type
+        value: application/json
+      - type: body.contains
+        value: '"error"'
+
+  # /v1/embeddings auth required
+  - type: http
+    path: /v1/embeddings
+    method: POST
+    headers:
+      Content-Type: application/json
+    body: '{"model":"test","input":"test"}'
+    match:
+      - type: status
+        value: 401
+      - type: content-type
+        value: application/json
+      - type: body.contains
+        value: '"error"'
+
+  # /v1/embeddings validation error
+  - type: http
+    path: /v1/embeddings
+    method: POST
+    headers:
+      Content-Type: application/json
+    body: '{"model":"test","input":"test"}'
+    match:
+      - type: status
+        value: 422
+
+models:
+  path: /v1/models
+  method: GET
+  extract: ".data[].id"
+
+augustus:
+  generator: openai
+  config_template:
+    endpoint: "$TARGET/v1"
+    model: "$MODEL"
+    api_key: "$API_KEY"
+    timeout: 180

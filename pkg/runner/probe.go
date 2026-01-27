@@ -15,8 +15,8 @@ import (
 )
 
 var (
-	targetsFile   string
-	augustusFlag  bool
+	targetsFile  string
+	augustusFlag bool
 )
 
 var probeCmd = &cobra.Command{
@@ -50,7 +50,7 @@ func runProbe(cmd *cobra.Command, args []string) error {
 		return fmt.Errorf("no targets specified. Use --help for usage information")
 	}
 
-	var loadedProbes []*types.ProbeDefinition
+	var loadedProbes []*types.Probe
 	if probesDir != "" {
 		loadedProbes, err = probe.LoadProbesFromDir(probesDir)
 		if err != nil {
@@ -68,16 +68,19 @@ func runProbe(cmd *cobra.Command, args []string) error {
 	}
 
 	timeoutDuration := time.Duration(timeout) * time.Second
-	s := scanner.NewScanner(timeoutDuration)
+	s := scanner.NewScanner(timeoutDuration, concurrency)
 
-	var results []types.Result
+	var allResults []types.Result
+	matchedTargets := make(map[string]bool)
+
 	for _, target := range targets {
 		targetPort := scanner.ExtractPort(target)
 		sortedProbes := probe.SortProbesByPortHint(loadedProbes, targetPort)
 
-		result := s.Scan(target, sortedProbes, augustusFlag)
-		if result != nil {
-			results = append(results, *result)
+		results := s.Scan(target, sortedProbes, augustusFlag)
+		if len(results) > 0 {
+			allResults = append(allResults, results...)
+			matchedTargets[target] = true
 		} else if !quiet {
 			fmt.Fprintf(os.Stderr, "No match found for %s\n", target)
 		}
@@ -88,7 +91,7 @@ func runProbe(cmd *cobra.Command, args []string) error {
 		return fmt.Errorf("creating output writer: %w", err)
 	}
 
-	if err := writer.Write(results); err != nil {
+	if err := writer.Write(allResults); err != nil {
 		return fmt.Errorf("writing output: %w", err)
 	}
 

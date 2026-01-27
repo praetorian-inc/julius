@@ -4,18 +4,20 @@ name: open-webui
 description: Open WebUI - ChatGPT-style interface for LLMs
 category: rag-orchestration
 port_hint: 3000
+specificity: 80
 api_docs: https://docs.openwebui.com/getting-started/api-endpoints/
 
-probes:
+requests:
   - type: http
     path: /api/config
     method: GET
     match:
       - type: status
         value: 200
+      - type: content-type
+        value: application/json
       - type: body.contains
         value: '"name":"Open WebUI"'
-    confidence: high
 
   - type: http
     path: /api/config
@@ -23,14 +25,12 @@ probes:
     match:
       - type: status
         value: 200
+      - type: content-type
+        value: application/json
       - type: body.contains
         value: '"features":'
       - type: body.contains
         value: '"enable_signup"'
-      - type: body.contains
-        not: true
-        value: "<!DOCTYPE"
-    confidence: high
 
   - type: http
     path: /api/version
@@ -38,11 +38,12 @@ probes:
     match:
       - type: status
         value: 200
+      - type: content-type
+        value: application/json
       - type: body.contains
         value: '"version"'
       - type: body.contains
         value: '"deployment_id"'
-    confidence: high
 
   - type: http
     path: /
@@ -54,7 +55,6 @@ probes:
         value: "/static/favicon.png"
       - type: body.contains
         value: "open-webui"
-    confidence: medium
 
 models:
   path: /api/models

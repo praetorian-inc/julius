@@ -181,3 +181,99 @@ func TestUnmarshalRule(t *testing.T) {
 		})
 	}
 }
+
+func TestContentTypeRule_Match(t *testing.T) {
+	tests := []struct {
+		name        string
+		ruleValue   string
+		contentType string
+		not         bool
+		want        bool
+	}{
+		{
+			name:        "exact match",
+			ruleValue:   "application/json",
+			contentType: "application/json",
+			want:        true,
+		},
+		{
+			name:        "match with charset",
+			ruleValue:   "application/json",
+			contentType: "application/json; charset=utf-8",
+			want:        true,
+		},
+		{
+			name:        "case insensitive",
+			ruleValue:   "application/json",
+			contentType: "Application/JSON",
+			want:        true,
+		},
+		{
+			name:        "no match",
+			ruleValue:   "application/json",
+			contentType: "text/html",
+			want:        false,
+		},
+		{
+			name:        "negated - not html",
+			ruleValue:   "text/html",
+			contentType: "application/json",
+			not:         true,
+			want:        true,
+		},
+		{
+			name:        "negated - is html",
+			ruleValue:   "text/html",
+			contentType: "text/html; charset=utf-8",
+			not:         true,
+			want:        false,
+		},
+		{
+			name:        "empty content-type header",
+			ruleValue:   "application/json",
+			contentType: "",
+			want:        false,
+		},
+		{
+			name:        "nil response",
+			ruleValue:   "application/json",
+			contentType: "",
+			want:        false,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			rule := &ContentTypeRule{
+				BaseRule: BaseRule{Type: "content-type", Not: tt.not},
+				Value:    tt.ruleValue,
+			}
+
+			var resp *http.Response
+			if tt.name != "nil response" {
+				resp = &http.Response{Header: http.Header{}}
+				if tt.contentType != "" {
+					resp.Header.Set("Content-Type", tt.contentType)
+				}
+			}
+
+			assert.Equal(t, tt.want, rule.Match(resp, nil))
+		})
+	}
+}
+
+func TestContentTypeRule_Unmarshal(t *testing.T) {
+	yamlStr := "type: content-type\nvalue: application/json"
+	
+	var raw RawRule
+	err := yaml.Unmarshal([]byte(yamlStr), &raw)
+	require.NoError(t, err)
+
+	rule, err := raw.ToRule()
+	require.NoError(t, err)
+	assert.Equal(t, "content-type", rule.GetType())
+	
+	contentTypeRule, ok := rule.(*ContentTypeRule)
+	require.True(t, ok)
+	assert.Equal(t, "application/json", contentTypeRule.Value)
+}

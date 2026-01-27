@@ -4,31 +4,24 @@ name: ollama
 description: Ollama local LLM server
 category: self-hosted
 port_hint: 11434
+specificity: 100
 api_docs: https://github.com/ollama/ollama/blob/main/docs/api.md
 
-probes:
+requests:
   - type: http
     path: /api/tags
     method: GET
     match:
       - type: status
         value: 200
+      - type: content-type
+        value: application/json
       - type: body.contains
         value: '"models"'
       - type: body.contains
         value: '"name"'
       - type: body.contains
         value: '"model"'
-      - type: body.contains
-        not: true
-        value: "<!DOCTYPE"
-      - type: body.contains
-        not: true
-        value: "<html"
-      - type: body.contains
-        not: true
-        value: "<head>"
-    confidence: high
 
   - type: http
     path: /
@@ -38,7 +31,6 @@ probes:
         value: 200
       - type: body.contains
         value: "Ollama is running"
-    confidence: medium
 
 models:
   path: /api/tags

@@ -4,45 +4,42 @@ name: vllm
 description: vLLM high-throughput LLM serving
 category: self-hosted
 port_hint: 8000
+specificity: 75
+require: all
 api_docs: https://docs.vllm.ai/en/stable/serving/openai_compatible_server.html
 
-probes:
+requests:
+  # Must have uvicorn Server header on /v1/models
   - type: http
     path: /v1/models
     method: GET
     match:
       - type: status
         value: 200
+      - type: content-type
+        value: application/json
       - type: header.contains
         header: Server
         value: "uvicorn"
       - type: body.contains
-        value: '"object":"list"'
+        value: '"object"'
       - type: body.contains
         value: '"data"'
-      - type: body.contains
-        not: true
-        value: "<html"
-      - type: body.contains
-        not: true
-        value: "<!doctype"
-    confidence: high
 
+  # AND must have /version endpoint with version field (vLLM-specific)
   - type: http
     path: /version
     method: GET
     match:
       - type: status
         value: 200
+      - type: content-type
+        value: application/json
       - type: body.contains
         value: '"version"'
       - type: body.contains
         not: true
-        value: "<html"
-      - type: body.contains
-        not: true
         value: '"deployment_id"'
-    confidence: high
 
 models:
   path: /v1/models

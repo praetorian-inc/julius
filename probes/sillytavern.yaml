@@ -5,7 +5,7 @@ category: rag-orchestration
 port_hint: 8000
 api_docs: https://docs.sillytavern.app/
 
-probes:
+requests:
   - type: http
     path: /
     method: GET
@@ -14,4 +14,3 @@ probes:
         value: 200
       - type: body.contains
         value: "SillyTavern"
-    confidence: high
