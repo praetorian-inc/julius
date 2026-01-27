@@ -5,6 +5,7 @@ description: vLLM high-throughput LLM serving
 category: self-hosted
 port_hint: 8000
 specificity: 75
+require: all
 api_docs: https://docs.vllm.ai/en/stable/serving/openai_compatible_server.html
 
 requests:
@@ -18,15 +19,12 @@ requests:
         header: Server
         value: "uvicorn"
       - type: body.contains
-        value: '"object":"list"'
+        value: '"object"'
       - type: body.contains
         value: '"data"'
       - type: body.contains
         not: true
         value: "<html"
-      - type: body.contains
-        not: true
-        value: "<!doctype"
     confidence: high
 
   - type: http

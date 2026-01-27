@@ -64,41 +64,35 @@ func (s *Scanner) Scan(target string, probes []*types.Probe, augustus bool) []ty
 			default:
 			}
 
-			for _, req := range p.Requests {
-				req.ApplyDefaults()
-
-				matched, err := s.DoRequest(target, req)
-				if err != nil || !matched {
-					continue
-				}
-
-				result := types.Result{
-					Target:         target + req.Path,
-					Service:        p.Name,
-					Confidence:     req.Confidence,
-					MatchedRequest: req.Path,
-					Category:       p.Category,
-					Specificity:    p.GetSpecificity(),
-				}
-
-				if p.Models != nil {
-					models, err := s.fetchModels(target, p.Models)
-					if err != nil {
-						result.Error = err.Error()
-					}
-					result.Models = models
-				}
-
-				if augustus {
-					result.GeneratorConfigs = p.BuildGeneratorConfigs(target, result.Models)
-				}
-
-				resultsMu.Lock()
-				results = append(results, result)
-				resultsMu.Unlock()
-
-				break
+			matched, matchedReq := s.matchProbe(target, p)
+			if !matched {
+				return nil
 			}
+
+			result := types.Result{
+				Target:         target + matchedReq.Path,
+				Service:        p.Name,
+				Confidence:     matchedReq.Confidence,
+				MatchedRequest: matchedReq.Path,
+				Category:       p.Category,
+				Specificity:    p.GetSpecificity(),
+			}
+
+			if p.Models != nil {
+				models, err := s.fetchModels(target, p.Models)
+				if err != nil {
+					result.Error = err.Error()
+				}
+				result.Models = models
+			}
+
+			if augustus {
+				result.GeneratorConfigs = p.BuildGeneratorConfigs(target, result.Models)
+			}
+
+			resultsMu.Lock()
+			results = append(results, result)
+			resultsMu.Unlock()
 
 			return nil
 		})
@@ -106,11 +100,56 @@ func (s *Scanner) Scan(target string, probes []*types.Probe, augustus bool) []ty
 
 	g.Wait()
 
+	// Sort by specificity (highest first)
 	sort.SliceStable(results, func(i, j int) bool {
 		return results[i].Specificity > results[j].Specificity
 	})
 
 	return results
+}
+
+func (s *Scanner) matchProbe(target string, p *types.Probe) (bool, types.Request) {
+	if p.RequiresAll() {
+		return s.matchProbeAll(target, p)
+	}
+	return s.matchProbeAny(target, p)
+}
+
+func (s *Scanner) matchProbeAny(target string, p *types.Probe) (bool, types.Request) {
+	for _, req := range p.Requests {
+		req.ApplyDefaults()
+
+		matched, err := s.DoRequest(target, req)
+		if err != nil || !matched {
+			continue
+		}
+
+		return true, req
+	}
+
+	return false, types.Request{}
+}
+
+func (s *Scanner) matchProbeAll(target string, p *types.Probe) (bool, types.Request) {
+	if len(p.Requests) == 0 {
+		return false, types.Request{}
+	}
+
+	var firstReq types.Request
+	for i, req := range p.Requests {
+		req.ApplyDefaults()
+
+		matched, err := s.DoRequest(target, req)
+		if err != nil || !matched {
+			return false, types.Request{}
+		}
+
+		if i == 0 {
+			firstReq = req
+		}
+	}
+
+	return true, firstReq
 }
 
 func (s *Scanner) DoRequest(target string, req types.Request) (bool, error) {

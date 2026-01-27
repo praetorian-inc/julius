@@ -8,6 +8,7 @@ specificity: 70
 api_docs: https://lmstudio.ai/docs/api/server
 
 requests:
+  # LM Studio-specific: /api/v0/models endpoint (unique to LM Studio)
   - type: http
     path: /api/v0/models
     method: GET
@@ -25,24 +26,6 @@ requests:
         not: true
         value: "<html"
     confidence: high
-
-  - type: http
-    path: /v1/models
-    method: GET
-    match:
-      - type: status
-        value: 200
-      - type: body.contains
-        value: '"object":"list"'
-      - type: body.contains
-        value: '"data"'
-      - type: body.contains
-        not: true
-        value: "<!DOCTYPE"
-      - type: body.contains
-        not: true
-        value: "<html"
-    confidence: medium
 
 models:
   path: /v1/models

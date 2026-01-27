@@ -938,3 +938,172 @@ func TestCacheKeyIncludesBody(t *testing.T) {
 
 	assert.Equal(t, int32(2), requestCount.Load(), "different bodies should not be cached together")
 }
+
+// ============================================================================
+// Require All Tests
+// ============================================================================
+
+func TestScan_RequireAll_AllMatch(t *testing.T) {
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		switch r.URL.Path {
+		case "/v1/models":
+			w.Header().Set("Server", "uvicorn")
+			w.WriteHeader(200)
+			w.Write([]byte(`{"object":"list","data":[]}`))
+		case "/tokenize":
+			w.WriteHeader(200)
+			w.Write([]byte(`{"tokens":[1,2,3]}`))
+		default:
+			w.WriteHeader(404)
+		}
+	}))
+	defer server.Close()
+
+	s := NewScanner(5*time.Second, 10)
+	probes := []*types.Probe{
+		{
+			Name:    "test-all",
+			Require: "all",
+			Requests: []types.Request{
+				{
+					Path:     "/v1/models",
+					Method:   "GET",
+					RawMatch: []rules.RawRule{{Type: "status", Value: 200}},
+				},
+				{
+					Path:     "/tokenize",
+					Method:   "GET",
+					RawMatch: []rules.RawRule{{Type: "status", Value: 200}},
+				},
+			},
+		},
+	}
+
+	results := s.Scan(server.URL, probes, false)
+
+	require.Len(t, results, 1, "should match when all requests succeed")
+	assert.Equal(t, "test-all", results[0].Service)
+	assert.Equal(t, "/v1/models", results[0].MatchedRequest) // First request path
+}
+
+func TestScan_RequireAll_SomeFail(t *testing.T) {
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		switch r.URL.Path {
+		case "/v1/models":
+			w.WriteHeader(200)
+			w.Write([]byte(`{"object":"list","data":[]}`))
+		case "/tokenize":
+			w.WriteHeader(404) // This one fails
+			w.Write([]byte(`{"error":"not found"}`))
+		default:
+			w.WriteHeader(404)
+		}
+	}))
+	defer server.Close()
+
+	s := NewScanner(5*time.Second, 10)
+	probes := []*types.Probe{
+		{
+			Name:    "test-all",
+			Require: "all",
+			Requests: []types.Request{
+				{
+					Path:     "/v1/models",
+					Method:   "GET",
+					RawMatch: []rules.RawRule{{Type: "status", Value: 200}},
+				},
+				{
+					Path:     "/tokenize",
+					Method:   "GET",
+					RawMatch: []rules.RawRule{{Type: "status", Value: 200}},
+				},
+			},
+		},
+	}
+
+	results := s.Scan(server.URL, probes, false)
+
+	assert.Empty(t, results, "should not match when any request fails")
+}
+
+func TestScan_RequireAny_Default(t *testing.T) {
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		switch r.URL.Path {
+		case "/v1/models":
+			w.WriteHeader(404)
+		case "/tokenize":
+			w.WriteHeader(200)
+			w.Write([]byte(`{"tokens":[1,2,3]}`))
+		default:
+			w.WriteHeader(404)
+		}
+	}))
+	defer server.Close()
+
+	s := NewScanner(5*time.Second, 10)
+	probes := []*types.Probe{
+		{
+			Name: "test-any", // No require field = default "any"
+			Requests: []types.Request{
+				{
+					Path:     "/v1/models",
+					Method:   "GET",
+					RawMatch: []rules.RawRule{{Type: "status", Value: 200}},
+				},
+				{
+					Path:     "/tokenize",
+					Method:   "GET",
+					RawMatch: []rules.RawRule{{Type: "status", Value: 200}},
+				},
+			},
+		},
+	}
+
+	results := s.Scan(server.URL, probes, false)
+
+	require.Len(t, results, 1, "should match when any request succeeds")
+	assert.Equal(t, "test-any", results[0].Service)
+	assert.Equal(t, "/tokenize", results[0].MatchedRequest) // Second request matched
+}
+
+func TestScan_RequireAll_EmptyRequests(t *testing.T) {
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.WriteHeader(200)
+	}))
+	defer server.Close()
+
+	s := NewScanner(5*time.Second, 10)
+	probes := []*types.Probe{
+		{
+			Name:     "test-empty",
+			Require:  "all",
+			Requests: []types.Request{}, // Empty
+		},
+	}
+
+	results := s.Scan(server.URL, probes, false)
+
+	assert.Empty(t, results, "should not match with empty requests")
+}
+
+func TestProbe_RequiresAll(t *testing.T) {
+	tests := []struct {
+		require  string
+		expected bool
+	}{
+		{"all", true},
+		{"ALL", true},
+		{"All", true},
+		{"any", false},
+		{"ANY", false},
+		{"", false},
+		{"invalid", false},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.require, func(t *testing.T) {
+			p := types.Probe{Require: tt.require}
+			assert.Equal(t, tt.expected, p.RequiresAll())
+		})
+	}
+}

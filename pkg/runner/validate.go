@@ -100,6 +100,10 @@ func validateProbe(p *types.Probe) []string {
 		errors = append(errors, fmt.Sprintf("specificity must be 0-100, got %d", p.Specificity))
 	}
 
+	if p.Require != "" && p.Require != types.RequireAny && p.Require != types.RequireAll {
+		errors = append(errors, fmt.Sprintf("require must be '%s' or '%s', got '%s'", types.RequireAny, types.RequireAll, p.Require))
+	}
+
 	for i, req := range p.Requests {
 		if req.Path == "" {
 			errors = append(errors, fmt.Sprintf("request %d: path is required", i))

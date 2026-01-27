@@ -1,0 +1,129 @@
+# Generic detector for any OpenAI API-compatible endpoint
+# Specificity 1 = lowest priority, fallback detection only
+name: openai-compatible
+description: Generic OpenAI-compatible API endpoint
+category: generic
+specificity: 1
+api_docs: https://platform.openai.com/docs/api-reference
+
+requests:
+  - type: http
+    path: /v1/models
+    method: GET
+    match:
+      - type: status
+        value: 200
+      - type: body.contains
+        value: '"object"'
+      - type: body.contains
+        value: '"data"'
+      - type: body.contains
+        not: true
+        value: "<!DOCTYPE"
+      - type: body.contains
+        not: true
+        value: "<html"
+      - type: body.contains
+        not: true
+        value: "<HTML"
+    confidence: low
+
+  - type: http
+    path: /v1/models
+    method: GET
+    match:
+      - type: status
+        value: 401
+      - type: body.contains
+        value: '"error"'
+      - type: body.contains
+        not: true
+        value: "<html"
+    confidence: low
+
+  - type: http
+    path: /v1/models
+    method: GET
+    match:
+      - type: status
+        value: 403
+      - type: body.contains
+        value: '"error"'
+      - type: body.contains
+        not: true
+        value: "<html"
+    confidence: low
+
+  - type: http
+    path: /v1/chat/completions
+    method: POST
+    headers:
+      Content-Type: application/json
+    body: '{"model":"test","messages":[{"role":"user","content":"test"}]}'
+    match:
+      - type: status
+        value: 401
+      - type: body.contains
+        value: '"error"'
+    confidence: low
+
+  - type: http
+    path: /v1/chat/completions
+    method: POST
+    headers:
+      Content-Type: application/json
+    body: '{"model":"test","messages":[{"role":"user","content":"test"}]}'
+    match:
+      - type: status
+        value: 422
+    confidence: low
+
+  - type: http
+    path: /v1/completions
+    method: POST
+    headers:
+      Content-Type: application/json
+    body: '{"model":"test","prompt":"test"}'
+    match:
+      - type: status
+        value: 401
+      - type: body.contains
+        value: '"error"'
+    confidence: low
+
+  - type: http
+    path: /v1/embeddings
+    method: POST
+    headers:
+      Content-Type: application/json
+    body: '{"model":"test","input":"test"}'
+    match:
+      - type: status
+        value: 401
+      - type: body.contains
+        value: '"error"'
+    confidence: low
+
+  - type: http
+    path: /v1/embeddings
+    method: POST
+    headers:
+      Content-Type: application/json
+    body: '{"model":"test","input":"test"}'
+    match:
+      - type: status
+        value: 422
+    confidence: low
+
+models:
+  path: /v1/models
+  method: GET
+  extract: ".data[].id"
+
+augustus:
+  generator: openai
+  config_template:
+    endpoint: "$TARGET/v1"
+    model: "$MODEL"
+    api_key: "$API_KEY"
+    timeout: 180

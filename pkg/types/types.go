@@ -40,17 +40,27 @@ type AugustusConfig struct {
 	ConfigTemplate generator.Config `yaml:"config_template"`
 }
 
+const (
+	RequireAny = "any" // Default: match if ANY request succeeds
+	RequireAll = "all" // Match only if ALL requests succeed
+)
+
 // Probe defines a service detection probe with one or more HTTP requests
 type Probe struct {
 	Name        string          `yaml:"name"`
 	Description string          `yaml:"description"`
 	Category    string          `yaml:"category"`
 	PortHint    int             `yaml:"port_hint"`
-	Specificity int             `yaml:"specificity"` // 1-100, 0 treated as default (50)
+	Specificity int             `yaml:"specificity"`       // 1-100, 0 treated as default (50)
+	Require     string          `yaml:"require,omitempty"` // "any" (default) or "all"
 	APIDocs     string          `yaml:"api_docs"`
 	Requests    []Request       `yaml:"requests"`
 	Models      *ModelsConfig   `yaml:"models,omitempty"`
 	Augustus    *AugustusConfig `yaml:"augustus,omitempty"`
+}
+
+func (p *Probe) RequiresAll() bool {
+	return strings.ToLower(p.Require) == RequireAll
 }
 
 // GetSpecificity returns the probe's specificity, defaulting to 50 if not set
