@@ -1,6 +1,6 @@
 module github.com/praetorian-inc/julius
 
-go 1.25.6
+go 1.25.4
 
 require (
 	github.com/goccy/go-yaml v1.19.2
