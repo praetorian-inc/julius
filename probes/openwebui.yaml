@@ -4,9 +4,10 @@ name: open-webui
 description: Open WebUI - ChatGPT-style interface for LLMs
 category: rag-orchestration
 port_hint: 3000
+specificity: 80
 api_docs: https://docs.openwebui.com/getting-started/api-endpoints/
 
-probes:
+requests:
   - type: http
     path: /api/config
     method: GET

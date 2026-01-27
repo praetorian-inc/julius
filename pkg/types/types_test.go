@@ -11,11 +11,12 @@ import (
 
 func TestResult_JSONMarshal(t *testing.T) {
 	r := Result{
-		Target:       "10.0.1.5:11434",
-		Service:      "ollama",
-		Confidence:   "high",
-		MatchedProbe: "/api/tags",
-		Category:     "self-hosted",
+		Target:         "10.0.1.5:11434",
+		Service:        "ollama",
+		Confidence:     "high",
+		MatchedRequest: "/api/tags",
+		Category:       "self-hosted",
+		Specificity:    100,
 	}
 
 	data, err := json.Marshal(r)
@@ -26,32 +27,56 @@ func TestResult_JSONMarshal(t *testing.T) {
 
 	assert.Equal(t, r.Target, decoded.Target)
 	assert.Equal(t, r.Service, decoded.Service)
+	assert.Equal(t, r.Specificity, decoded.Specificity)
 }
 
-func TestProbeDefinition_Fields(t *testing.T) {
-	pd := ProbeDefinition{
+func TestProbe_Fields(t *testing.T) {
+	p := Probe{
 		Name:        "ollama",
 		Description: "Ollama local LLM server",
 		Category:    "self-hosted",
 		PortHint:    11434,
+		Specificity: 100,
 		APIDocs:     "https://example.com",
-		Probes:      []Probe{},
+		Requests:    []Request{},
 	}
 
-	assert.Equal(t, "ollama", pd.Name)
-	assert.Equal(t, 11434, pd.PortHint)
+	assert.Equal(t, "ollama", p.Name)
+	assert.Equal(t, 11434, p.PortHint)
+	assert.Equal(t, 100, p.GetSpecificity())
 }
 
-func TestProbe_DefaultMethod(t *testing.T) {
-	p := Probe{Path: "/health"}
-	p.ApplyDefaults()
+func TestProbe_GetSpecificity(t *testing.T) {
+	tests := []struct {
+		name        string
+		specificity int
+		expected    int
+	}{
+		{"explicit 100", 100, 100},
+		{"explicit 75", 75, 75},
+		{"explicit 1 (generic)", 1, 1},
+		{"zero defaults to 50", 0, 50},
+		{"negative defaults to 50", -1, 50},
+	}
 
-	assert.Equal(t, "GET", p.Method)
-	assert.Equal(t, "http", p.Type)
-	assert.Equal(t, "medium", p.Confidence)
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			p := Probe{Specificity: tt.specificity}
+			assert.Equal(t, tt.expected, p.GetSpecificity())
+		})
+	}
 }
 
-func TestProbe_NewFields(t *testing.T) {
+func TestRequest_DefaultMethod(t *testing.T) {
+	r := Request{Path: "/health"}
+	r.ApplyDefaults()
+
+	assert.Equal(t, "GET", r.Method)
+	assert.Equal(t, "http", r.Type)
+	assert.Equal(t, "medium", r.Confidence)
+}
+
+func TestRequest_NewFields(t *testing.T) {
 	yamlData := `
 type: http
 path: /api/auth
@@ -67,18 +92,18 @@ match:
     value: success
 confidence: high
 `
-	var probe Probe
-	err := yaml.Unmarshal([]byte(yamlData), &probe)
+	var req Request
+	err := yaml.Unmarshal([]byte(yamlData), &req)
 	require.NoError(t, err)
 
-	assert.Equal(t, "POST", probe.Method)
-	assert.Equal(t, `{"test": "data"}`, probe.Body)
-	assert.Equal(t, "application/json", probe.Headers["Content-Type"])
-	assert.Equal(t, "Bearer token", probe.Headers["Authorization"])
-	assert.Len(t, probe.RawMatch, 2)
+	assert.Equal(t, "POST", req.Method)
+	assert.Equal(t, `{"test": "data"}`, req.Body)
+	assert.Equal(t, "application/json", req.Headers["Content-Type"])
+	assert.Equal(t, "Bearer token", req.Headers["Authorization"])
+	assert.Len(t, req.RawMatch, 2)
 
 	// Test GetRules
-	ruleList, err := probe.GetRules()
+	ruleList, err := req.GetRules()
 	require.NoError(t, err)
 	assert.Len(t, ruleList, 2)
 	assert.Equal(t, "status", ruleList[0].GetType())
@@ -98,7 +123,7 @@ func TestModelsConfig(t *testing.T) {
 			name: "full config",
 			yaml: `
 name: test
-probes: []
+requests: []
 models:
   path: /v1/models
   method: GET
@@ -115,7 +140,7 @@ models:
 			name: "optional models block",
 			yaml: `
 name: test
-probes: []
+requests: []
 `,
 			expectModels: false,
 		},
@@ -123,7 +148,7 @@ probes: []
 			name: "minimal models config",
 			yaml: `
 name: test
-probes: []
+requests: []
 models:
   path: /api/tags
   extract: ".models[].name"
@@ -137,17 +162,17 @@ models:
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			var pd ProbeDefinition
-			err := yaml.Unmarshal([]byte(tt.yaml), &pd)
+			var p Probe
+			err := yaml.Unmarshal([]byte(tt.yaml), &p)
 			require.NoError(t, err, "YAML parsing should succeed")
 
 			if tt.expectModels {
-				require.NotNil(t, pd.Models, "Models should not be nil")
-				assert.Equal(t, tt.expectedPath, pd.Models.Path)
-				assert.Equal(t, tt.expectedMethod, pd.Models.Method)
-				assert.Equal(t, tt.expectedExtract, pd.Models.Extract)
+				require.NotNil(t, p.Models, "Models should not be nil")
+				assert.Equal(t, tt.expectedPath, p.Models.Path)
+				assert.Equal(t, tt.expectedMethod, p.Models.Method)
+				assert.Equal(t, tt.expectedExtract, p.Models.Extract)
 			} else {
-				assert.Nil(t, pd.Models, "Models should be nil when not specified")
+				assert.Nil(t, p.Models, "Models should be nil when not specified")
 			}
 		})
 	}
@@ -187,11 +212,12 @@ func TestResultFields(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			result := Result{
-				Target:     "https://example.com",
-				Service:    "openai",
-				Confidence: "high",
-				Models:     tt.models,
-				Error:      tt.err,
+				Target:      "https://example.com",
+				Service:     "openai",
+				Confidence:  "high",
+				Specificity: 50,
+				Models:      tt.models,
+				Error:       tt.err,
 			}
 
 			assert.Len(t, result.Models, tt.expectedModels)
@@ -202,4 +228,12 @@ func TestResultFields(t *testing.T) {
 			}
 		})
 	}
+}
+
+func TestSpecificityConstants(t *testing.T) {
+	assert.Equal(t, 1, SpecificityGeneric)
+	assert.Equal(t, 25, SpecificityLow)
+	assert.Equal(t, 50, SpecificityMedium)
+	assert.Equal(t, 75, SpecificityHigh)
+	assert.Equal(t, 100, SpecificityExact)
 }

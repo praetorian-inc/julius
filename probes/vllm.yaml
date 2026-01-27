@@ -4,9 +4,10 @@ name: vllm
 description: vLLM high-throughput LLM serving
 category: self-hosted
 port_hint: 8000
+specificity: 75
 api_docs: https://docs.vllm.ai/en/stable/serving/openai_compatible_server.html
 
-probes:
+requests:
   - type: http
     path: /v1/models
     method: GET

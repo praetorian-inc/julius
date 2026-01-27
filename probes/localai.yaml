@@ -4,9 +4,10 @@ name: localai
 description: LocalAI - local OpenAI compatible API
 category: self-hosted
 port_hint: 8080
+specificity: 75
 api_docs: https://localai.io/api/
 
-probes:
+requests:
   - type: http
     path: /v1/models
     method: GET

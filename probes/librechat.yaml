@@ -5,7 +5,7 @@ category: rag-orchestration
 port_hint: 3080
 api_docs: https://www.librechat.ai/docs
 
-probes:
+requests:
   - type: http
     path: /
     method: GET

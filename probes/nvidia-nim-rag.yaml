@@ -4,9 +4,10 @@ name: nvidia-nim-rag
 description: NVIDIA AI Blueprints RAG (NIM-based)
 category: rag-orchestration
 port_hint: 8081
+specificity: 75
 api_docs: https://docs.nvidia.com/nim/blueprints/rag/latest/index.html
 
-probes:
+requests:
   - type: http
     path: /generate
     method: POST

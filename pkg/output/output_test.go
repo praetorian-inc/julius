@@ -35,11 +35,12 @@ func TestTableWriter_WriteSingleResult(t *testing.T) {
 
 	results := []types.Result{
 		{
-			Target:       "https://api.openai.com",
-			Service:      "OpenAI API",
-			Confidence:   "high",
-			MatchedProbe: "openai-completion",
-			Category:     "llm",
+			Target:         "https://api.openai.com",
+			Service:        "OpenAI API",
+			Confidence:     "high",
+			MatchedRequest: "openai-completion",
+			Category:       "llm",
+			Specificity:    75,
 		},
 	}
 
@@ -50,10 +51,12 @@ func TestTableWriter_WriteSingleResult(t *testing.T) {
 	assert.Contains(t, output, "TARGET")
 	assert.Contains(t, output, "SERVICE")
 	assert.Contains(t, output, "CONFIDENCE")
+	assert.Contains(t, output, "SPECIFICITY")
 
 	assert.Contains(t, output, "https://api.openai.com")
 	assert.Contains(t, output, "OpenAI API")
 	assert.Contains(t, output, "high")
+	assert.Contains(t, output, "75")
 }
 
 func TestTableWriter_WriteMultipleResults(t *testing.T) {
@@ -62,18 +65,20 @@ func TestTableWriter_WriteMultipleResults(t *testing.T) {
 
 	results := []types.Result{
 		{
-			Target:       "https://api.openai.com",
-			Service:      "OpenAI API",
-			Confidence:   "high",
-			MatchedProbe: "openai-completion",
-			Category:     "llm",
+			Target:         "https://api.openai.com",
+			Service:        "OpenAI API",
+			Confidence:     "high",
+			MatchedRequest: "openai-completion",
+			Category:       "llm",
+			Specificity:    75,
 		},
 		{
-			Target:       "https://api.anthropic.com",
-			Service:      "Anthropic API",
-			Confidence:   "high",
-			MatchedProbe: "anthropic-messages",
-			Category:     "llm",
+			Target:         "https://api.anthropic.com",
+			Service:        "Anthropic API",
+			Confidence:     "high",
+			MatchedRequest: "anthropic-messages",
+			Category:       "llm",
+			Specificity:    75,
 		},
 	}
 
@@ -113,11 +118,12 @@ func TestJSONWriter_WriteSingleResult(t *testing.T) {
 
 	results := []types.Result{
 		{
-			Target:       "https://api.openai.com",
-			Service:      "OpenAI API",
-			Confidence:   "high",
-			MatchedProbe: "openai-completion",
-			Category:     "llm",
+			Target:         "https://api.openai.com",
+			Service:        "OpenAI API",
+			Confidence:     "high",
+			MatchedRequest: "openai-completion",
+			Category:       "llm",
+			Specificity:    75,
 		},
 	}
 
@@ -140,18 +146,20 @@ func TestJSONWriter_WriteMultipleResults(t *testing.T) {
 
 	results := []types.Result{
 		{
-			Target:       "https://api.openai.com",
-			Service:      "OpenAI API",
-			Confidence:   "high",
-			MatchedProbe: "openai-completion",
-			Category:     "llm",
+			Target:         "https://api.openai.com",
+			Service:        "OpenAI API",
+			Confidence:     "high",
+			MatchedRequest: "openai-completion",
+			Category:       "llm",
+			Specificity:    75,
 		},
 		{
-			Target:       "https://api.anthropic.com",
-			Service:      "Anthropic API",
-			Confidence:   "high",
-			MatchedProbe: "anthropic-messages",
-			Category:     "llm",
+			Target:         "https://api.anthropic.com",
+			Service:        "Anthropic API",
+			Confidence:     "high",
+			MatchedRequest: "anthropic-messages",
+			Category:       "llm",
+			Specificity:    75,
 		},
 	}
 
@@ -238,11 +246,12 @@ func TestJSONLWriter_WriteSingleResult(t *testing.T) {
 
 	results := []types.Result{
 		{
-			Target:       "https://api.openai.com",
-			Service:      "OpenAI API",
-			Confidence:   "high",
-			MatchedProbe: "openai-completion",
-			Category:     "llm",
+			Target:         "https://api.openai.com",
+			Service:        "OpenAI API",
+			Confidence:     "high",
+			MatchedRequest: "openai-completion",
+			Category:       "llm",
+			Specificity:    75,
 		},
 	}
 
@@ -267,18 +276,20 @@ func TestJSONLWriter_WriteMultipleResults(t *testing.T) {
 
 	results := []types.Result{
 		{
-			Target:       "https://api.openai.com",
-			Service:      "OpenAI API",
-			Confidence:   "high",
-			MatchedProbe: "openai-completion",
-			Category:     "llm",
+			Target:         "https://api.openai.com",
+			Service:        "OpenAI API",
+			Confidence:     "high",
+			MatchedRequest: "openai-completion",
+			Category:       "llm",
+			Specificity:    75,
 		},
 		{
-			Target:       "https://api.anthropic.com",
-			Service:      "Anthropic API",
-			Confidence:   "high",
-			MatchedProbe: "anthropic-messages",
-			Category:     "llm",
+			Target:         "https://api.anthropic.com",
+			Service:        "Anthropic API",
+			Confidence:     "high",
+			MatchedRequest: "anthropic-messages",
+			Category:       "llm",
+			Specificity:    75,
 		},
 	}
 
@@ -329,35 +340,38 @@ func TestTableWriterModelsAndError(t *testing.T) {
 		{
 			name: "with models",
 			result: types.Result{
-				Target:       "https://example.com",
-				Service:      "ollama",
-				Confidence:   "high",
-				MatchedProbe: "/api/tags",
-				Category:     "self-hosted",
-				Models:       []string{"llama3.2:1b", "mistral:7b"},
+				Target:         "https://example.com",
+				Service:        "ollama",
+				Confidence:     "high",
+				MatchedRequest: "/api/tags",
+				Category:       "self-hosted",
+				Specificity:    100,
+				Models:         []string{"llama3.2:1b", "mistral:7b"},
 			},
 			expectInOutput: []string{"MODELS", "llama3.2:1b", "mistral:7b"},
 		},
 		{
 			name: "with error",
 			result: types.Result{
-				Target:       "https://example.com",
-				Service:      "openai",
-				Confidence:   "high",
-				MatchedProbe: "/v1/chat",
-				Category:     "cloud-managed",
-				Error:        "401 unauthorized",
+				Target:         "https://example.com",
+				Service:        "openai",
+				Confidence:     "high",
+				MatchedRequest: "/v1/chat",
+				Category:       "cloud-managed",
+				Specificity:    75,
+				Error:          "401 unauthorized",
 			},
 			expectInOutput: []string{"ERROR", "401 unauthorized"},
 		},
 		{
 			name: "empty models and error",
 			result: types.Result{
-				Target:       "https://example.com",
-				Service:      "test",
-				Confidence:   "medium",
-				MatchedProbe: "/health",
-				Category:     "test",
+				Target:         "https://example.com",
+				Service:        "test",
+				Confidence:     "medium",
+				MatchedRequest: "/health",
+				Category:       "test",
+				Specificity:    50,
 			},
 			expectInOutput: []string{"MODELS", "ERROR"},
 		},

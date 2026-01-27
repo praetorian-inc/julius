@@ -15,12 +15,12 @@ var listCmd = &cobra.Command{
 	Use:   "list",
 	Short: "List all available probe definitions",
 	Long: `List all probe definitions that are available for fingerprinting.
-Shows the name, description, port hint, and number of probes for each definition.`,
+Shows the name, description, port hint, and number of requests for each definition.`,
 	RunE: runList,
 }
 
 func runList(cmd *cobra.Command, args []string) error {
-	var loadedProbes []*types.ProbeDefinition
+	var loadedProbes []*types.Probe
 	var err error
 
 	if probesDir != "" {
@@ -41,24 +41,26 @@ func runList(cmd *cobra.Command, args []string) error {
 	}
 
 	table := tablewriter.NewWriter(os.Stdout)
-	table.SetHeader([]string{"NAME", "DESCRIPTION", "PORT HINT", "PROBES", "CATEGORY"})
+	table.SetHeader([]string{"NAME", "DESCRIPTION", "PORT HINT", "REQUESTS", "SPECIFICITY", "CATEGORY"})
 	table.SetBorder(false)
 	table.SetHeaderAlignment(tablewriter.ALIGN_LEFT)
 	table.SetAlignment(tablewriter.ALIGN_LEFT)
 
-	for _, pd := range loadedProbes {
-		portHint := fmt.Sprintf("%d", pd.PortHint)
-		if pd.PortHint == 0 {
+	for _, p := range loadedProbes {
+		portHint := fmt.Sprintf("%d", p.PortHint)
+		if p.PortHint == 0 {
 			portHint = "-"
 		}
-		probeCount := fmt.Sprintf("%d", len(pd.Probes))
+		requestCount := fmt.Sprintf("%d", len(p.Requests))
+		specificity := fmt.Sprintf("%d", p.GetSpecificity())
 
 		table.Append([]string{
-			pd.Name,
-			pd.Description,
+			p.Name,
+			p.Description,
 			portHint,
-			probeCount,
-			pd.Category,
+			requestCount,
+			specificity,
+			p.Category,
 		})
 	}
 

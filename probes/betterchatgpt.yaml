@@ -5,7 +5,7 @@ category: rag-orchestration
 port_hint: 3000
 api_docs: https://github.com/ztjhz/BetterChatGPT
 
-probes:
+requests:
   - type: http
     path: /
     method: GET

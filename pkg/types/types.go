@@ -8,12 +8,22 @@ import (
 	"github.com/praetorian-inc/julius/pkg/rules"
 )
 
+// Specificity constants for common levels
+const (
+	SpecificityGeneric = 1   // Fallback probes (lowest priority)
+	SpecificityLow     = 25  // Broad detection
+	SpecificityMedium  = 50  // Default
+	SpecificityHigh    = 75  // Service-specific markers
+	SpecificityExact   = 100 // Definitive identification
+)
+
 type Result struct {
 	Target           string             `json:"target"`
 	Service          string             `json:"service"`
 	Confidence       string             `json:"confidence"`
-	MatchedProbe     string             `json:"matched_probe"`
+	MatchedRequest   string             `json:"matched_request"`
 	Category         string             `json:"category"`
+	Specificity      int                `json:"specificity"`
 	Models           []string           `json:"models,omitempty"`
 	GeneratorConfigs []generator.Config `json:"generator_configs,omitempty"`
 	Error            string             `json:"error,omitempty"`
@@ -30,18 +40,28 @@ type AugustusConfig struct {
 	ConfigTemplate generator.Config `yaml:"config_template"`
 }
 
-type ProbeDefinition struct {
+// Probe defines a service detection probe with one or more HTTP requests
+type Probe struct {
 	Name        string          `yaml:"name"`
 	Description string          `yaml:"description"`
 	Category    string          `yaml:"category"`
 	PortHint    int             `yaml:"port_hint"`
+	Specificity int             `yaml:"specificity"` // 1-100, 0 treated as default (50)
 	APIDocs     string          `yaml:"api_docs"`
-	Probes      []Probe         `yaml:"probes"`
+	Requests    []Request       `yaml:"requests"`
 	Models      *ModelsConfig   `yaml:"models,omitempty"`
 	Augustus    *AugustusConfig `yaml:"augustus,omitempty"`
 }
 
-func (p *ProbeDefinition) BuildGeneratorConfigs(target string, models []string) []generator.Config {
+// GetSpecificity returns the probe's specificity, defaulting to 50 if not set
+func (p *Probe) GetSpecificity() int {
+	if p.Specificity <= 0 {
+		return SpecificityMedium // Default 50
+	}
+	return p.Specificity
+}
+
+func (p *Probe) BuildGeneratorConfigs(target string, models []string) []generator.Config {
 	if p.Augustus == nil {
 		return nil
 	}
@@ -95,7 +115,8 @@ type ModelsConfig struct {
 	Extract string            `yaml:"extract"`
 }
 
-type Probe struct {
+// Request defines a single HTTP request within a probe
+type Request struct {
 	Type       string            `yaml:"type"`
 	Path       string            `yaml:"path"`
 	Method     string            `yaml:"method"`
@@ -105,21 +126,21 @@ type Probe struct {
 	Confidence string            `yaml:"confidence"`
 }
 
-func (p *Probe) ApplyDefaults() {
-	if p.Type == "" {
-		p.Type = "http"
+func (r *Request) ApplyDefaults() {
+	if r.Type == "" {
+		r.Type = "http"
 	}
-	if p.Method == "" {
-		p.Method = "GET"
+	if r.Method == "" {
+		r.Method = "GET"
 	}
-	if p.Confidence == "" {
-		p.Confidence = "medium"
+	if r.Confidence == "" {
+		r.Confidence = "medium"
 	}
 }
 
-func (p *Probe) GetRules() ([]rules.Rule, error) {
-	result := make([]rules.Rule, 0, len(p.RawMatch))
-	for i, raw := range p.RawMatch {
+func (r *Request) GetRules() ([]rules.Rule, error) {
+	result := make([]rules.Rule, 0, len(r.RawMatch))
+	for i, raw := range r.RawMatch {
 		rule, err := raw.ToRule()
 		if err != nil {
 			return nil, fmt.Errorf("rule %d: %w", i, err)

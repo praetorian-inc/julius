@@ -8,6 +8,7 @@ var (
 	outputFormat string
 	probesDir    string
 	timeout      int
+	concurrency  int
 	verbose      bool
 	quiet        bool
 )
@@ -23,6 +24,7 @@ func init() {
 	rootCmd.PersistentFlags().StringVarP(&outputFormat, "output", "o", "table", "Output format (table, json, jsonl)")
 	rootCmd.PersistentFlags().StringVarP(&probesDir, "probes-dir", "p", "", "Override probe definitions directory")
 	rootCmd.PersistentFlags().IntVarP(&timeout, "timeout", "t", 5, "HTTP timeout in seconds")
+	rootCmd.PersistentFlags().IntVarP(&concurrency, "concurrency", "c", 10, "Maximum concurrent probe requests per target")
 	rootCmd.PersistentFlags().BoolVarP(&verbose, "verbose", "v", false, "Verbose output")
 	rootCmd.PersistentFlags().BoolVarP(&quiet, "quiet", "q", false, "Suppress non-match output")
 }

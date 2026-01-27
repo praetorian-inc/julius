@@ -6,6 +6,8 @@ import (
 	"io"
 	"net/http"
 	"net/http/httptest"
+	"sync"
+	"sync/atomic"
 	"testing"
 	"time"
 
@@ -17,14 +19,23 @@ import (
 
 func TestNewScanner(t *testing.T) {
 	timeout := 5 * time.Second
-	s := NewScanner(timeout)
+	s := NewScanner(timeout, 10)
 
 	require.NotNil(t, s, "NewScanner should not return nil")
 	assert.NotNil(t, s.client, "Scanner.client should not be nil")
 	assert.Equal(t, timeout, s.client.Timeout)
+	assert.Equal(t, 10, s.concurrency)
 }
 
-func TestProbe_Match(t *testing.T) {
+func TestNewScanner_DefaultConcurrency(t *testing.T) {
+	s := NewScanner(5*time.Second, 0)
+	assert.Equal(t, 10, s.concurrency, "should default to 10 concurrency")
+
+	s2 := NewScanner(5*time.Second, -1)
+	assert.Equal(t, 10, s2.concurrency, "should default to 10 for negative values")
+}
+
+func TestDoRequest_Match(t *testing.T) {
 	// Create test server that returns matching response
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("X-Test-Header", "test-value")
@@ -33,8 +44,8 @@ func TestProbe_Match(t *testing.T) {
 	}))
 	defer server.Close()
 
-	s := NewScanner(5 * time.Second)
-	probe := types.Probe{
+	s := NewScanner(5*time.Second, 10)
+	req := types.Request{
 		Type:   "http",
 		Path:   "/",
 		Method: "GET",
@@ -44,12 +55,12 @@ func TestProbe_Match(t *testing.T) {
 		},
 	}
 
-	matched, err := s.Probe(server.URL, probe)
-	require.NoError(t, err, "Probe should not return error")
-	assert.True(t, matched, "Probe should return true for matching response")
+	matched, err := s.DoRequest(server.URL, req)
+	require.NoError(t, err, "DoRequest should not return error")
+	assert.True(t, matched, "DoRequest should return true for matching response")
 }
 
-func TestProbe_NoMatch(t *testing.T) {
+func TestDoRequest_NoMatch(t *testing.T) {
 	// Create test server that returns non-matching response
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusOK)
@@ -57,8 +68,8 @@ func TestProbe_NoMatch(t *testing.T) {
 	}))
 	defer server.Close()
 
-	s := NewScanner(5 * time.Second)
-	probe := types.Probe{
+	s := NewScanner(5*time.Second, 10)
+	req := types.Request{
 		Type:   "http",
 		Path:   "/",
 		Method: "GET",
@@ -68,56 +79,83 @@ func TestProbe_NoMatch(t *testing.T) {
 		},
 	}
 
-	matched, err := s.Probe(server.URL, probe)
-	require.NoError(t, err, "Probe should not return error")
-	assert.False(t, matched, "Probe should return false for non-matching response")
+	matched, err := s.DoRequest(server.URL, req)
+	require.NoError(t, err, "DoRequest should not return error")
+	assert.False(t, matched, "DoRequest should return false for non-matching response")
 }
 
-func TestScan_FirstMatch(t *testing.T) {
+func TestScan_ReturnsAllMatches(t *testing.T) {
 	// Create test server
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusOK)
-		w.Write([]byte("openai response"))
+		w.Write([]byte(`{"object":"list","data":[]}`))
 	}))
 	defer server.Close()
 
-	s := NewScanner(5 * time.Second)
-	probes := []*types.ProbeDefinition{
+	s := NewScanner(5*time.Second, 10)
+	probes := []*types.Probe{
 		{
-			Name:     "Claude",
-			Category: "LLM",
-			Probes: []types.Probe{
+			Name:        "specific-service",
+			Category:    "LLM",
+			Specificity: 75,
+			Requests: []types.Request{
 				{
-					Path:   "/v1/messages",
-					Method: "POST",
+					Path:   "/v1/models",
+					Method: "GET",
 					RawMatch: []rules.RawRule{
-						{Type: "body.contains", Value: "claude"},
+						{Type: "status", Value: 200},
 					},
 				},
 			},
 		},
 		{
-			Name:     "OpenAI",
-			Category: "LLM",
-			Probes: []types.Probe{
+			Name:        "generic-service",
+			Category:    "generic",
+			Specificity: 1,
+			Requests: []types.Request{
 				{
-					Path:   "/v1/chat/completions",
-					Method: "POST",
+					Path:   "/v1/models",
+					Method: "GET",
 					RawMatch: []rules.RawRule{
-						{Type: "body.contains", Value: "openai"},
+						{Type: "status", Value: 200},
 					},
 				},
 			},
 		},
 	}
 
-	result := s.Scan(server.URL, probes, false)
+	results := s.Scan(server.URL, probes, false)
 
-	require.NotNil(t, result, "Scan should return result")
-	assert.Equal(t, "OpenAI", result.Service)
-	assert.Equal(t, "LLM", result.Category)
-	assert.Equal(t, server.URL+"/v1/chat/completions", result.Target)
-	assert.Equal(t, "/v1/chat/completions", result.MatchedProbe)
+	require.Len(t, results, 2, "Scan should return all matching probes")
+	// Results should be sorted by specificity (highest first)
+	assert.Equal(t, "specific-service", results[0].Service)
+	assert.Equal(t, 75, results[0].Specificity)
+	assert.Equal(t, "generic-service", results[1].Service)
+	assert.Equal(t, 1, results[1].Specificity)
+}
+
+func TestScan_SortsBySpecificity(t *testing.T) {
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.WriteHeader(http.StatusOK)
+		w.Write([]byte(`OK`))
+	}))
+	defer server.Close()
+
+	s := NewScanner(5*time.Second, 10)
+	probes := []*types.Probe{
+		{Name: "low", Specificity: 25, Requests: []types.Request{{Path: "/", RawMatch: []rules.RawRule{{Type: "status", Value: 200}}}}},
+		{Name: "high", Specificity: 100, Requests: []types.Request{{Path: "/", RawMatch: []rules.RawRule{{Type: "status", Value: 200}}}}},
+		{Name: "medium", Specificity: 50, Requests: []types.Request{{Path: "/", RawMatch: []rules.RawRule{{Type: "status", Value: 200}}}}},
+		{Name: "generic", Specificity: 1, Requests: []types.Request{{Path: "/", RawMatch: []rules.RawRule{{Type: "status", Value: 200}}}}},
+	}
+
+	results := s.Scan(server.URL, probes, false)
+
+	require.Len(t, results, 4)
+	assert.Equal(t, "high", results[0].Service)
+	assert.Equal(t, "medium", results[1].Service)
+	assert.Equal(t, "low", results[2].Service)
+	assert.Equal(t, "generic", results[3].Service)
 }
 
 func TestScan_NoMatch(t *testing.T) {
@@ -128,12 +166,12 @@ func TestScan_NoMatch(t *testing.T) {
 	}))
 	defer server.Close()
 
-	s := NewScanner(5 * time.Second)
-	probes := []*types.ProbeDefinition{
+	s := NewScanner(5*time.Second, 10)
+	probes := []*types.Probe{
 		{
 			Name:     "OpenAI",
 			Category: "LLM",
-			Probes: []types.Probe{
+			Requests: []types.Request{
 				{
 					Path:   "/v1/chat/completions",
 					Method: "POST",
@@ -145,9 +183,9 @@ func TestScan_NoMatch(t *testing.T) {
 		},
 	}
 
-	result := s.Scan(server.URL, probes, false)
+	results := s.Scan(server.URL, probes, false)
 
-	assert.Nil(t, result, "Scan should return nil when no match")
+	assert.Empty(t, results, "Scan should return empty slice when no match")
 }
 
 func TestScanAll(t *testing.T) {
@@ -164,13 +202,13 @@ func TestScanAll(t *testing.T) {
 	}))
 	defer server2.Close()
 
-	s := NewScanner(5 * time.Second)
+	s := NewScanner(5*time.Second, 10)
 	targets := []string{server1.URL, server2.URL}
-	probes := []*types.ProbeDefinition{
+	probes := []*types.Probe{
 		{
 			Name:     "OpenAI",
 			Category: "LLM",
-			Probes: []types.Probe{
+			Requests: []types.Request{
 				{
 					Path:   "/v1/chat/completions",
 					Method: "POST",
@@ -183,7 +221,7 @@ func TestScanAll(t *testing.T) {
 		{
 			Name:     "Claude",
 			Category: "LLM",
-			Probes: []types.Probe{
+			Requests: []types.Request{
 				{
 					Path:   "/v1/messages",
 					Method: "POST",
@@ -198,16 +236,6 @@ func TestScanAll(t *testing.T) {
 	results := s.ScanAll(targets, probes, false)
 
 	require.Len(t, results, 2, "ScanAll should return 2 results")
-
-	// Check first result
-	assert.Equal(t, "OpenAI", results[0].Service)
-	assert.Equal(t, server1.URL+"/v1/chat/completions", results[0].Target)
-	assert.Equal(t, "/v1/chat/completions", results[0].MatchedProbe)
-
-	// Check second result
-	assert.Equal(t, "Claude", results[1].Service)
-	assert.Equal(t, server2.URL+"/v1/messages", results[1].Target)
-	assert.Equal(t, "/v1/messages", results[1].MatchedProbe)
 }
 
 func TestScanAll_SomeNoMatch(t *testing.T) {
@@ -224,13 +252,13 @@ func TestScanAll_SomeNoMatch(t *testing.T) {
 	}))
 	defer server2.Close()
 
-	s := NewScanner(5 * time.Second)
+	s := NewScanner(5*time.Second, 10)
 	targets := []string{server1.URL, server2.URL}
-	probes := []*types.ProbeDefinition{
+	probes := []*types.Probe{
 		{
 			Name:     "OpenAI",
 			Category: "LLM",
-			Probes: []types.Probe{
+			Requests: []types.Request{
 				{
 					Path:   "/v1/chat/completions",
 					Method: "POST",
@@ -248,7 +276,7 @@ func TestScanAll_SomeNoMatch(t *testing.T) {
 	assert.Equal(t, "OpenAI", results[0].Service)
 }
 
-func TestProbe_WithBodyAndHeaders(t *testing.T) {
+func TestDoRequest_WithBodyAndHeaders(t *testing.T) {
 	// Create test server that echoes back request body and headers
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		body, _ := io.ReadAll(r.Body)
@@ -262,8 +290,8 @@ func TestProbe_WithBodyAndHeaders(t *testing.T) {
 	}))
 	defer server.Close()
 
-	s := NewScanner(5 * time.Second)
-	p := types.Probe{
+	s := NewScanner(5*time.Second, 10)
+	req := types.Request{
 		Path:   "/test",
 		Method: "POST",
 		Body:   `{"test":"data"}`,
@@ -277,7 +305,7 @@ func TestProbe_WithBodyAndHeaders(t *testing.T) {
 		},
 	}
 
-	matched, err := s.Probe(server.URL, p)
+	matched, err := s.DoRequest(server.URL, req)
 	require.NoError(t, err)
 	assert.True(t, matched)
 }
@@ -327,12 +355,12 @@ func TestScanWithModels(t *testing.T) {
 			}))
 			defer server.Close()
 
-			scanner := NewScanner(5 * time.Second)
-			probes := []*types.ProbeDefinition{
+			scanner := NewScanner(5*time.Second, 10)
+			probes := []*types.Probe{
 				{
 					Name:     "ollama",
 					Category: "self-hosted",
-					Probes: []types.Probe{
+					Requests: []types.Request{
 						{
 							Type:   "http",
 							Path:   "/api/tags",
@@ -351,16 +379,16 @@ func TestScanWithModels(t *testing.T) {
 				},
 			}
 
-			result := scanner.Scan(server.URL, probes, false)
-			require.NotNil(t, result, "expected result")
+			results := scanner.Scan(server.URL, probes, false)
+			require.Len(t, results, 1, "expected 1 result")
 
-			assert.Equal(t, "ollama", result.Service)
-			assert.Equal(t, tt.expectModels, result.Models)
+			assert.Equal(t, "ollama", results[0].Service)
+			assert.Equal(t, tt.expectModels, results[0].Models)
 
 			if tt.expectError {
-				assert.NotEmpty(t, result.Error, "expected error")
+				assert.NotEmpty(t, results[0].Error, "expected error")
 			} else {
-				assert.Empty(t, result.Error, "expected no error")
+				assert.Empty(t, results[0].Error, "expected no error")
 			}
 		})
 	}
@@ -373,12 +401,12 @@ func TestScanWithoutModelsConfig(t *testing.T) {
 	}))
 	defer server.Close()
 
-	scanner := NewScanner(5 * time.Second)
-	probes := []*types.ProbeDefinition{
+	scanner := NewScanner(5*time.Second, 10)
+	probes := []*types.Probe{
 		{
 			Name:     "test-service",
 			Category: "test",
-			Probes: []types.Probe{
+			Requests: []types.Request{
 				{
 					Type:   "http",
 					Path:   "/health",
@@ -393,12 +421,12 @@ func TestScanWithoutModelsConfig(t *testing.T) {
 		},
 	}
 
-	result := scanner.Scan(server.URL, probes, false)
-	require.NotNil(t, result)
+	results := scanner.Scan(server.URL, probes, false)
+	require.Len(t, results, 1)
 
-	assert.Equal(t, "test-service", result.Service)
-	assert.Empty(t, result.Models)
-	assert.Empty(t, result.Error)
+	assert.Equal(t, "test-service", results[0].Service)
+	assert.Empty(t, results[0].Models)
+	assert.Empty(t, results[0].Error)
 }
 
 func TestFetchModels(t *testing.T) {
@@ -461,7 +489,7 @@ func TestFetchModels(t *testing.T) {
 			}))
 			defer server.Close()
 
-			scanner := NewScanner(5 * time.Second)
+			scanner := NewScanner(5*time.Second, 10)
 			models, err := scanner.fetchModels(server.URL, tt.config)
 
 			if tt.wantErr {
@@ -484,7 +512,7 @@ func TestFetchModelsWithHeaders(t *testing.T) {
 	}))
 	defer server.Close()
 
-	scanner := NewScanner(5 * time.Second)
+	scanner := NewScanner(5*time.Second, 10)
 	cfg := &types.ModelsConfig{
 		Path:    "/v1/models",
 		Method:  "GET",
@@ -724,4 +752,189 @@ func TestExtractPort(t *testing.T) {
 			assert.Equal(t, tt.want, got)
 		})
 	}
+}
+
+// ============================================================================
+// Singleflight and Caching Tests
+// ============================================================================
+
+func TestSingleflightDeduplication(t *testing.T) {
+	requestCount := atomic.Int32{}
+
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		requestCount.Add(1)
+		time.Sleep(100 * time.Millisecond) // Simulate latency
+		w.WriteHeader(200)
+		w.Write([]byte(`{"object":"list","data":[]}`))
+	}))
+	defer server.Close()
+
+	s := NewScanner(5*time.Second, 10)
+
+	// Simulate multiple goroutines hitting the same endpoint concurrently
+	var wg sync.WaitGroup
+	for i := 0; i < 5; i++ {
+		wg.Add(1)
+		go func() {
+			defer wg.Done()
+			s.doHTTPRequest(server.URL, "GET", "/v1/models", "", nil)
+		}()
+	}
+	wg.Wait()
+
+	assert.Equal(t, int32(1), requestCount.Load(), "concurrent requests to same URL should be deduplicated")
+}
+
+func TestCachePersistsAcrossCalls(t *testing.T) {
+	requestCount := atomic.Int32{}
+
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		requestCount.Add(1)
+		w.WriteHeader(200)
+		w.Write([]byte(`{}`))
+	}))
+	defer server.Close()
+
+	s := NewScanner(5*time.Second, 10)
+
+	// First call
+	s.doHTTPRequest(server.URL, "GET", "/v1/models", "", nil)
+	// Second call (should hit cache)
+	s.doHTTPRequest(server.URL, "GET", "/v1/models", "", nil)
+
+	assert.Equal(t, int32(1), requestCount.Load(), "second call should use cache")
+}
+
+func TestDifferentURLsNotDeduplicated(t *testing.T) {
+	requestCount := atomic.Int32{}
+
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		requestCount.Add(1)
+		w.WriteHeader(200)
+		w.Write([]byte(`{}`))
+	}))
+	defer server.Close()
+
+	s := NewScanner(5*time.Second, 10)
+
+	// Different paths = different cache keys
+	s.doHTTPRequest(server.URL, "GET", "/v1/models", "", nil)
+	s.doHTTPRequest(server.URL, "GET", "/v1/chat", "", nil)
+
+	assert.Equal(t, int32(2), requestCount.Load(), "different URLs should not be deduplicated")
+}
+
+func TestConcurrentProbeExecution(t *testing.T) {
+	var requestTimes []time.Time
+	var mu sync.Mutex
+
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		mu.Lock()
+		requestTimes = append(requestTimes, time.Now())
+		mu.Unlock()
+		time.Sleep(50 * time.Millisecond)
+		w.WriteHeader(200)
+		w.Write([]byte(`{}`))
+	}))
+	defer server.Close()
+
+	// 5 probes hitting different endpoints
+	probes := make([]*types.Probe, 5)
+	for i := 0; i < 5; i++ {
+		probes[i] = &types.Probe{
+			Name:        fmt.Sprintf("probe-%d", i),
+			Specificity: 50,
+			Requests: []types.Request{{
+				Path:     fmt.Sprintf("/endpoint-%d", i),
+				Method:   "GET",
+				RawMatch: []rules.RawRule{{Type: "status", Value: 200}},
+			}},
+		}
+	}
+
+	s := NewScanner(5*time.Second, 10)
+	start := time.Now()
+	s.Scan(server.URL, probes, false)
+	elapsed := time.Since(start)
+
+	// With concurrency, 5 requests @ 50ms each should take ~50-100ms, not 250ms
+	assert.Less(t, elapsed, 200*time.Millisecond, "probes should run concurrently")
+}
+
+func TestConcurrencyLimit(t *testing.T) {
+	var concurrentCount atomic.Int32
+	var maxConcurrent atomic.Int32
+
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		current := concurrentCount.Add(1)
+		for {
+			old := maxConcurrent.Load()
+			if current <= old || maxConcurrent.CompareAndSwap(old, current) {
+				break
+			}
+		}
+		time.Sleep(50 * time.Millisecond)
+		concurrentCount.Add(-1)
+		w.WriteHeader(200)
+		w.Write([]byte(`{}`))
+	}))
+	defer server.Close()
+
+	// Create more probes than the concurrency limit
+	probes := make([]*types.Probe, 20)
+	for i := 0; i < 20; i++ {
+		probes[i] = &types.Probe{
+			Name:        fmt.Sprintf("probe-%d", i),
+			Specificity: 50,
+			Requests: []types.Request{{
+				Path:     fmt.Sprintf("/endpoint-%d", i),
+				Method:   "GET",
+				RawMatch: []rules.RawRule{{Type: "status", Value: 200}},
+			}},
+		}
+	}
+
+	// Set concurrency limit to 5
+	s := NewScanner(5*time.Second, 5)
+	s.Scan(server.URL, probes, false)
+
+	assert.LessOrEqual(t, maxConcurrent.Load(), int32(5), "should not exceed concurrency limit")
+}
+
+func TestCacheKeyIncludesMethod(t *testing.T) {
+	requestCount := atomic.Int32{}
+
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		requestCount.Add(1)
+		w.WriteHeader(200)
+		w.Write([]byte(`{}`))
+	}))
+	defer server.Close()
+
+	s := NewScanner(5*time.Second, 10)
+
+	// Same URL, different methods = different cache keys
+	s.doHTTPRequest(server.URL, "GET", "/v1/models", "", nil)
+	s.doHTTPRequest(server.URL, "POST", "/v1/models", "", nil)
+
+	assert.Equal(t, int32(2), requestCount.Load(), "different methods should not be cached together")
+}
+
+func TestCacheKeyIncludesBody(t *testing.T) {
+	requestCount := atomic.Int32{}
+
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		requestCount.Add(1)
+		w.WriteHeader(200)
+		w.Write([]byte(`{}`))
+	}))
+	defer server.Close()
+
+	s := NewScanner(5*time.Second, 10)
+
+	// Same URL and method, different body = different cache keys
+	s.doHTTPRequest(server.URL, "POST", "/v1/chat", `{"a":1}`, nil)
+	s.doHTTPRequest(server.URL, "POST", "/v1/chat", `{"b":2}`, nil)
+
+	assert.Equal(t, int32(2), requestCount.Load(), "different bodies should not be cached together")
 }

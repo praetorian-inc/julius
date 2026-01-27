@@ -4,9 +4,10 @@ name: gradio
 description: Gradio ML demo interfaces
 category: self-hosted
 port_hint: 7860
+specificity: 75
 api_docs: https://www.gradio.app/docs/
 
-probes:
+requests:
   - type: http
     path: /config
     method: GET

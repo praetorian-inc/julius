@@ -16,12 +16,12 @@ func TestLoadProbeFromFile(t *testing.T) {
 	data, err := os.ReadFile("../../testdata/probes/valid_probe.yaml")
 	require.NoError(t, err, "Failed to read test file")
 
-	pd, err := ParseProbe(data)
+	p, err := ParseProbe(data)
 	require.NoError(t, err, "ParseProbe() should not error")
 
-	assert.Equal(t, "test-service", pd.Name)
-	assert.Equal(t, 8080, pd.PortHint)
-	assert.Len(t, pd.Probes, 1)
+	assert.Equal(t, "test-service", p.Name)
+	assert.Equal(t, 8080, p.PortHint)
+	assert.Len(t, p.Requests, 1)
 }
 
 func TestLoadProbesFromDir(t *testing.T) {
@@ -45,7 +45,7 @@ func TestLoadProbesFromFS(t *testing.T) {
 }
 
 func TestSortProbesByPortHint(t *testing.T) {
-	probeList := []*types.ProbeDefinition{
+	probeList := []*types.Probe{
 		{Name: "generic", PortHint: 0},
 		{Name: "ollama", PortHint: 11434},
 		{Name: "vllm", PortHint: 8000},
@@ -57,7 +57,7 @@ func TestSortProbesByPortHint(t *testing.T) {
 }
 
 func TestSortProbesByPortHint_NoMatch(t *testing.T) {
-	probeList := []*types.ProbeDefinition{
+	probeList := []*types.Probe{
 		{Name: "a", PortHint: 8000},
 		{Name: "b", PortHint: 9000},
 	}

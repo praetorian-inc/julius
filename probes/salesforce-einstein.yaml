@@ -4,9 +4,10 @@ name: salesforce-einstein
 description: Salesforce Einstein Messaging API (MIAW)
 category: cloud-managed
 port_hint: 443
+specificity: 75
 api_docs: https://developer.salesforce.com/docs/service/messaging-api/references/about
 
-probes:
+requests:
   - type: http
     path: /iamessage/api/v2/authorization/unauthenticated/access-token
     method: POST

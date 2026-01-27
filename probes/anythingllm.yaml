@@ -5,7 +5,7 @@ category: rag-orchestration
 port_hint: 3001
 api_docs: https://docs.anythingllm.com/
 
-probes:
+requests:
   - type: http
     path: /
     method: GET

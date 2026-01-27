@@ -4,9 +4,10 @@ name: nvidia-nim
 description: NVIDIA NIM enterprise containers
 category: self-hosted
 port_hint: 8000
+specificity: 75
 api_docs: https://docs.nvidia.com/nim/large-language-models/latest/api-reference.html
 
-probes:
+requests:
   - type: http
     path: /v1/health/ready
     method: GET

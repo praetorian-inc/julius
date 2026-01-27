@@ -15,34 +15,34 @@ import (
 	"github.com/praetorian-inc/julius/pkg/types"
 )
 
-func ParseProbe(data []byte) (*types.ProbeDefinition, error) {
-	var pd types.ProbeDefinition
-	if err := yaml.Unmarshal(data, &pd); err != nil {
+func ParseProbe(data []byte) (*types.Probe, error) {
+	var p types.Probe
+	if err := yaml.Unmarshal(data, &p); err != nil {
 		return nil, fmt.Errorf("parsing probe YAML: %w", err)
 	}
 
-	for i := range pd.Probes {
-		pd.Probes[i].ApplyDefaults()
+	for i := range p.Requests {
+		p.Requests[i].ApplyDefaults()
 	}
 
-	return &pd, nil
+	return &p, nil
 }
 
-func LoadProbesFromDir(dir string) ([]*types.ProbeDefinition, error) {
+func LoadProbesFromDir(dir string) ([]*types.Probe, error) {
 	return loadProbesFromFS(os.DirFS(dir), ".")
 }
 
-func LoadProbesFromFS(fsys embed.FS, dir string) ([]*types.ProbeDefinition, error) {
+func LoadProbesFromFS(fsys embed.FS, dir string) ([]*types.Probe, error) {
 	return loadProbesFromFS(fsys, dir)
 }
 
-func loadProbesFromFS(fsys fs.FS, dir string) ([]*types.ProbeDefinition, error) {
+func loadProbesFromFS(fsys fs.FS, dir string) ([]*types.Probe, error) {
 	entries, err := fs.ReadDir(fsys, dir)
 	if err != nil {
 		return nil, fmt.Errorf("reading probe directory: %w", err)
 	}
 
-	var probes []*types.ProbeDefinition
+	var probes []*types.Probe
 	for _, entry := range entries {
 		if entry.IsDir() {
 			continue
@@ -57,19 +57,19 @@ func loadProbesFromFS(fsys fs.FS, dir string) ([]*types.ProbeDefinition, error) 
 			return nil, fmt.Errorf("reading %s: %w", path, err)
 		}
 
-		pd, err := ParseProbe(data)
+		p, err := ParseProbe(data)
 		if err != nil {
 			return nil, fmt.Errorf("parsing %s: %w", path, err)
 		}
 
-		probes = append(probes, pd)
+		probes = append(probes, p)
 	}
 
 	return probes, nil
 }
 
-func SortProbesByPortHint(probes []*types.ProbeDefinition, targetPort int) []*types.ProbeDefinition {
-	sorted := make([]*types.ProbeDefinition, len(probes))
+func SortProbesByPortHint(probes []*types.Probe, targetPort int) []*types.Probe {
+	sorted := make([]*types.Probe, len(probes))
 	copy(sorted, probes)
 
 	sort.SliceStable(sorted, func(i, j int) bool {

@@ -4,9 +4,10 @@ name: lm-studio
 description: LM Studio local server
 category: self-hosted
 port_hint: 1234
+specificity: 70
 api_docs: https://lmstudio.ai/docs/api/server
 
-probes:
+requests:
   - type: http
     path: /api/v0/models
     method: GET
