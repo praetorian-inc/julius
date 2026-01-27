@@ -13,6 +13,8 @@ requests:
     match:
       - type: status
         value: 200
+      - type: content-type
+        value: application/json
       - type: body.contains
         value: '"model_id":'
 

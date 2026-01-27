@@ -14,16 +14,12 @@ requests:
     match:
       - type: status
         value: 200
+      - type: content-type
+        value: application/json
       - type: body.contains
         value: '"mode"'
       - type: body.contains
         value: '"components"'
-      - type: body.contains
-        not: true
-        value: "<!DOCTYPE"
-      - type: body.contains
-        not: true
-        value: "Index of"
 
   - type: http
     path: /info
@@ -31,11 +27,10 @@ requests:
     match:
       - type: status
         value: 200
+      - type: content-type
+        value: application/json
       - type: body.contains
         value: '"version"'
-      - type: body.contains
-        not: true
-        value: "<html"
 
   - type: http
     path: /
@@ -52,5 +47,7 @@ requests:
     match:
       - type: status
         value: 200
+      - type: content-type
+        value: application/json
       - type: body.contains
         value: '"named_endpoints"'

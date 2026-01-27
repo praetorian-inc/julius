@@ -15,16 +15,12 @@ requests:
     match:
       - type: status
         value: 200
+      - type: content-type
+        value: application/json
       - type: body.contains
         value: '"object"'
       - type: body.contains
         value: '"data"'
-      - type: body.contains
-        not: true
-        value: "<!DOCTYPE"
-      - type: body.contains
-        not: true
-        value: "<html"
 
 models:
   path: /v1/models

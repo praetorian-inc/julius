@@ -8,54 +8,45 @@ specificity: 75
 api_docs: https://docs.nvidia.com/nim/large-language-models/latest/api-reference.html
 
 requests:
+  # NVIDIA NIM-specific: /v1/metadata endpoint with modelInfo
   - type: http
     path: /v1/metadata
     method: GET
     match:
       - type: status
         value: 200
+      - type: content-type
+        value: application/json
       - type: body.contains
         value: '"modelInfo"'
-      - type: body.contains
-        not: true
-        value: "<!DOCTYPE"
-      - type: body.contains
-        not: true
-        value: "<html"
 
+  # NVIDIA NIM-specific: /v1/metadata with assetInfo
   - type: http
     path: /v1/metadata
     method: GET
     match:
       - type: status
         value: 200
+      - type: content-type
+        value: application/json
       - type: body.contains
         value: '"assetInfo"'
       - type: body.contains
         value: '"version"'
-      - type: body.contains
-        not: true
-        value: "<!DOCTYPE"
-      - type: body.contains
-        not: true
-        value: "<html"
 
+  # NVIDIA NIM-specific: /v1/health/ready endpoint
   - type: http
     path: /v1/health/ready
     method: GET
     match:
       - type: status
         value: 200
+      - type: content-type
+        value: application/json
       - type: body.contains
         value: '"status"'
       - type: body.contains
         value: "ready"
-      - type: body.contains
-        not: true
-        value: "<!DOCTYPE"
-      - type: body.contains
-        not: true
-        value: "<html"
 
 models:
   path: /v1/models

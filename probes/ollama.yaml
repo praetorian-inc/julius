@@ -14,21 +14,14 @@ requests:
     match:
       - type: status
         value: 200
+      - type: content-type
+        value: application/json
       - type: body.contains
         value: '"models"'
       - type: body.contains
         value: '"name"'
       - type: body.contains
         value: '"model"'
-      - type: body.contains
-        not: true
-        value: "<!DOCTYPE"
-      - type: body.contains
-        not: true
-        value: "<html"
-      - type: body.contains
-        not: true
-        value: "<head>"
 
   - type: http
     path: /

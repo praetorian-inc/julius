@@ -17,13 +17,12 @@ requests:
     match:
       - type: status
         value: 400
+      - type: content-type
+        value: application/json
       - type: body.contains
         value: '"message"'
       - type: body.contains
         value: '"errorCode":"INVALID_'
-      - type: body.contains
-        not: true
-        value: "<!DOCTYPE"
 
   - type: http
     path: /iamessage/api/v2/authorization/unauthenticated/access-token
@@ -34,6 +33,8 @@ requests:
     match:
       - type: status
         value: 400
+      - type: content-type
+        value: application/json
       - type: body.contains
         value: '"message"'
       - type: body.contains

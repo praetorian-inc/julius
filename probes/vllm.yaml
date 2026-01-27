@@ -9,12 +9,15 @@ require: all
 api_docs: https://docs.vllm.ai/en/stable/serving/openai_compatible_server.html
 
 requests:
+  # Must have uvicorn Server header on /v1/models
   - type: http
     path: /v1/models
     method: GET
     match:
       - type: status
         value: 200
+      - type: content-type
+        value: application/json
       - type: header.contains
         header: Server
         value: "uvicorn"
@@ -22,21 +25,18 @@ requests:
         value: '"object"'
       - type: body.contains
         value: '"data"'
-      - type: body.contains
-        not: true
-        value: "<html"
 
+  # AND must have /version endpoint with version field (vLLM-specific)
   - type: http
     path: /version
     method: GET
     match:
       - type: status
         value: 200
+      - type: content-type
+        value: application/json
       - type: body.contains
         value: '"version"'
-      - type: body.contains
-        not: true
-        value: "<html"
       - type: body.contains
         not: true
         value: '"deployment_id"'

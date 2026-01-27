@@ -17,19 +17,12 @@ requests:
     match:
       - type: status
         value: 200
+      - type: content-type
+        value: application/json
       - type: body.contains
         value: '"content"'
       - type: body.contains
         value: '"message"'
-      - type: body.contains
-        not: true
-        value: "<!DOCTYPE"
-      - type: body.contains
-        not: true
-        value: "<!doctype"
-      - type: body.contains
-        not: true
-        value: "<html"
       - type: body.contains
         not: true
         value: '"uptime"'
@@ -43,14 +36,10 @@ requests:
     match:
       - type: status
         value: 200
+      - type: content-type
+        value: application/json
       - type: body.contains
         value: '"choices"'
-      - type: body.contains
-        not: true
-        value: "<!DOCTYPE"
-      - type: body.contains
-        not: true
-        value: "<html"
       - type: body.contains
         not: true
         value: '"uptime"'
