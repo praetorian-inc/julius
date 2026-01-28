@@ -146,7 +146,7 @@ LLM service fingerprinting identifies what LLM server software (Ollama, vLLM, Li
 
 ### Is Julius safe for penetration testing?
 
-Yes. Julius only performs standard HTTP requests - the same as a web browser. It does not exploit vulnerabilities, modify data, or cause denial of service. Always ensure you have authorization before scanning targets.
+Yes. Julius only performs standard HTTP requests - the same as a web browser. It does not exploit vulnerabilities or modify data. Always ensure you have authorization before scanning targets.
 
 ### How do I add support for a new LLM service?
 
