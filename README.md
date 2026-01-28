@@ -14,17 +14,6 @@ You've found an open port during a security assessment. Is it Ollama? vLLM? Lite
 
 **Julius answers that question in seconds.**
 
-## Why Julius?
-
-Security researchers need to quickly answer: **"What LLM service is this?"**
-
-- **Fast** - Concurrent probing, results in seconds
-- **Accurate** - 17 service signatures with confidence scoring
-- **Simple** - One command: `julius probe https://target:port`
-- **Extensible** - Add services via YAML, no code required
-
-Julius does one thing well: identify LLM services so you can move on to what matters.
-
 ## Quick Start
 
 ```bash
@@ -44,25 +33,25 @@ julius probe https://target.example.com
 
 Julius identifies 17 LLM platforms across self-hosted, enterprise, and UI categories:
 
-| Service | Category | Confidence |
-|---------|----------|------------|
-| [Ollama](https://ollama.ai) | Self-hosted | High |
-| [vLLM](https://github.com/vllm-project/vllm) | Self-hosted | High |
-| [LiteLLM](https://github.com/BerriAI/litellm) | Proxy/Gateway | High |
-| [LocalAI](https://localai.io) | Self-hosted | High |
-| [LM Studio](https://lmstudio.ai) | Desktop | High |
-| [Hugging Face TGI](https://huggingface.co/docs/text-generation-inference) | Self-hosted | High |
-| [llama.cpp](https://github.com/ggerganov/llama.cpp) | Self-hosted | High |
-| [Open WebUI](https://github.com/open-webui/open-webui) | UI/Frontend | High |
-| [AnythingLLM](https://anythingllm.com) | RAG Platform | High |
-| [NVIDIA NIM](https://developer.nvidia.com/nim) | Enterprise | High |
-| [Kong AI Gateway](https://konghq.com) | Gateway | High |
-| [LibreChat](https://librechat.ai) | Chat UI | High |
-| [Gradio](https://gradio.app) | Web UI | Medium |
-| [SillyTavern](https://sillytavernai.com) | Chat UI | Medium |
-| [BetterChatGPT](https://github.com/ztjhz/BetterChatGPT) | Chat UI | Medium |
-| [Salesforce Einstein](https://www.salesforce.com/einstein/) | Enterprise | Medium |
-| OpenAI-compatible | Generic | Low |
+| Service | Category |
+|---------|----------|
+| [Ollama](https://ollama.ai) | Self-hosted |
+| [vLLM](https://github.com/vllm-project/vllm) | Self-hosted |
+| [LiteLLM](https://github.com/BerriAI/litellm) | Proxy/Gateway |
+| [LocalAI](https://localai.io) | Self-hosted |
+| [LM Studio](https://lmstudio.ai) | Desktop |
+| [Hugging Face TGI](https://huggingface.co/docs/text-generation-inference) | Self-hosted |
+| [llama.cpp](https://github.com/ggerganov/llama.cpp) | Self-hosted |
+| [Open WebUI](https://github.com/open-webui/open-webui) | UI/Frontend |
+| [AnythingLLM](https://anythingllm.com) | RAG Platform |
+| [NVIDIA NIM](https://developer.nvidia.com/nim) | Enterprise |
+| [Kong AI Gateway](https://konghq.com) | Gateway |
+| [LibreChat](https://librechat.ai) | Chat UI |
+| [Gradio](https://gradio.app) | Web UI |
+| [SillyTavern](https://sillytavernai.com) | Chat UI |
+| [BetterChatGPT](https://github.com/ztjhz/BetterChatGPT) | Chat UI |
+| [Salesforce Einstein](https://www.salesforce.com/einstein/) | Enterprise |
+| OpenAI-compatible | Generic |
 
 ## Usage
 
@@ -178,8 +167,3 @@ We welcome contributions! See [CONTRIBUTING.md](CONTRIBUTING.md) for:
 ## License
 
 [MIT](LICENSE) - Praetorian, Inc.
-
-## Related Projects
-
-- [Praetorian](https://praetorian.com) - Offensive security company
-- [Chariot](https://github.com/praetorian-inc/chariot) - Attack surface management platform
