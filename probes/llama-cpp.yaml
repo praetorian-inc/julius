@@ -36,7 +36,7 @@ models:
 augustus:
   generator: openai
   config_template:
-    endpoint: "$TARGET/v1"
+    endpoint: "$TARGET"
     model: "$MODEL"
     api_key: "not-needed"
     timeout: 180
