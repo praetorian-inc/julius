@@ -31,6 +31,7 @@ Unlike model fingerprinting tools that identify which LLM generated text, Julius
 - [Troubleshooting](#troubleshooting)
 - [Contributing](#contributing)
 - [Security](#security)
+- [Support](#support)
 - [License](#license)
 
 ## The Problem
@@ -210,8 +211,21 @@ julius list
 
 Julius uses HTTP-based service fingerprinting to identify LLM platforms:
 
-```
-Target → Load Probes → Send HTTP Requests → Match Rules → Report Service
+```mermaid
+flowchart LR
+    A[Target URL] --> B[Load Probes]
+    B --> C[HTTP Requests]
+    C --> D[Rule Matching]
+    D --> E{Match?}
+    E -->|Yes| F[Report Service]
+    E -->|No| G[Try Next Probe]
+    G --> C
+
+    subgraph Scanner
+        C
+        D
+        E
+    end
 ```
 
 ### Detection Process
@@ -410,6 +424,17 @@ Julius is designed for **authorized security testing only**. See [SECURITY.md](S
 - Security considerations and responsible use
 - What Julius does and does not do
 - Reporting security issues
+
+## Support
+
+If you find Julius useful, please consider:
+
+- Giving it a **star** on GitHub
+- [Opening an issue](https://github.com/praetorian-inc/julius/issues) for bugs or feature requests
+- [Contributing](CONTRIBUTING.md) new LLM service probes
+- Joining [GitHub Discussions](https://github.com/praetorian-inc/julius/discussions) for questions
+
+[![Star History Chart](https://api.star-history.com/svg?repos=praetorian-inc/julius&type=Date)](https://star-history.com/#praetorian-inc/julius&Date)
 
 ## License
 
