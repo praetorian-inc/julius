@@ -3,6 +3,8 @@
 !*.*
 !Makefile
 !Dockerfile
+!LICENSE
+!CODEOWNERS
 
 local/
 .claude/
