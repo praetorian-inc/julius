@@ -1,0 +1,46 @@
+# probes/mlc-llm.yaml
+# Reference: https://llm.mlc.ai/docs/
+name: mlc-llm
+description: MLC LLM - universal LLM deployment with ML compilation
+category: self-hosted
+port_hint: 8000
+specificity: 70
+api_docs: https://llm.mlc.ai/docs/deploy/rest.html
+
+requests:
+  # MLC LLM /stats endpoint (unique to MLC LLM)
+  - type: http
+    path: /stats
+    method: GET
+    match:
+      - type: status
+        value: 200
+      - type: content-type
+        value: application/json
+
+  # MLC LLM /metrics endpoint with prometheus format
+  - type: http
+    path: /metrics
+    method: GET
+    match:
+      - type: status
+        value: 200
+      - type: body.contains
+        value: "# HELP"
+      - type: body.contains
+        value: "# TYPE"
+      - type: body.contains
+        value: "mlc"
+
+models:
+  path: /v1/models
+  method: GET
+  extract: ".data[].id"
+
+augustus:
+  generator: openai
+  config_template:
+    endpoint: "$TARGET"
+    model: "$MODEL"
+    api_key: "not-needed"
+    timeout: 180

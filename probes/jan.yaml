@@ -1,0 +1,51 @@
+# probes/jan.yaml
+# Reference: https://jan.ai/docs
+name: jan
+description: Jan - open-source ChatGPT alternative with local LLM support
+category: ui
+port_hint: 1337
+specificity: 85
+require: all
+api_docs: https://jan.ai/docs/api-reference
+
+requests:
+  # Jan's OpenAI-compatible API with /v1/models must work
+  - type: http
+    path: /v1/models
+    method: GET
+    match:
+      - type: status
+        value: 200
+      - type: content-type
+        value: application/json
+      - type: body.contains
+        value: '"data"'
+      - type: body.contains
+        value: '"object"'
+
+  # AND Jan /healthz must return ok (not HTML)
+  - type: http
+    path: /healthz
+    method: GET
+    match:
+      - type: status
+        value: 200
+      - type: body.contains
+        not: true
+        value: "<!doctype"
+      - type: body.contains
+        not: true
+        value: "<html"
+
+models:
+  path: /v1/models
+  method: GET
+  extract: ".data[].id"
+
+augustus:
+  generator: openai
+  config_template:
+    endpoint: "$TARGET"
+    model: "$MODEL"
+    api_key: "not-needed"
+    timeout: 180

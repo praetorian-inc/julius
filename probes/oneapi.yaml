@@ -1,0 +1,47 @@
+# probes/oneapi.yaml
+# Reference: https://github.com/songquanpeng/one-api
+name: oneapi
+description: One API - unified gateway for multiple LLM providers
+category: gateway
+port_hint: 3000
+specificity: 80
+require: all
+api_docs: https://github.com/songquanpeng/one-api
+
+requests:
+  # One API /api/status endpoint (unique to One API) - REQUIRED
+  - type: http
+    path: /api/status
+    method: GET
+    match:
+      - type: status
+        value: 200
+      - type: content-type
+        value: application/json
+      - type: body.contains
+        value: '"success"'
+
+  # AND /v1/models must return proper JSON
+  - type: http
+    path: /v1/models
+    method: GET
+    match:
+      - type: status
+        value: 200
+      - type: content-type
+        value: application/json
+      - type: body.contains
+        value: '"data"'
+
+models:
+  path: /v1/models
+  method: GET
+  extract: ".data[].id"
+
+augustus:
+  generator: openai
+  config_template:
+    endpoint: "$TARGET"
+    model: "$MODEL"
+    api_key: "$API_KEY"
+    timeout: 180

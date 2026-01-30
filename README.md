@@ -2,7 +2,7 @@
 
 # Julius: LLM Service Fingerprinting Tool
 
-> Identify Ollama, vLLM, LiteLLM, and 17+ AI services running on any endpoint in seconds.
+> Identify Ollama, vLLM, LiteLLM, and 28 AI services running on any endpoint in seconds.
 
 [![Go Version](https://img.shields.io/badge/go-1.24+-blue.svg)](https://golang.org/)
 [![License](https://img.shields.io/github/license/praetorian-inc/julius)](LICENSE)
@@ -46,7 +46,7 @@ You've discovered an open port during a security assessment. Is it Ollama on por
 
 | Feature | Description |
 |---------|-------------|
-| **17 LLM Services** | Detects Ollama, vLLM, LiteLLM, LocalAI, Hugging Face TGI, and 12 more |
+| **28 LLM Services** | Detects Ollama, vLLM, LiteLLM, LocalAI, Hugging Face TGI, and 23 more |
 | **Fast Scanning** | Concurrent probing with intelligent port-based prioritization |
 | **Model Discovery** | Extracts available models from identified endpoints |
 | **Specificity Scoring** | 1-100 scoring ranks results by most specific match (e.g., LiteLLM over generic OpenAI-compatible) |
@@ -82,7 +82,7 @@ julius probe https://target.example.com
 
 ## Supported LLM Services
 
-Julius identifies 17 LLM platforms across self-hosted, enterprise, proxy, and UI categories:
+Julius identifies 28 LLM platforms across self-hosted, enterprise, proxy, and UI categories:
 
 ### Self-Hosted LLM Servers
 
@@ -94,6 +94,13 @@ Julius identifies 17 LLM platforms across self-hosted, enterprise, proxy, and UI
 | [llama.cpp](https://github.com/ggerganov/llama.cpp) | 8080 | CPU-optimized LLM inference |
 | [Hugging Face TGI](https://huggingface.co/docs/text-generation-inference) | 8080 | Text Generation Inference server |
 | [LM Studio](https://lmstudio.ai) | 1234 | Desktop LLM application with API server |
+| [text-generation-webui](https://github.com/oobabooga/text-generation-webui) | 5000 | Oobabooga's web UI for running LLMs locally |
+| [KoboldCpp](https://github.com/LostRuins/koboldcpp) | 5001 | llama.cpp with KoboldAI API compatibility |
+| [TabbyAPI](https://github.com/theroyallab/tabbyAPI) | 5000 | FastAPI backend for ExllamaV2/V3 |
+| [Aphrodite Engine](https://github.com/PygmalionAI/aphrodite-engine) | 2242 | High-performance vLLM-based inference |
+| [FastChat](https://github.com/lm-sys/FastChat) | 21001 | Distributed multi-model serving (LMSYS) |
+| [MLC LLM](https://github.com/mlc-ai/mlc-llm) | 8000 | Universal LLM deployment with ML compilation |
+| [GPT4All](https://gpt4all.io) | 4891 | Local LLM desktop application with API server |
 
 ### Proxy/Gateway Services
 
@@ -101,6 +108,7 @@ Julius identifies 17 LLM platforms across self-hosted, enterprise, proxy, and UI
 |---------|--------------|-------------|
 | [LiteLLM](https://github.com/BerriAI/litellm) | 4000 | Unified proxy for 100+ LLM providers |
 | [Kong AI Gateway](https://konghq.com) | 8000 | Enterprise API gateway with AI plugins |
+| [One API](https://github.com/songquanpeng/one-api) | 3000 | Unified gateway for multiple LLM providers |
 
 ### UI/Frontend Applications
 
@@ -111,6 +119,9 @@ Julius identifies 17 LLM platforms across self-hosted, enterprise, proxy, and UI
 | [Gradio](https://gradio.app) | 7860 | ML model demo interfaces |
 | [SillyTavern](https://sillytavernai.com) | 8000 | Character-based chat application |
 | [BetterChatGPT](https://github.com/ztjhz/BetterChatGPT) | 3000 | Enhanced ChatGPT interface |
+| [LobeChat](https://github.com/lobehub/lobe-chat) | 3210 | AI chat interface with agent support |
+| [ChatGPT-Next-Web](https://github.com/ChatGPTNextWeb/ChatGPT-Next-Web) | 3000 | Lightweight ChatGPT web UI (NextChat) |
+| [Jan](https://jan.ai) | 1337 | Open-source ChatGPT alternative |
 
 ### Enterprise & RAG Platforms
 
@@ -327,7 +338,7 @@ LLM service fingerprinting identifies what **LLM server software** (Ollama, vLLM
 
 ### How is Julius different from Shodan-based detection?
 
-Tools like Cisco's Shodan-based Ollama detector query internet-wide scan databases. Julius performs **active probing** against specific targets you control, working offline without external dependencies. It also detects 17+ services versus single-service detection.
+Tools like Cisco's Shodan-based Ollama detector query internet-wide scan databases. Julius performs **active probing** against specific targets you control, working offline without external dependencies. It also detects 28 services versus single-service detection.
 
 ### Is Julius safe for penetration testing?
 

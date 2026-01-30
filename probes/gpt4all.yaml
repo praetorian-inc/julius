@@ -1,0 +1,57 @@
+# probes/gpt4all.yaml
+# Reference: https://docs.gpt4all.io/
+name: gpt4all
+description: GPT4All - local LLM desktop application with API server
+category: self-hosted
+port_hint: 4891
+specificity: 80
+require: all
+api_docs: https://docs.gpt4all.io/gpt4all_api_server/home.html
+
+requests:
+  # GPT4All API server /v1/models endpoint must work
+  - type: http
+    path: /v1/models
+    method: GET
+    match:
+      - type: status
+        value: 200
+      - type: content-type
+        value: application/json
+      - type: body.contains
+        value: '"data"'
+      - type: body.contains
+        value: '"object"'
+
+  # AND /health must exist but NOT contain litellm markers
+  - type: http
+    path: /health
+    method: GET
+    match:
+      - type: status
+        value: 200
+      - type: body.contains
+        not: true
+        value: "healthy_endpoints"
+      - type: body.contains
+        not: true
+        value: "litellm"
+      - type: body.contains
+        not: true
+        value: "<!doctype"
+      - type: body.contains
+        not: true
+        value: "<html"
+
+models:
+  path: /v1/models
+  method: GET
+  extract: ".data[].id"
+
+augustus:
+  generator: openai
+  config_template:
+    endpoint: "$TARGET"
+    model: "$MODEL"
+    api_key: "not-needed"
+    timeout: 180

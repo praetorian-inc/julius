@@ -1,0 +1,62 @@
+# probes/text-generation-webui.yaml
+# Reference: https://github.com/oobabooga/text-generation-webui/wiki/12-%E2%80%90-OpenAI-API
+name: text-generation-webui
+description: text-generation-webui (oobabooga) - web UI for running LLMs locally
+category: self-hosted
+port_hint: 5000
+specificity: 75
+api_docs: https://github.com/oobabooga/text-generation-webui/wiki/12-%E2%80%90-OpenAI-API
+
+requests:
+  # text-generation-webui has unique /api/v1/model endpoint returning current model info
+  - type: http
+    path: /api/v1/model
+    method: GET
+    match:
+      - type: status
+        value: 200
+      - type: content-type
+        value: application/json
+      - type: body.contains
+        value: '"result"'
+
+  # Internal API endpoint unique to oobabooga
+  - type: http
+    path: /api/v1/chat
+    method: POST
+    headers:
+      Content-Type: application/json
+    body: '{"user_input":"test","history":{"internal":[],"visible":[]}}'
+    match:
+      - type: status
+        value: 200
+      - type: content-type
+        value: application/json
+      - type: body.contains
+        value: '"results"'
+
+  # Alternative detection via /api/v1/generate endpoint
+  - type: http
+    path: /api/v1/generate
+    method: POST
+    headers:
+      Content-Type: application/json
+    body: '{"prompt":"test"}'
+    match:
+      - type: status
+        value: 200
+      - type: content-type
+        value: application/json
+
+models:
+  path: /api/v1/model
+  method: GET
+  extract: "[.result]"
+
+augustus:
+  generator: openai
+  config_template:
+    endpoint: "$TARGET/v1"
+    model: "$MODEL"
+    api_key: "not-needed"
+    timeout: 180

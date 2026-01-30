@@ -1,0 +1,70 @@
+# probes/tabbyapi.yaml
+# Reference: https://theroyallab.github.io/tabbyAPI
+name: tabbyapi
+description: TabbyAPI - FastAPI backend for ExllamaV2/V3
+category: self-hosted
+port_hint: 5000
+specificity: 80
+api_docs: https://theroyallab.github.io/tabbyAPI
+
+requests:
+  # TabbyAPI-specific /health endpoint with tabby fields
+  - type: http
+    path: /health
+    method: GET
+    match:
+      - type: status
+        value: 200
+      - type: content-type
+        value: application/json
+      - type: body.contains
+        value: '"status"'
+
+  # TabbyAPI /v1/model endpoint returns model info with unique structure
+  - type: http
+    path: /v1/model
+    method: GET
+    match:
+      - type: status
+        value: 200
+      - type: content-type
+        value: application/json
+      - type: body.contains
+        value: '"id"'
+      - type: body.contains
+        value: '"parameters"'
+
+  # TabbyAPI /v1/model/list endpoint (unique to TabbyAPI)
+  - type: http
+    path: /v1/model/list
+    method: GET
+    match:
+      - type: status
+        value: 200
+      - type: content-type
+        value: application/json
+      - type: body.contains
+        value: '"data"'
+
+  # TabbyAPI /v1/lora/list endpoint (unique to TabbyAPI)
+  - type: http
+    path: /v1/lora/list
+    method: GET
+    match:
+      - type: status
+        value: 200
+      - type: content-type
+        value: application/json
+
+models:
+  path: /v1/model/list
+  method: GET
+  extract: ".data[].id"
+
+augustus:
+  generator: openai
+  config_template:
+    endpoint: "$TARGET"
+    model: "$MODEL"
+    api_key: "not-needed"
+    timeout: 180

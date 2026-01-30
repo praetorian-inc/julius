@@ -1,0 +1,41 @@
+# probes/chatgpt-next-web.yaml
+# Reference: https://github.com/ChatGPTNextWeb/ChatGPT-Next-Web
+name: chatgpt-next-web
+description: ChatGPT-Next-Web (NextChat) - lightweight ChatGPT web UI
+category: ui
+port_hint: 3000
+specificity: 75
+api_docs: https://github.com/ChatGPTNextWeb/ChatGPT-Next-Web
+
+requests:
+  # NextChat unique config endpoint with needCode JSON response
+  - type: http
+    path: /api/config
+    method: GET
+    match:
+      - type: status
+        value: 200
+      - type: content-type
+        value: application/json
+      - type: body.contains
+        value: '"needCode"'
+
+  # NextChat HTML page contains specific markers
+  - type: http
+    path: /
+    method: GET
+    match:
+      - type: status
+        value: 200
+      - type: body.contains
+        value: "ChatGPT Next Web"
+
+  # NextChat HTML with specific bundle markers
+  - type: http
+    path: /
+    method: GET
+    match:
+      - type: status
+        value: 200
+      - type: body.contains
+        value: "nextchat"

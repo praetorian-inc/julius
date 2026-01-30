@@ -1,0 +1,51 @@
+# probes/lobechat.yaml
+# Reference: https://lobehub.com/docs
+name: lobechat
+description: LobeChat - AI chat interface with agent support
+category: ui
+port_hint: 3210
+specificity: 80
+api_docs: https://lobehub.com/docs
+
+requests:
+  # LobeChat manifest.webmanifest with unique name
+  - type: http
+    path: /manifest.webmanifest
+    method: GET
+    match:
+      - type: status
+        value: 200
+      - type: content-type
+        value: application/manifest+json
+      - type: body.contains
+        value: '"LobeChat"'
+
+  # LobeChat static assets path
+  - type: http
+    path: /
+    method: GET
+    match:
+      - type: status
+        value: 200
+      - type: body.contains
+        value: "lobehub"
+
+  # LobeChat /api/config endpoint
+  - type: http
+    path: /api/config
+    method: GET
+    match:
+      - type: status
+        value: 200
+      - type: content-type
+        value: application/json
+
+  # LobeChat PWA manifest
+  - type: http
+    path: /
+    method: GET
+    match:
+      - type: status
+        value: 200
+      - type: body.contains
+        value: "lobe-chat"

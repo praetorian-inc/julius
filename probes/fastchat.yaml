@@ -1,0 +1,52 @@
+# probes/fastchat.yaml
+# Reference: https://github.com/lm-sys/FastChat
+name: fastchat
+description: FastChat - distributed multi-model serving system (LMSYS)
+category: self-hosted
+port_hint: 21001
+specificity: 70
+api_docs: https://github.com/lm-sys/FastChat/blob/main/docs/openai_api.md
+
+requests:
+  # FastChat controller /list_models endpoint (unique to FastChat)
+  - type: http
+    path: /list_models
+    method: POST
+    headers:
+      Content-Type: application/json
+    body: '{}'
+    match:
+      - type: status
+        value: 200
+      - type: content-type
+        value: application/json
+      - type: body.contains
+        value: '"models"'
+
+  # FastChat model worker /worker_get_status endpoint (unique to FastChat)
+  - type: http
+    path: /worker_get_status
+    method: POST
+    headers:
+      Content-Type: application/json
+    body: '{}'
+    match:
+      - type: status
+        value: 200
+      - type: content-type
+        value: application/json
+      - type: body.contains
+        value: '"model_names"'
+
+models:
+  path: /v1/models
+  method: GET
+  extract: ".data[].id"
+
+augustus:
+  generator: openai
+  config_template:
+    endpoint: "$TARGET"
+    model: "$MODEL"
+    api_key: "not-needed"
+    timeout: 180

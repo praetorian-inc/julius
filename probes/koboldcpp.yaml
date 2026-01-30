@@ -1,0 +1,70 @@
+# probes/koboldcpp.yaml
+# Reference: https://github.com/LostRuins/koboldcpp
+name: koboldcpp
+description: KoboldCpp - llama.cpp with KoboldAI API compatibility
+category: self-hosted
+port_hint: 5001
+specificity: 80
+api_docs: https://lite.koboldai.net/koboldcpp_api
+
+requests:
+  # KoboldCpp-specific /api/extra/version endpoint
+  - type: http
+    path: /api/extra/version
+    method: GET
+    match:
+      - type: status
+        value: 200
+      - type: content-type
+        value: application/json
+      - type: body.contains
+        value: '"result"'
+
+  # KoboldAI-compatible /api/v1/info/version endpoint
+  - type: http
+    path: /api/v1/info/version
+    method: GET
+    match:
+      - type: status
+        value: 200
+      - type: content-type
+        value: application/json
+      - type: body.contains
+        value: '"result"'
+
+  # KoboldCpp /api/extra/perf endpoint (unique to KoboldCpp)
+  - type: http
+    path: /api/extra/perf
+    method: GET
+    match:
+      - type: status
+        value: 200
+      - type: content-type
+        value: application/json
+      - type: body.contains
+        value: '"last_process"'
+
+  # KoboldAI /api/v1/model endpoint
+  - type: http
+    path: /api/v1/model
+    method: GET
+    match:
+      - type: status
+        value: 200
+      - type: content-type
+        value: application/json
+      - type: body.contains
+        value: '"result"'
+
+models:
+  path: /api/v1/model
+  method: GET
+  extract: "[.result]"
+
+augustus:
+  generator: openai
+  config_template:
+    endpoint: "$TARGET/v1"
+    model: "$MODEL"
+    api_key: "not-needed"
+    timeout: 180

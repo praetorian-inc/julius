@@ -1,0 +1,50 @@
+# probes/aphrodite-engine.yaml
+# Reference: https://aphrodite.pygmalion.chat
+name: aphrodite-engine
+description: Aphrodite Engine - high-performance LLM inference (vLLM-based)
+category: self-hosted
+port_hint: 2242
+specificity: 80
+require: all
+api_docs: https://aphrodite.pygmalion.chat
+
+requests:
+  # Aphrodite uses uvicorn like vLLM and has /v1/models
+  - type: http
+    path: /v1/models
+    method: GET
+    match:
+      - type: status
+        value: 200
+      - type: content-type
+        value: application/json
+      - type: header.contains
+        header: Server
+        value: "uvicorn"
+      - type: body.contains
+        value: '"data"'
+      - type: body.contains
+        value: '"object"'
+
+  # AND must have /v1/samplers endpoint (unique to Aphrodite)
+  - type: http
+    path: /v1/samplers
+    method: GET
+    match:
+      - type: status
+        value: 200
+      - type: content-type
+        value: application/json
+
+models:
+  path: /v1/models
+  method: GET
+  extract: ".data[].id"
+
+augustus:
+  generator: openai
+  config_template:
+    endpoint: "$TARGET"
+    model: "$MODEL"
+    api_key: "not-needed"
+    timeout: 180
