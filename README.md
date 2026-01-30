@@ -1,25 +1,75 @@
-<img width="2752" height="1536" alt="julius" src="https://github.com/user-attachments/assets/aca4e0d4-313e-4428-8856-06f07599d283" />
+<img width="2752" height="1536" alt="Julius - LLM Service Fingerprinting Tool for Security Assessments" src="https://github.com/user-attachments/assets/aca4e0d4-313e-4428-8856-06f07599d283" />
 
-# Julius
+# Julius: LLM Service Fingerprinting Tool
 
-**Simple LLM service identification.** Translate IP:Port to Ollama, vLLM, LiteLLM, or 15+ other AI services in seconds.
+> Identify Ollama, vLLM, LiteLLM, and 17+ AI services running on any endpoint in seconds.
 
 [![Go Version](https://img.shields.io/badge/go-1.24+-blue.svg)](https://golang.org/)
 [![License](https://img.shields.io/github/license/praetorian-inc/julius)](LICENSE)
 [![Build Status](https://img.shields.io/github/actions/workflow/status/praetorian-inc/julius/ci.yml?branch=main)](https://github.com/praetorian-inc/julius/actions)
+[![Go Report Card](https://goreportcard.com/badge/github.com/praetorian-inc/julius)](https://goreportcard.com/report/github.com/praetorian-inc/julius)
+
+**Julius** is an LLM service fingerprinting tool for security professionals. It detects which AI server software is running on network endpoints during penetration tests, attack surface discovery, and security assessments.
+
+Unlike model fingerprinting tools that identify which LLM generated text, Julius identifies the **server infrastructure**: Is that endpoint running Ollama? vLLM? LiteLLM? A Hugging Face deployment? Julius answers in seconds.
+
+## Table of Contents
+
+- [The Problem](#the-problem)
+- [Features](#features)
+- [Quick Start](#quick-start)
+- [Supported LLM Services](#supported-llm-services)
+- [Usage](#usage)
+  - [Single Target](#single-target)
+  - [Multiple Targets](#multiple-targets)
+  - [Output Formats](#output-formats)
+  - [Model Discovery](#model-discovery)
+- [How It Works](#how-it-works)
+- [Architecture](#architecture)
+- [Adding Custom Probes](#adding-custom-probes)
+- [FAQ](#faq)
+- [Troubleshooting](#troubleshooting)
+- [Contributing](#contributing)
+- [Security](#security)
+- [License](#license)
 
 ## The Problem
 
-You've found an open port during a security assessment. Is it Ollama? vLLM? LiteLLM? A Hugging Face endpoint? Something else entirely?
+You've discovered an open port during a security assessment. Is it Ollama on port 11434? vLLM? LiteLLM? A Hugging Face endpoint? Some other AI service?
 
-**Julius answers that question in seconds.**
+**Manually checking each possibility is slow and error-prone.** Different LLM services have different API signatures, default ports, and response patterns.
+
+**Julius solves this by automatically fingerprinting LLM services** - sending targeted HTTP probes and matching response signatures to identify the exact service running.
+
+## Features
+
+| Feature | Description |
+|---------|-------------|
+| **17 LLM Services** | Detects Ollama, vLLM, LiteLLM, LocalAI, Hugging Face TGI, and 12 more |
+| **Fast Scanning** | Concurrent probing with intelligent port-based prioritization |
+| **Model Discovery** | Extracts available models from identified endpoints |
+| **Confidence Scoring** | High/medium/low confidence levels prevent false positives |
+| **Multiple Inputs** | Single target, file input, or stdin piping |
+| **Flexible Output** | Table, JSON, or JSONL formats for easy integration |
+| **Extensible** | Add new service detection via simple YAML probe files |
+| **Offline Operation** | No cloud dependencies - runs entirely locally |
+| **Single Binary** | Go-based tool compiles to one portable executable |
 
 ## Quick Start
 
+### Installation
+
 ```bash
 go install github.com/praetorian-inc/julius/cmd/julius@latest
+```
+
+### Basic Usage
+
+```bash
 julius probe https://target.example.com
 ```
+
+### Example Output
 
 ```
 +----------------------------+----------+------------+---------------+-------------+
@@ -31,130 +81,318 @@ julius probe https://target.example.com
 
 ## Supported LLM Services
 
-Julius identifies 17 LLM platforms across self-hosted, enterprise, and UI categories:
+Julius identifies 17 LLM platforms across self-hosted, enterprise, proxy, and UI categories:
 
-| Service | Category |
-|---------|----------|
-| [Ollama](https://ollama.ai) | Self-hosted |
-| [vLLM](https://github.com/vllm-project/vllm) | Self-hosted |
-| [LiteLLM](https://github.com/BerriAI/litellm) | Proxy/Gateway |
-| [LocalAI](https://localai.io) | Self-hosted |
-| [LM Studio](https://lmstudio.ai) | Desktop |
-| [Hugging Face TGI](https://huggingface.co/docs/text-generation-inference) | Self-hosted |
-| [llama.cpp](https://github.com/ggerganov/llama.cpp) | Self-hosted |
-| [Open WebUI](https://github.com/open-webui/open-webui) | UI/Frontend |
-| [AnythingLLM](https://anythingllm.com) | RAG Platform |
-| [NVIDIA NIM](https://developer.nvidia.com/nim) | Enterprise |
-| [Kong AI Gateway](https://konghq.com) | Gateway |
-| [LibreChat](https://librechat.ai) | Chat UI |
-| [Gradio](https://gradio.app) | Web UI |
-| [SillyTavern](https://sillytavernai.com) | Chat UI |
-| [BetterChatGPT](https://github.com/ztjhz/BetterChatGPT) | Chat UI |
-| [Salesforce Einstein](https://www.salesforce.com/einstein/) | Enterprise |
-| OpenAI-compatible | Generic |
+### Self-Hosted LLM Servers
+
+| Service | Default Port | Description |
+|---------|--------------|-------------|
+| [Ollama](https://ollama.ai) | 11434 | Popular local LLM server with easy model management |
+| [vLLM](https://github.com/vllm-project/vllm) | 8000 | High-throughput LLM inference engine |
+| [LocalAI](https://localai.io) | 8080 | OpenAI-compatible local AI server |
+| [llama.cpp](https://github.com/ggerganov/llama.cpp) | 8080 | CPU-optimized LLM inference |
+| [Hugging Face TGI](https://huggingface.co/docs/text-generation-inference) | 8080 | Text Generation Inference server |
+| [LM Studio](https://lmstudio.ai) | 1234 | Desktop LLM application with API server |
+
+### Proxy/Gateway Services
+
+| Service | Default Port | Description |
+|---------|--------------|-------------|
+| [LiteLLM](https://github.com/BerriAI/litellm) | 4000 | Unified proxy for 100+ LLM providers |
+| [Kong AI Gateway](https://konghq.com) | 8000 | Enterprise API gateway with AI plugins |
+
+### UI/Frontend Applications
+
+| Service | Default Port | Description |
+|---------|--------------|-------------|
+| [Open WebUI](https://github.com/open-webui/open-webui) | 8080 | ChatGPT-style interface for local LLMs |
+| [LibreChat](https://librechat.ai) | 3080 | Multi-provider chat interface |
+| [Gradio](https://gradio.app) | 7860 | ML model demo interfaces |
+| [SillyTavern](https://sillytavernai.com) | 8000 | Character-based chat application |
+| [BetterChatGPT](https://github.com/ztjhz/BetterChatGPT) | 3000 | Enhanced ChatGPT interface |
+
+### Enterprise & RAG Platforms
+
+| Service | Default Port | Description |
+|---------|--------------|-------------|
+| [NVIDIA NIM](https://developer.nvidia.com/nim) | 8000 | NVIDIA's enterprise inference microservices |
+| [Salesforce Einstein](https://www.salesforce.com/einstein/) | 443 | Salesforce AI platform |
+| [AnythingLLM](https://anythingllm.com) | 3001 | RAG-focused LLM platform |
+
+### Generic Detection
+
+| Service | Description |
+|---------|-------------|
+| OpenAI-compatible | Any server implementing OpenAI's API specification |
 
 ## Usage
 
 ### Single Target
 
+Scan a single endpoint for LLM services:
+
 ```bash
 julius probe https://target.example.com
+julius probe https://target.example.com:11434
+julius probe 192.168.1.100:8080
 ```
 
 ### Multiple Targets
 
+Scan multiple endpoints efficiently:
+
 ```bash
+# Command line arguments
 julius probe https://target1.example.com https://target2.example.com
+
+# From file (one target per line)
 julius probe -f targets.txt
+
+# From stdin (pipe from other tools)
 cat targets.txt | julius probe -
+echo "https://target.example.com" | julius probe -
 ```
 
 ### Output Formats
 
+Choose the output format that fits your workflow:
+
 ```bash
-# Table (default)
+# Table format (default) - human-readable
 julius probe https://target.example.com
 
-# JSON
+# JSON format - structured output
 julius probe -o json https://target.example.com
 
-# JSONL (for piping)
-julius probe -o jsonl https://target.example.com
+# JSONL format - one JSON object per line, ideal for piping
+julius probe -o jsonl https://target.example.com | jq '.service'
 ```
 
-### List Available Probes
+### Model Discovery
+
+When Julius identifies an LLM service, it can also extract available models:
 
 ```bash
+julius probe -o json https://ollama.example.com | jq '.models'
+```
+
+```json
+{
+  "target": "https://ollama.example.com",
+  "service": "ollama",
+  "models": ["llama2", "mistral", "codellama"]
+}
+```
+
+### Advanced Options
+
+```bash
+# Adjust concurrency (default: 10)
+julius probe -c 20 https://target.example.com
+
+# Increase timeout for slow endpoints (default: 5 seconds)
+julius probe -t 10 https://target.example.com
+
+# Use custom probe definitions
+julius probe -p ./my-probes https://target.example.com
+
+# Verbose output for debugging
+julius probe -v https://target.example.com
+
+# Quiet mode - only show matches
+julius probe -q https://target.example.com
+
+# List all available probes
 julius list
 ```
 
 ## How It Works
 
-Julius sends HTTP probes to targets and matches responses against service signatures:
+Julius uses HTTP-based service fingerprinting to identify LLM platforms:
 
 ```
-Target → Probes → Scanner → Rules → Match
+Target → Load Probes → Send HTTP Requests → Match Rules → Report Service
 ```
 
-Each probe defines:
-- **Endpoint** - Path to request (e.g., `/api/tags` for Ollama)
-- **Match rules** - Status codes, headers, body patterns
-- **Confidence** - How certain the identification is
+### Detection Process
 
-When all rules match, Julius reports the service with its confidence level.
+1. **Target Normalization**: Validates and normalizes input URLs
+2. **Probe Selection**: Prioritizes probes matching the target's port
+3. **HTTP Probing**: Sends requests to service-specific endpoints
+4. **Rule Matching**: Compares responses against signature patterns
+5. **Confidence Scoring**: Ranks matches by specificity (100 = exact match)
+6. **Model Extraction**: Optionally retrieves available models via JQ expressions
+
+### Match Rules
+
+Each probe defines rules that must all match for identification:
+
+| Rule Type | Description | Example |
+|-----------|-------------|---------|
+| `status` | HTTP status code | `200`, `404` |
+| `body.contains` | Response body contains string | `"models":` |
+| `body.prefix` | Response body starts with | `{"object":` |
+| `header.contains` | Header contains value | `application/json` |
+| `header.prefix` | Header starts with value | `text/` |
+
+All rules support negation with `not: true`.
 
 ## Architecture
 
 ```
-cmd/julius/     CLI entrypoint
+cmd/julius/          CLI entrypoint
 pkg/
-  runner/       Command execution
-  scanner/      HTTP client and response matching
-  rules/        Match rules (status, body.contains, header.prefix, etc.)
-  output/       Table and JSON formatters
-  probe/        Probe loading and sorting
-probes/         YAML probe definitions (add your own here)
+  runner/            Command execution (probe, list, validate)
+  scanner/           HTTP client, response caching, model extraction
+  rules/             Match rule engine (status, body, header patterns)
+  output/            Formatters (table, JSON, JSONL)
+  probe/             Probe loader (embedded YAML + filesystem)
+  types/             Core data structures
+probes/              YAML probe definitions (one per service)
 ```
+
+### Key Design Decisions
+
+- **Concurrent scanning** with bounded goroutine pools via `errgroup`
+- **Response caching** with MD5 deduplication and `singleflight`
+- **Embedded probes** compiled into binary for portability
+- **Plugin-style rules** for easy extension
+- **Port-based prioritization** for faster identification
 
 ## Adding Custom Probes
 
-Create a YAML file in `probes/` to detect new services:
+Create a YAML file in `probes/` to detect new LLM services:
 
 ```yaml
 name: my-llm-service
-description: My custom LLM service
+description: My custom LLM service detection
 category: self-hosted
 port_hint: 8080
+api_docs: https://example.com/api-docs
 
 probes:
   - path: /health
+    method: GET
     match:
       - type: status
         value: 200
       - type: body.contains
         value: '"service":"my-llm"'
     confidence: high
+
+  - path: /api/version
+    method: GET
+    match:
+      - type: status
+        value: 200
+      - type: header.contains
+        header: Content-Type
+        value: application/json
+    confidence: medium
+
+models:
+  path: /api/models
+  method: GET
+  extract: ".models[].name"
 ```
 
-See [CONTRIBUTING.md](CONTRIBUTING.md) for the full probe specification.
+Validate your probe:
+
+```bash
+julius validate ./probes
+```
+
+See [CONTRIBUTING.md](CONTRIBUTING.md) for the complete probe specification.
 
 ## FAQ
 
 ### What is LLM service fingerprinting?
 
-LLM service fingerprinting identifies what LLM server software (Ollama, vLLM, LiteLLM, etc.) is running on a network endpoint. This differs from model fingerprinting, which identifies which AI model generated a piece of text.
+LLM service fingerprinting identifies what **LLM server software** (Ollama, vLLM, LiteLLM, etc.) is running on a network endpoint. This differs from **model fingerprinting**, which identifies which AI model generated a piece of text.
+
+**Julius answers**: "What server is running on this port?"
+**Model fingerprinting answers**: "Which LLM wrote this text?"
+
+### How is Julius different from Shodan-based detection?
+
+Tools like Cisco's Shodan-based Ollama detector query internet-wide scan databases. Julius performs **active probing** against specific targets you control, working offline without external dependencies. It also detects 17+ services versus single-service detection.
 
 ### Is Julius safe for penetration testing?
 
-Yes. Julius only performs standard HTTP requests - the same as a web browser. It does not exploit vulnerabilities or modify data. Always ensure you have authorization before scanning targets.
+Yes. Julius only sends standard HTTP requests - the same as a web browser or curl. It does not:
+
+- Exploit vulnerabilities
+- Attempt authentication bypass
+- Perform denial of service
+- Modify or delete data
+- Execute code on targets
+
+Always ensure you have authorization before scanning targets.
 
 ### How do I add support for a new LLM service?
 
-Create a YAML probe file in the `probes/` directory. See [CONTRIBUTING.md](CONTRIBUTING.md) for the full specification and examples.
+1. Create a YAML probe file in `probes/` (e.g., `probes/my-service.yaml`)
+2. Define HTTP requests with match rules
+3. Validate with `julius validate ./probes`
+4. Test against a live instance
+5. Submit a pull request
+
+See [CONTRIBUTING.md](CONTRIBUTING.md) for detailed examples.
+
+### Why doesn't Julius detect my LLM service?
+
+Common reasons:
+
+1. **Non-default port**: Try specifying the full URL with port
+2. **Authentication required**: Julius doesn't handle auth; the endpoint may be protected
+3. **Custom configuration**: The service may have non-standard API paths
+4. **Unsupported service**: Consider [adding a custom probe](#adding-custom-probes)
+
+### Can Julius detect services behind reverse proxies?
+
+Yes, if the proxy forwards requests to the backend LLM service endpoints. Julius matches on response content, not network-level signatures.
 
 ### Why "Julius"?
 
 Named after Julius Caesar - the original fingerprinter of Roman politics.
+
+## Troubleshooting
+
+### Error: "no matches found"
+
+**Cause**: No probe signatures matched the target's responses.
+
+**Solutions**:
+1. Verify the target URL is correct and accessible
+2. Check if the service requires authentication
+3. Try with verbose mode: `julius probe -v https://target`
+4. The service may not be in Julius's probe database - consider adding a custom probe
+
+### Error: "connection refused"
+
+**Cause**: Target is not accepting connections on the specified port.
+
+**Solutions**:
+1. Verify the target host and port are correct
+2. Check if a firewall is blocking the connection
+3. Ensure the LLM service is running
+
+### Error: "timeout"
+
+**Cause**: Target didn't respond within the timeout period.
+
+**Solutions**:
+1. Increase timeout: `julius probe -t 15 https://target`
+2. Check network connectivity to the target
+3. The service may be overloaded or unresponsive
+
+### Slow scanning performance
+
+**Cause**: Default concurrency may be too low for many targets.
+
+**Solutions**:
+1. Increase concurrency: `julius probe -c 50 -f targets.txt`
+2. Use JSONL output for faster streaming: `julius probe -o jsonl -f targets.txt`
 
 ## Contributing
 
@@ -163,7 +401,20 @@ We welcome contributions! See [CONTRIBUTING.md](CONTRIBUTING.md) for:
 - Adding new LLM service probes
 - Creating new match rule types
 - Testing guidelines
+- Code style requirements
+
+## Security
+
+Julius is designed for **authorized security testing only**. See [SECURITY.md](SECURITY.md) for:
+
+- Security considerations and responsible use
+- What Julius does and does not do
+- Reporting security issues
 
 ## License
 
-[MIT](LICENSE) - Praetorian, Inc.
+[Apache 2.0](LICENSE) - Praetorian, Inc.
+
+---
+
+**Built by [Praetorian](https://www.praetorian.com/)** - Offensive Security Solutions
