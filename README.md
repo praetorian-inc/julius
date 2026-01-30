@@ -1,4 +1,4 @@
-<img width="2752" height="1536" alt="Julius - LLM Service Fingerprinting Tool for Security Assessments" src="https://github.com/user-attachments/assets/aca4e0d4-313e-4428-8856-06f07599d283" />
+<img width="1200" height="628" alt="julius-social" src="https://github.com/user-attachments/assets/54c4b17d-4f85-40a3-8b03-ba0b9630fa82" />
 
 # Julius: LLM Service Fingerprinting Tool
 
