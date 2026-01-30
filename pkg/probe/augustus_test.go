@@ -1,3 +1,5 @@
+//go:build augustus
+
 package probe
 
 import (

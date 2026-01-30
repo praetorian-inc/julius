@@ -15,8 +15,7 @@ import (
 )
 
 var (
-	targetsFile  string
-	augustusFlag bool
+	targetsFile string
 )
 
 var probeCmd = &cobra.Command{
@@ -150,5 +149,4 @@ func readTargetsFromReader(r *os.File) ([]string, error) {
 func init() {
 	rootCmd.AddCommand(probeCmd)
 	probeCmd.Flags().StringVarP(&targetsFile, "file", "f", "", "Read targets from file")
-	probeCmd.Flags().BoolVar(&augustusFlag, "augustus", false, "Include Augustus generator configs in output")
 }
