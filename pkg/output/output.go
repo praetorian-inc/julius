@@ -26,7 +26,6 @@ func (tw *TableWriter) Write(results []types.Result) error {
 
 	table := tablewriter.NewWriter(tw.writer)
 	table.SetHeader([]string{"TARGET", "SERVICE", "SPECIFICITY", "CATEGORY", "MODELS", "ERROR"})
-	table.SetBorder(false)
 	table.SetHeaderAlignment(tablewriter.ALIGN_LEFT)
 	table.SetAlignment(tablewriter.ALIGN_LEFT)
 

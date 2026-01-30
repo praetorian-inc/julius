@@ -49,7 +49,7 @@ You've discovered an open port during a security assessment. Is it Ollama on por
 | **17 LLM Services** | Detects Ollama, vLLM, LiteLLM, LocalAI, Hugging Face TGI, and 12 more |
 | **Fast Scanning** | Concurrent probing with intelligent port-based prioritization |
 | **Model Discovery** | Extracts available models from identified endpoints |
-| **Confidence Scoring** | High/medium/low confidence levels prevent false positives |
+| **Specificity Scoring** | 1-100 scoring ranks results by most specific match (e.g., LiteLLM over generic OpenAI-compatible) |
 | **Multiple Inputs** | Single target, file input, or stdin piping |
 | **Flexible Output** | Table, JSON, or JSONL formats for easy integration |
 | **Extensible** | Add new service detection via simple YAML probe files |
@@ -73,11 +73,11 @@ julius probe https://target.example.com
 ### Example Output
 
 ```
-+----------------------------+----------+------------+---------------+-------------+
-|           TARGET           | SERVICE  | CONFIDENCE | MATCHED PROBE |  CATEGORY   |
-+----------------------------+----------+------------+---------------+-------------+
-| https://target.example.com | ollama   | high       | /api/tags     | self-hosted |
-+----------------------------+----------+------------+---------------+-------------+
++----------------------------+---------+-------------+-------------+--------+-------+
+|           TARGET           | SERVICE | SPECIFICITY |  CATEGORY   | MODELS | ERROR |
++----------------------------+---------+-------------+-------------+--------+-------+
+| https://target.example.com | ollama  |         100 | self-hosted |        |       |
++----------------------------+---------+-------------+-------------+--------+-------+
 ```
 
 ## Supported LLM Services
@@ -234,7 +234,7 @@ flowchart LR
 2. **Probe Selection**: Prioritizes probes matching the target's port
 3. **HTTP Probing**: Sends requests to service-specific endpoints
 4. **Rule Matching**: Compares responses against signature patterns
-5. **Confidence Scoring**: Ranks matches by specificity (100 = exact match)
+5. **Specificity Scoring**: Orders results by most specific match first
 6. **Model Extraction**: Optionally retrieves available models via JQ expressions
 
 ### Match Rules
@@ -246,7 +246,8 @@ Each probe defines rules that must all match for identification:
 | `status` | HTTP status code | `200`, `404` |
 | `body.contains` | Response body contains string | `"models":` |
 | `body.prefix` | Response body starts with | `{"object":` |
-| `header.contains` | Header contains value | `application/json` |
+| `content-type` | Content-Type header equals value | `application/json` |
+| `header.contains` | Header contains value | `X-Custom: foo` |
 | `header.prefix` | Header starts with value | `text/` |
 
 All rules support negation with `not: true`.
@@ -284,7 +285,7 @@ category: self-hosted
 port_hint: 8080
 api_docs: https://example.com/api-docs
 
-probes:
+requests:
   - path: /health
     method: GET
     match:
@@ -292,17 +293,14 @@ probes:
         value: 200
       - type: body.contains
         value: '"service":"my-llm"'
-    confidence: high
 
   - path: /api/version
     method: GET
     match:
       - type: status
         value: 200
-      - type: header.contains
-        header: Content-Type
+      - type: content-type
         value: application/json
-    confidence: medium
 
 models:
   path: /api/models
