@@ -438,7 +438,7 @@ If you find Julius useful, please consider:
 
 ## License
 
-[Apache 2.0](LICENSE) - Praetorian, Inc.
+[Apache 2.0](LICENSE) - Praetorian Security, Inc.
 
 ---
 
