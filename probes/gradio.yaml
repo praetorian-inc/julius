@@ -8,6 +8,7 @@ specificity: 75
 api_docs: https://www.gradio.app/docs/
 
 requests:
+  # Gradio config endpoint has specific structure
   - type: http
     path: /config
     method: GET
@@ -21,17 +22,7 @@ requests:
       - type: body.contains
         value: '"components"'
 
-  - type: http
-    path: /info
-    method: GET
-    match:
-      - type: status
-        value: 200
-      - type: content-type
-        value: application/json
-      - type: body.contains
-        value: '"version"'
-
+  # Gradio HTML page contains gradio-app element
   - type: http
     path: /
     method: GET
@@ -41,6 +32,7 @@ requests:
       - type: body.contains
         value: "gradio-app"
 
+  # Gradio API endpoint has named_endpoints
   - type: http
     path: /api/
     method: GET

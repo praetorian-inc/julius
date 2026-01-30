@@ -1,88 +1,11 @@
-# Reference: https://docs.konghq.com/hub/kong-inc/ai-proxy/
-# Detects Kong AI Proxy plugin (v3.6 and earlier use /llm/v1/ prefix)
-# Newer versions (3.11+) use OpenAI-compatible /v1/ endpoints
 name: kong-ai-proxy
-description: Kong AI Proxy plugin (legacy v3.6 and earlier)
+description: Kong AI Proxy plugin
 category: gateway
 port_hint: 8000
 specificity: 80
 api_docs: https://docs.konghq.com/hub/kong-inc/ai-proxy/
 
 requests:
-  - type: http
-    path: /llm/v1/chat
-    method: POST
-    headers:
-      Content-Type: application/json
-    body: '{"messages":[{"role":"user","content":"test"}]}'
-    match:
-      - type: status
-        value: 401
-      - type: content-type
-        value: application/json
-      - type: body.contains
-        value: '"message"'
-
-  - type: http
-    path: /llm/v1/chat
-    method: POST
-    headers:
-      Content-Type: application/json
-    body: '{"messages":[{"role":"user","content":"test"}]}'
-    match:
-      - type: status
-        value: 400
-      - type: content-type
-        value: application/json
-
-  - type: http
-    path: /llm/v1/completions
-    method: POST
-    headers:
-      Content-Type: application/json
-    body: '{"prompt":"test"}'
-    match:
-      - type: status
-        value: 401
-      - type: content-type
-        value: application/json
-
-  - type: http
-    path: /llm/v1/completions
-    method: POST
-    headers:
-      Content-Type: application/json
-    body: '{"prompt":"test"}'
-    match:
-      - type: status
-        value: 400
-      - type: content-type
-        value: application/json
-
-  - type: http
-    path: /llm/v1/embeddings
-    method: POST
-    headers:
-      Content-Type: application/json
-    body: '{"input":"test"}'
-    match:
-      - type: status
-        value: 401
-      - type: content-type
-        value: application/json
-
-  - type: http
-    path: /llm/v1/embeddings
-    method: POST
-    headers:
-      Content-Type: application/json
-    body: '{"input":"test"}'
-    match:
-      - type: status
-        value: 400
-      - type: content-type
-        value: application/json
-
   - type: http
     path: /
     method: GET
@@ -103,6 +26,9 @@ requests:
         value: '"server"'
       - type: body.contains
         value: '"database"'
+      - type: header.contains
+        header: Server
+        value: "kong"
 
 augustus:
   generator: openai
