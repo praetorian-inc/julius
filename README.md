@@ -92,7 +92,7 @@ Julius identifies 17 LLM platforms across self-hosted, enterprise, proxy, and UI
 | [vLLM](https://github.com/vllm-project/vllm) | 8000 | High-throughput LLM inference engine |
 | [LocalAI](https://localai.io) | 8080 | OpenAI-compatible local AI server |
 | [llama.cpp](https://github.com/ggerganov/llama.cpp) | 8080 | CPU-optimized LLM inference |
-| [Hugging Face TGI](https://huggingface.co/docs/text-generation-inference) | 8080 | Text Generation Inference server |
+| [Hugging Face TGI](https://huggingface.co/docs/text-generation-inference) | 3000 | Text Generation Inference server |
 | [LM Studio](https://lmstudio.ai) | 1234 | Desktop LLM application with API server |
 
 ### Proxy/Gateway Services
