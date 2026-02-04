@@ -17,7 +17,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 
 - Initial release of Julius LLM service fingerprinting tool
-- Support for 17 LLM platforms:
+- Support for 19 LLM platforms:
   - Self-hosted: Ollama, vLLM, LocalAI, llama.cpp, Hugging Face TGI, LM Studio
   - Proxy/Gateway: LiteLLM, Kong AI Gateway
   - UI/Frontend: Open WebUI, LibreChat, Gradio, SillyTavern, BetterChatGPT

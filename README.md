@@ -2,7 +2,7 @@
 
 # Julius: LLM Service Fingerprinting Tool
 
-> Identify Ollama, vLLM, LiteLLM, and 17+ AI services running on any endpoint in seconds.
+> Identify Ollama, vLLM, LiteLLM, and 19+ AI services running on any endpoint in seconds.
 
 [![Go Version](https://img.shields.io/badge/go-1.24+-blue.svg)](https://golang.org/)
 [![License](https://img.shields.io/github/license/praetorian-inc/julius)](LICENSE)
@@ -46,7 +46,7 @@ You've discovered an open port during a security assessment. Is it Ollama on por
 
 | Feature | Description |
 |---------|-------------|
-| **17 LLM Services** | Detects Ollama, vLLM, LiteLLM, LocalAI, Hugging Face TGI, and 12 more |
+| **19 LLM Services** | Detects Ollama, vLLM, LiteLLM, LocalAI, Hugging Face TGI, and 12 more |
 | **Fast Scanning** | Concurrent probing with intelligent port-based prioritization |
 | **Model Discovery** | Extracts available models from identified endpoints |
 | **Specificity Scoring** | 1-100 scoring ranks results by most specific match (e.g., LiteLLM over generic OpenAI-compatible) |
@@ -82,7 +82,7 @@ julius probe https://target.example.com
 
 ## Supported LLM Services
 
-Julius identifies 17 LLM platforms across self-hosted, enterprise, proxy, and UI categories:
+Julius identifies 19 LLM platforms across self-hosted, enterprise, proxy, and UI categories:
 
 ### Self-Hosted LLM Servers
 
@@ -327,7 +327,7 @@ LLM service fingerprinting identifies what **LLM server software** (Ollama, vLLM
 
 ### How is Julius different from Shodan-based detection?
 
-Tools like Cisco's Shodan-based Ollama detector query internet-wide scan databases. Julius performs **active probing** against specific targets you control, working offline without external dependencies. It also detects 17+ services versus single-service detection.
+Tools like Cisco's Shodan-based Ollama detector query internet-wide scan databases. Julius performs **active probing** against specific targets you control, working offline without external dependencies. It also detects 19+ services versus single-service detection.
 
 ### Is Julius safe for penetration testing?
 
