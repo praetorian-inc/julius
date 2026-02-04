@@ -1,0 +1,44 @@
+# probes/koboldcpp.yaml
+# Reference: https://lite.koboldai.net/koboldcpp_api
+name: koboldcpp
+description: KoboldCpp local LLM server - easy-to-use AI text-generation software for GGML/GGUF models
+category: self-hosted
+port_hint: 5001
+specificity: 95
+api_docs: https://lite.koboldai.net/koboldcpp_api
+
+requests:
+  - type: http
+    path: /api/extra/version
+    method: GET
+    match:
+      - type: status
+        value: 200
+      - type: content-type
+        value: application/json
+      - type: body.contains
+        value: '"result": "KoboldCpp"'
+
+  - type: http
+    path: /v1/models
+    method: GET
+    match:
+      - type: status
+        value: 200
+      - type: content-type
+        value: application/json
+      - type: body.contains
+        value: '"owned_by": "koboldcpp"'
+
+models:
+  path: /v1/models
+  method: GET
+  extract: ".data[].id"
+
+augustus:
+  generator: openai
+  config_template:
+    endpoint: "$TARGET"
+    model: "$MODEL"
+    api_key: "not-needed"
+    timeout: 180

@@ -4,7 +4,7 @@ name: text-generation-webui
 description: Oobabooga text-generation-webui - local LLM interface with OpenAI-compatible API
 category: self-hosted
 port_hint: 5000
-specificity: 100
+specificity: 90
 api_docs: https://github.com/oobabooga/text-generation-webui/wiki/12-%E2%80%90-OpenAI-API
 
 requests:

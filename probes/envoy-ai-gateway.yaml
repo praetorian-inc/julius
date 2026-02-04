@@ -4,7 +4,7 @@ name: envoy-ai-gateway
 description: Envoy AI Gateway - unified access to Generative AI services built on Envoy Gateway
 category: gateway
 port_hint: 80
-specificity: 100
+specificity: 90
 api_docs: https://aigateway.envoyproxy.io/docs/
 
 requests:
