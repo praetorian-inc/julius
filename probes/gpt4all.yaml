@@ -1,0 +1,37 @@
+# GPT4All local LLM server probe
+# Reference: https://docs.gpt4all.io/gpt4all_api_server/home.html
+# Default port: 4891
+# Specificity score: 85 (unique marker provides high confidence)
+
+name: gpt4all
+description: GPT4All local LLM server - run local models on any device
+category: self-hosted
+port_hint: 4891
+specificity: 50
+api_docs: https://docs.gpt4all.io/gpt4all_api_server/home.html
+
+requests:
+  # Primary fingerprint: "owned_by":"humanity"
+  - type: http
+    path: /v1/models
+    method: GET
+    match:
+      - type: status
+        value: 200
+      - type: content-type
+        value: application/json
+      - type: body.contains
+        value: '"owned_by":"humanity"'
+
+models:
+  path: /v1/models
+  method: GET
+  extract: ".data[].id"
+
+augustus:
+  generator: openai
+  config_template:
+    endpoint: "$TARGET"
+    model: "$MODEL"
+    api_key: "not-needed"
+    timeout: 180

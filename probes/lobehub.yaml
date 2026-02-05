@@ -1,0 +1,35 @@
+# probes/lobehub.yaml
+# Reference: https://lobehub.com/docs
+name: lobehub
+description: LobeHub - Multi-agent AI collaboration platform with chat UI
+category: rag-orchestration
+port_hint: 3210
+specificity: 90
+api_docs: https://lobehub.com/docs
+
+requests:
+  - type: http
+    path: /manifest.webmanifest
+    method: GET
+    match:
+      - type: status
+        value: 200
+      - type: content-type
+        value: application/manifest+json
+      - type: body.contains
+        value: '"id":"lobe-hub"'
+      - type: body.contains
+        value: '"name":"LobeHub"'
+      - type: body.contains
+        value: '"short_name":"LobeHub"'
+
+  - type: http
+    path: /signin
+    method: GET
+    match:
+      - type: status
+        value: 200
+      - type: body.contains
+        value: "LobeHub"
+      - type: body.contains
+        value: "/manifest.webmanifest"
