@@ -1,0 +1,23 @@
+# probes/aphrodite-engine.yaml
+# Reference: https://github.com/aphrodite-engine/aphrodite-engine
+name: aphrodite-engine
+description: Aphrodite Engine - Large-scale LLM inference engine with OpenAI-compatible API
+category: self-hosted
+port_hint: 2242
+specificity: 95
+api_docs: https://github.com/aphrodite-engine/aphrodite-engine
+
+requests:
+  # Primary detection: /.well-known/serviceinfo returns Aphrodite Engine in software.name
+  - type: http
+    path: /.well-known/serviceinfo
+    method: GET
+    match:
+      - type: status
+        value: 200
+      - type: content-type
+        value: application/json
+      - type: body.contains
+        value: '"Aphrodite Engine"'
+      - type: body.contains
+        value: '"software"'
