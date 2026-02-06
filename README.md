@@ -1,4 +1,4 @@
-<img width="1200" height="628" alt="julius-social" src="https://github.com/user-attachments/assets/54c4b17d-4f85-40a3-8b03-ba0b9630fa82" />
+<img width="1200" height="628" alt="Julius - Open source LLM service fingerprinting tool for security professionals. Identify Ollama, vLLM, LiteLLM and 17+ AI services." src="https://github.com/user-attachments/assets/54c4b17d-4f85-40a3-8b03-ba0b9630fa82" />
 
 # Julius: LLM Service Fingerprinting Tool
 
