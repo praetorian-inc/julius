@@ -1,10 +1,10 @@
-<img width="1200" height="628" alt="julius-social" src="https://github.com/user-attachments/assets/54c4b17d-4f85-40a3-8b03-ba0b9630fa82" />
+<img width="1200" height="628" alt="Julius - Open source LLM service fingerprinting tool for security professionals. Identify Ollama, vLLM, LiteLLM and 17+ AI services." src="https://github.com/user-attachments/assets/54c4b17d-4f85-40a3-8b03-ba0b9630fa82" />
 
 # Julius: LLM Service Fingerprinting Tool
 
 > Identify Ollama, vLLM, LiteLLM, and 17+ AI services running on any endpoint in seconds.
 
-[![Go Version](https://img.shields.io/badge/go-1.24+-blue.svg)](https://golang.org/)
+[![Go Version](https://img.shields.io/badge/go-1.25+-blue.svg)](https://golang.org/)
 [![License](https://img.shields.io/github/license/praetorian-inc/julius)](LICENSE)
 [![Build Status](https://img.shields.io/github/actions/workflow/status/praetorian-inc/julius/ci.yml?branch=main)](https://github.com/praetorian-inc/julius/actions)
 [![Go Report Card](https://goreportcard.com/badge/github.com/praetorian-inc/julius)](https://goreportcard.com/report/github.com/praetorian-inc/julius)
@@ -82,7 +82,7 @@ julius probe https://target.example.com
 
 ## Supported LLM Services
 
-Julius identifies 17 LLM platforms across self-hosted, enterprise, proxy, and UI categories:
+Julius identifies 17 LLM platforms across self-hosted, gateway, RAG/orchestration, and cloud-managed categories:
 
 ### Self-Hosted LLM Servers
 
@@ -94,31 +94,31 @@ Julius identifies 17 LLM platforms across self-hosted, enterprise, proxy, and UI
 | [llama.cpp](https://github.com/ggerganov/llama.cpp) | 8080 | CPU-optimized LLM inference |
 | [Hugging Face TGI](https://huggingface.co/docs/text-generation-inference) | 3000 | Text Generation Inference server |
 | [LM Studio](https://lmstudio.ai) | 1234 | Desktop LLM application with API server |
+| [NVIDIA NIM](https://developer.nvidia.com/nim) | 8000 | NVIDIA's enterprise inference microservices |
+| [Gradio](https://gradio.app) | 7860 | ML model demo interfaces |
 
-### Proxy/Gateway Services
+### Gateway Services
 
 | Service | Default Port | Description |
 |---------|--------------|-------------|
 | [LiteLLM](https://github.com/BerriAI/litellm) | 4000 | Unified proxy for 100+ LLM providers |
 | [Kong AI Gateway](https://konghq.com) | 8000 | Enterprise API gateway with AI plugins |
 
-### UI/Frontend Applications
+### RAG & Orchestration Platforms
 
 | Service | Default Port | Description |
 |---------|--------------|-------------|
-| [Open WebUI](https://github.com/open-webui/open-webui) | 8080 | ChatGPT-style interface for local LLMs |
+| [Open WebUI](https://github.com/open-webui/open-webui) | 3000 | ChatGPT-style interface for local LLMs |
 | [LibreChat](https://librechat.ai) | 3080 | Multi-provider chat interface |
-| [Gradio](https://gradio.app) | 7860 | ML model demo interfaces |
 | [SillyTavern](https://sillytavernai.com) | 8000 | Character-based chat application |
 | [BetterChatGPT](https://github.com/ztjhz/BetterChatGPT) | 3000 | Enhanced ChatGPT interface |
+| [AnythingLLM](https://anythingllm.com) | 3001 | RAG-focused LLM platform |
 
-### Enterprise & RAG Platforms
+### Cloud-Managed Services
 
 | Service | Default Port | Description |
 |---------|--------------|-------------|
-| [NVIDIA NIM](https://developer.nvidia.com/nim) | 8000 | NVIDIA's enterprise inference microservices |
 | [Salesforce Einstein](https://www.salesforce.com/einstein/) | 443 | Salesforce AI platform |
-| [AnythingLLM](https://anythingllm.com) | 3001 | RAG-focused LLM platform |
 
 ### Generic Detection
 
