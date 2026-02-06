@@ -1,16 +1,49 @@
 # probes/anythingllm.yaml
+# Reference: https://docs.useanything.com/
+# GitHub: https://github.com/Mintplex-Labs/anything-llm
 name: anythingllm
-description: AnythingLLM - All-in-one AI assistant with RAG
+description: AnythingLLM - All-in-one AI application with RAG, agents, and multi-model support
 category: rag-orchestration
 port_hint: 3001
-api_docs: https://docs.anythingllm.com/
+specificity: 95
+api_docs: https://docs.useanything.com/
 
 requests:
+  # Primary detection: /api/setup-complete returns unique AnythingLLM config keys
   - type: http
-    path: /
+    path: /api/setup-complete
     method: GET
     match:
       - type: status
         value: 200
+      - type: content-type
+        value: application/json
       - type: body.contains
-        value: "AnythingLLM"
+        value: '"AnythingLLMOllamaModelPref"'
+
+  # Secondary detection: same endpoint with alternative unique marker
+  - type: http
+    path: /api/setup-complete
+    method: GET
+    match:
+      - type: status
+        value: 200
+      - type: content-type
+        value: application/json
+      - type: body.contains
+        value: '"PGVectorTableName":"anythingllm_vectors"'
+
+models:
+  path: /api/v1/openai/models
+  method: GET
+  headers:
+    Authorization: "Bearer $API_KEY"
+  extract: ".data[].id"
+
+augustus:
+  generator: openai
+  config_template:
+    endpoint: "$TARGET/api/v1/openai"
+    model: "$MODEL"
+    api_key: "$API_KEY"
+    timeout: 180

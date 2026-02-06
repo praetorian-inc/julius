@@ -1,0 +1,48 @@
+# probes/huggingface-chat-ui.yaml
+# Reference: https://github.com/huggingface/chat-ui
+name: huggingface-chat-ui
+description: HuggingFace Chat UI - Open source ChatGPT-style interface powering HuggingChat
+category: rag-orchestration
+port_hint: 3000
+specificity: 90
+api_docs: https://huggingface.co/docs/chat-ui/index
+
+requests:
+  # Primary: /api/v2/public-config is unique to Chat UI - returns config with PUBLIC_APP_NAME
+  - type: http
+    path: /api/v2/public-config
+    method: GET
+    match:
+      - type: status
+        value: 200
+      - type: content-type
+        value: application/json
+      - type: body.contains
+        value: '"PUBLIC_APP_NAME":"ChatUI"'
+      - type: body.contains
+        value: '"PUBLIC_APP_ASSETS"'
+
+  # Secondary: Default manifest path unique to chatui instances
+  - type: http
+    path: /chatui/manifest.json
+    method: GET
+    match:
+      - type: status
+        value: 200
+      - type: content-type
+        value: application/json
+      - type: body.contains
+        value: '"start_url": "/chat"'
+
+models:
+  path: /api/models
+  method: GET
+  extract: ".[].id"
+
+augustus:
+  generator: openai
+  config_template:
+    endpoint: "$TARGET"
+    model: "$MODEL"
+    api_key: "$API_KEY"
+    timeout: 180

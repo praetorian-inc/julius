@@ -1,0 +1,32 @@
+# probes/astrbot.yaml
+# Reference: https://docs.astrbot.app/
+name: astrbot
+description: AstrBot - Multi-platform LLM chatbot framework with dashboard and plugin system
+category: rag-orchestration
+port_hint: 6185
+specificity: 85
+api_docs: https://docs.astrbot.app/
+
+requests:
+  - type: http
+    path: /
+    method: GET
+    match:
+      - type: status
+        value: 200
+      - type: body.contains
+        value: "<title>AstrBot"
+      - type: body.contains
+        value: "AstrBot Dashboard"
+
+  - type: http
+    path: /
+    method: GET
+    match:
+      - type: status
+        value: 200
+      - type: body.contains
+        value: "AstrBot Soulter"
+      - type: header.contains
+        header: "server"
+        value: "hypercorn"

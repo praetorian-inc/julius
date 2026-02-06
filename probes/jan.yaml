@@ -1,0 +1,36 @@
+# probes/jan.yaml
+# Reference: https://www.jan.ai/docs/desktop
+name: jan
+description: Jan AI - local OpenAI-compatible API server for running LLMs on your machine
+category: self-hosted
+port_hint: 1337
+specificity: 85
+api_docs: https://www.jan.ai/docs/desktop
+
+requests:
+  # Primary fingerprint: OpenAPI spec with unique service title
+  - type: http
+    path: /openapi.json
+    method: GET
+    match:
+      - type: status
+        value: 200
+      - type: content-type
+        value: application/json
+      - type: body.contains
+        value: '"title": "Jan API Server Endpoints"'
+
+models:
+  path: /v1/models
+  method: GET
+  headers:
+    Authorization: "Bearer $API_KEY"
+  extract: ".data[].id"
+
+augustus:
+  generator: openai
+  config_template:
+    endpoint: "$TARGET"
+    model: "$MODEL"
+    api_key: "$API_KEY"
+    timeout: 180
