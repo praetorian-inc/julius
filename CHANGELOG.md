@@ -9,7 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
-- 13 new LLM service probes (32 total):
+- 15 new LLM service probes (32 total):
   - Self-hosted: Aphrodite Engine, FastChat Controller, GPT4All, Jan, KoboldCpp, TabbyAPI, Text Generation WebUI
   - Gateway: Envoy AI Gateway
   - RAG/Orchestration: AstrBot, Dify, Flowise, HuggingFace Chat UI, LobeHub, NextChat, Onyx
