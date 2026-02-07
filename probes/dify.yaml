@@ -1,0 +1,40 @@
+# probes/dify.yaml
+# Reference: https://docs.dify.ai
+name: dify
+description: Dify - Open-source LLM app development platform with workflow orchestration
+category: rag-orchestration
+port_hint: 80
+specificity: 90
+api_docs: https://docs.dify.ai
+
+requests:
+  # Request 1: /apps with status 200 (newer versions)
+  - type: http
+    path: /apps
+    method: GET
+    match:
+      - type: status
+        value: 200
+      - type: body.contains
+        value: "<title>Dify</title>"
+
+  # Request 2: /apps with status 500 (older/misconfigured versions)
+  - type: http
+    path: /apps
+    method: GET
+    match:
+      - type: status
+        value: 500
+      - type: body.contains
+        value: "<title>Dify</title>"
+
+  # Request 5: Root path with status 200
+  - type: http
+    path: /
+    method: GET
+    match:
+      - type: status
+        value: 200
+      - type: body.contains
+        value: "<title>Dify</title>"
+

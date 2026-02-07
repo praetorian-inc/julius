@@ -5,19 +5,21 @@ All notable changes to Julius will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [Unreleased]
+## [0.1.1] - 2025-02-09
 
 ### Added
 
-- SEO optimizations for repository discoverability
-- Improved documentation structure
+- 15 new LLM service probes (32 total):
+  - Self-hosted: Aphrodite Engine, FastChat Controller, GPT4All, Jan, KoboldCpp, TabbyAPI, Text Generation WebUI
+  - Gateway: Envoy AI Gateway
+  - RAG/Orchestration: AstrBot, Dify, Flowise, HuggingFace Chat UI, LobeHub, NextChat, Onyx
 
 ## [0.1.0] - 2025-01-24
 
 ### Added
 
 - Initial release of Julius LLM service fingerprinting tool
-- Support for 17 LLM platforms:
+- Support for 19 LLM platforms:
   - Self-hosted: Ollama, vLLM, LocalAI, llama.cpp, Hugging Face TGI, LM Studio
   - Proxy/Gateway: LiteLLM, Kong AI Gateway
   - UI/Frontend: Open WebUI, LibreChat, Gradio, SillyTavern, BetterChatGPT

@@ -1,0 +1,34 @@
+# probes/envoy-ai-gateway.yaml
+# Reference: https://aigateway.envoyproxy.io/docs/
+name: envoy-ai-gateway
+description: Envoy AI Gateway - unified access to Generative AI services built on Envoy Gateway
+category: gateway
+port_hint: 80
+specificity: 90
+api_docs: https://aigateway.envoyproxy.io/docs/
+
+requests:
+  # Primary fingerprint: /v1/models returns "owned_by": "Envoy AI Gateway"
+  - type: http
+    path: /v1/models
+    method: GET
+    match:
+      - type: status
+        value: 200
+      - type: content-type
+        value: application/json
+      - type: body.contains
+        value: '"owned_by":"Envoy AI Gateway"'
+
+models:
+  path: /v1/models
+  method: GET
+  extract: ".data[].id"
+
+augustus:
+  generator: openai
+  config_template:
+    endpoint: "$TARGET/v1"
+    model: "$MODEL"
+    api_key: "$API_KEY"
+    timeout: 180

@@ -1,0 +1,25 @@
+# probes/flowise.yaml
+# Reference: https://docs.flowiseai.com/api-reference/ping
+name: flowise
+description: Flowise - Open source low-code platform for building AI agents and LLM workflows visually
+category: rag-orchestration
+port_hint: 3000
+specificity: 90
+api_docs: https://docs.flowiseai.com/
+
+requests:
+  - type: http
+    path: /
+    method: GET
+    match:
+      - type: status
+        value: 200
+      - type: body.contains
+        value: "Flowise - Build AI Agents, Visually"
+      - type: body.contains
+        value: "FlowiseAI"
+
+models:
+  path: /api/v1/chatflows
+  method: GET
+  extract: ".[].name"

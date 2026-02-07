@@ -1,0 +1,37 @@
+# probes/tabbyapi.yaml
+# Reference: https://theroyallab.github.io/tabbyAPI
+name: tabbyapi
+description: TabbyAPI - FastAPI-based LLM server for ExLlama with OpenAI-compatible API
+category: self-hosted
+port_hint: 5000
+specificity: 100
+api_docs: https://theroyallab.github.io/tabbyAPI
+
+requests:
+  # Primary detection: /.well-known/serviceinfo returns TabbyAPI in software.name
+  # https://github.com/theroyallab/tabbyAPI/blob/main/endpoints/core/router.py
+  - type: http
+    path: /.well-known/serviceinfo
+    method: GET
+    match:
+      - type: status
+        value: 200
+      - type: content-type
+        value: application/json
+      - type: body.contains
+        value: '"TabbyAPI"'
+      - type: body.contains
+        value: '"software"'
+
+models:
+  path: /v1/models
+  method: GET
+  extract: ".data[].id"
+
+augustus:
+  generator: openai
+  config_template:
+    endpoint: "$TARGET"
+    model: "$MODEL"
+    api_key: "not-needed"
+    timeout: 180

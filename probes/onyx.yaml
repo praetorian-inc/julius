@@ -1,0 +1,44 @@
+# probes/onyx.yaml
+# Reference: https://docs.onyx.app
+name: onyx
+description: Onyx - Open source AI platform for enterprise search and chat with RAG capabilities
+category: rag-orchestration
+port_hint: 3000
+specificity: 90
+api_docs: https://docs.onyx.app
+
+requests:
+  # Request 1: OpenAPI spec with Onyx Backend title (most unique)
+  - type: http
+    path: /openapi.json
+    method: GET
+    match:
+      - type: status
+        value: 200
+      - type: content-type
+        value: application/json
+      - type: body.contains
+        value: '"title":"Onyx Backend"'
+
+  # Request 2: Swagger UI with Onyx Backend title
+  - type: http
+    path: /api/docs
+    method: GET
+    match:
+      - type: status
+        value: 200
+      - type: body.contains
+        value: "<title>Onyx Backend - Swagger UI</title>"
+
+models:
+  path: /api/admin/llm/provider
+  method: GET
+  extract: ".[] | .model_names[]"
+
+augustus:
+  generator: openai
+  config_template:
+    endpoint: "$TARGET/api"
+    model: "$MODEL"
+    api_key: "not-needed"
+    timeout: 180

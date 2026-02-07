@@ -1,0 +1,37 @@
+# probes/nextchat.yaml
+# Reference: https://github.com/ChatGPTNextWeb/NextChat
+name: nextchat
+description: NextChat (ChatGPT Next Web) - Self-hosted ChatGPT-style interface supporting multiple AI providers
+category: rag-orchestration
+port_hint: 3000
+specificity: 85
+api_docs: https://github.com/ChatGPTNextWeb/NextChat
+
+requests:
+  # Primary: Web manifest contains unique NextChat identifiers
+  - type: http
+    path: /site.webmanifest
+    method: GET
+    match:
+      - type: status
+        value: 200
+      - type: body.contains
+        value: '"name": "NextChat"'
+      - type: body.contains
+        value: '"short_name": "NextChat"'
+
+  # Secondary: Config endpoint with NextChat-specific fields
+  - type: http
+    path: /api/config
+    method: GET
+    match:
+      - type: status
+        value: 200
+      - type: content-type
+        value: application/json
+      - type: body.contains
+        value: '"needCode"'
+      - type: body.contains
+        value: '"hideUserApiKey"'
+      - type: body.contains
+        value: '"disableGPT4"'

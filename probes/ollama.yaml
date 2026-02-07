@@ -4,7 +4,7 @@ name: ollama
 description: Ollama local LLM server
 category: self-hosted
 port_hint: 11434
-specificity: 100
+specificity: 80
 api_docs: https://github.com/ollama/ollama/blob/main/docs/api.md
 
 requests:

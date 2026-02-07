@@ -1,0 +1,41 @@
+# probes/fastchat.yaml
+# Reference: https://github.com/lm-sys/FastChat/blob/main/docs/openai_api.md
+name: fastchat-controller
+description: FastChat - open platform for training, serving, and evaluating LLM chatbots (controller component)
+category: self-hosted
+port_hint: 21001
+specificity: 90
+require: all
+api_docs: https://github.com/lm-sys/FastChat/blob/main/docs/openai_api.md
+
+requests:
+  # Primary fingerprint: /get_worker_address
+  - type: http
+    path: /get_worker_address
+    method: POST
+    headers:
+      Content-Type: application/json
+    body: '{"model":"test"}'
+    match:
+      - type: status
+        value: 200
+      - type: content-type
+        value: application/json
+      - type: header.contains
+        header: Server
+        value: "uvicorn"
+      - type: body.contains
+        value: '"address"'
+
+models:
+  path: /list_models
+  method: POST
+  extract: ".models[]"
+
+augustus:
+  generator: openai
+  config_template:
+    endpoint: "$TARGET"
+    model: "$MODEL"
+    api_key: "not-needed"
+    timeout: 180

@@ -1,0 +1,32 @@
+# probes/text-generation-webui.yaml
+# Reference: https://github.com/oobabooga/text-generation-webui/wiki/12-%E2%80%90-OpenAI-API
+name: text-generation-webui
+description: Oobabooga text-generation-webui - local LLM interface with OpenAI-compatible API
+category: self-hosted
+port_hint: 5000
+specificity: 90
+api_docs: https://github.com/oobabooga/text-generation-webui/wiki/12-%E2%80%90-OpenAI-API
+
+requests:
+  # Secondary fingerprint: FastAPI docs endpoint with oobabooga-specific internal endpoints
+  - type: http
+    path: /openapi.json
+    method: GET
+    match:
+      - type: status
+        value: 200
+      - type: body.contains
+        value: "text-generation-webui/user_data/instruction-templates"
+
+models:
+  path: /v1/models
+  method: GET
+  extract: ".data[].id"
+
+augustus:
+  generator: openai
+  config_template:
+    endpoint: "$TARGET"
+    model: "$MODEL"
+    api_key: "not-needed"
+    timeout: 180
