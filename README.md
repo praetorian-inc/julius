@@ -1,10 +1,10 @@
-<img width="1200" height="628" alt="julius-social" src="https://github.com/user-attachments/assets/54c4b17d-4f85-40a3-8b03-ba0b9630fa82" />
+<img width="1200" height="628" alt="Julius - Open source LLM service fingerprinting tool for security professionals. Identify Ollama, vLLM, LiteLLM and 17+ AI services." src="https://github.com/user-attachments/assets/54c4b17d-4f85-40a3-8b03-ba0b9630fa82" />
 
 # Julius: LLM Service Fingerprinting Tool
 
 > Identify Ollama, vLLM, LiteLLM, and 30+ AI services running on any endpoint in seconds.
 
-[![Go Version](https://img.shields.io/badge/go-1.24+-blue.svg)](https://golang.org/)
+[![Go Version](https://img.shields.io/badge/go-1.25+-blue.svg)](https://golang.org/)
 [![License](https://img.shields.io/github/license/praetorian-inc/julius)](LICENSE)
 [![Build Status](https://img.shields.io/github/actions/workflow/status/praetorian-inc/julius/ci.yml?branch=main)](https://github.com/praetorian-inc/julius/actions)
 [![Go Report Card](https://goreportcard.com/badge/github.com/praetorian-inc/julius)](https://goreportcard.com/report/github.com/praetorian-inc/julius)

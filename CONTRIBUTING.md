@@ -40,18 +40,20 @@ name: ollama
 description: Ollama local LLM server
 category: self-hosted
 port_hint: 11434
+specificity: 100
 api_docs: https://github.com/ollama/ollama/blob/main/docs/api.md
 
-probes:
+requests:
   - type: http
     path: /api/tags
     method: GET
     match:
       - type: status
         value: 200
+      - type: content-type
+        value: application/json
       - type: body.contains
-        value: '"models":'
-    confidence: high
+        value: '"models"'
 
   - type: http
     path: /
@@ -61,7 +63,6 @@ probes:
         value: 200
       - type: body.contains
         value: "Ollama is running"
-    confidence: medium
 
 models:
   path: /api/tags
@@ -75,23 +76,24 @@ models:
 |-------|----------|-------------|
 | `name` | Yes | Unique identifier matching the filename (without `.yaml`) |
 | `description` | Yes | Human-readable description of the LLM service |
-| `category` | Yes | Service category: `self-hosted`, `proxy`, `ui`, `enterprise`, `rag` |
+| `category` | Yes | Service category: `self-hosted`, `gateway`, `rag-orchestration`, `cloud-managed`, `generic` |
 | `port_hint` | No | Default port for the service (helps prioritize probes) |
+| `specificity` | No | Match specificity score from 1-100 (100=exact match, 50=default, 1=generic fallback) |
 | `api_docs` | No | Link to the service's API documentation |
-| `probes` | Yes | List of HTTP probe definitions |
+| `requests` | Yes | List of HTTP request definitions |
 | `models` | No | Configuration for extracting available model names |
 
-### Confidence Levels
+### Specificity Scoring
 
-Choose confidence based on how unique the signature is:
+Choose specificity based on how unique the signature is (1-100 scale):
 
-| Level | When to Use |
-|-------|-------------|
-| `high` | Signature is unique to this service (e.g., specific header, unique response body) |
-| `medium` | Signature is fairly specific but could match similar services |
-| `low` | Signature is generic (e.g., just a 200 status code) |
+| Score Range | When to Use |
+|-------------|-------------|
+| `90-100` | Signature is unique to this service (e.g., service name in response body, unique endpoint) |
+| `50-89` | Signature is fairly specific but could match similar services |
+| `1-49` | Signature is generic (e.g., just a 200 status code, common API patterns) |
 
-**Rule of thumb**: If another LLM service could reasonably match the same rules, use `medium` or lower.
+**Rule of thumb**: If another LLM service could reasonably match the same rules, use a lower specificity score. Higher scores take precedence when multiple probes match.
 
 ### Validating Your Probe
 
@@ -112,7 +114,7 @@ julius probe -v https://different-llm-service:port
 
 1. **Too generic rules**: Using only `status: 200` matches too many services
 2. **Missing negation**: Not using `not: true` when needed to exclude false positives
-3. **Wrong confidence**: Setting `high` confidence for generic signatures
+3. **Wrong specificity**: Setting high specificity (90-100) for generic signatures
 4. **Untested probes**: Not validating against live services
 
 ## Probe Reference
@@ -123,24 +125,24 @@ julius probe -v https://different-llm-service:port
 |-------|----------|---------|-------------|
 | `name` | Yes | - | Unique identifier, should match filename |
 | `description` | Yes | - | Human-readable description |
-| `category` | Yes | - | Service category |
+| `category` | Yes | - | Service category: `self-hosted`, `gateway`, `rag-orchestration`, `cloud-managed`, `generic` |
 | `port_hint` | No | - | Default port for the service |
+| `specificity` | No | 50 | Match specificity score (1-100, higher = more specific) |
 | `api_docs` | No | - | Link to API documentation |
-| `probes` | Yes | - | List of probe definitions |
+| `requests` | Yes | - | List of HTTP request definitions |
 | `models` | No | - | Model extraction configuration |
 | `require` | No | `any` | Match mode: `any` (first match wins) or `all` (all must match) |
 
-### Probe Definition Fields
+### Request Definition Fields
 
 | Field | Required | Default | Description |
 |-------|----------|---------|-------------|
-| `type` | No | `http` | Probe type (currently only `http` supported) |
+| `type` | No | `http` | Request type (currently only `http` supported) |
 | `path` | Yes | - | HTTP path to request |
 | `method` | No | `GET` | HTTP method |
 | `headers` | No | - | Request headers as key-value pairs |
 | `body` | No | - | Request body (for POST/PUT) |
 | `match` | Yes | - | List of match rules (all must match) |
-| `confidence` | No | `medium` | Match confidence level |
 
 ### Match Rules
 
@@ -333,7 +335,7 @@ For new probes, test manually:
 
 - Use lowercase names with hyphens (e.g., `huggingface-tgi`)
 - Include `api_docs` link when available
-- Order probes by confidence (highest first)
+- Order requests by specificity (highest first)
 - Use descriptive string values in match rules
 
 ## Submitting Changes
