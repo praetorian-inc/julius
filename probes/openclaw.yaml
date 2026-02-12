@@ -1,0 +1,51 @@
+# probes/openclaw.yaml
+# Reference: https://docs.openclaw.ai/start/getting-started
+name: openclaw
+description: OpenClaw - AI agent gateway and control plane (formerly Clawdbot/Moltbot)
+category: rag-orchestration
+port_hint: 18789
+specificity: 90
+api_docs: https://docs.openclaw.ai/
+
+requests:
+  # Current branding: OpenClaw Control
+  - type: http
+    path: /
+    method: GET
+    match:
+      - type: status
+        value: 200
+      - type: body.contains
+        value: "<title>OpenClaw Control</title>"
+      - type: body.contains
+        value: "<openclaw-app>"
+      - type: body.contains
+        value: "window.__OPENCLAW_CONTROL_UI_BASE_PATH__"
+
+  # Legacy branding: Moltbot Control
+  - type: http
+    path: /
+    method: GET
+    match:
+      - type: status
+        value: 200
+      - type: body.contains
+        value: "<title>Moltbot Control</title>"
+      - type: body.contains
+        value: "<moltbot-app>"
+      - type: body.contains
+        value: "window.__CLAWDBOT_CONTROL_UI_BASE_PATH__"
+
+  # Original branding: Clawdbot Control
+  - type: http
+    path: /
+    method: GET
+    match:
+      - type: status
+        value: 200
+      - type: body.contains
+        value: "<title>Clawdbot Control</title>"
+      - type: body.contains
+        value: "<clawdbot-app>"
+      - type: body.contains
+        value: "window.__CLAWDBOT_CONTROL_UI_BASE_PATH__"
