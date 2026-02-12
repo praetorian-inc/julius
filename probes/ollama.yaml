@@ -4,10 +4,22 @@ name: ollama
 description: Ollama local LLM server
 category: self-hosted
 port_hint: 11434
-specificity: 80
+specificity: 100
 api_docs: https://github.com/ollama/ollama/blob/main/docs/api.md
 
 requests:
+  # Primary: Definitive "Ollama is running" message (highest confidence)
+  - type: http
+    path: /
+    method: GET
+    match:
+      - type: status
+        value: 200
+      - type: body.contains
+        value: "Ollama is running"
+
+  # Secondary: /api/tags with Ollama-specific family markers
+  # Note: KoboldCpp also exposes /api/tags but with "family": "koboldcpp"
   - type: http
     path: /api/tags
     method: GET
@@ -19,18 +31,11 @@ requests:
       - type: body.contains
         value: '"models"'
       - type: body.contains
-        value: '"name"'
+        value: '"family":'
+      # Exclude KoboldCpp which mimics Ollama's /api/tags endpoint
       - type: body.contains
-        value: '"model"'
-
-  - type: http
-    path: /
-    method: GET
-    match:
-      - type: status
-        value: 200
-      - type: body.contains
-        value: "Ollama is running"
+        value: '"family": "koboldcpp"'
+        not: true
 
 models:
   path: /api/tags
