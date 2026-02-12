@@ -1,0 +1,37 @@
+name: kong-proxy
+description: Kong API Gateway with exposed Admin API
+category: gateway
+port_hint: 8001
+specificity: 80
+api_docs: https://docs.konghq.com/gateway/
+
+requests:
+  # Admin API root - lists available endpoints
+  - type: http
+    path: /
+    method: GET
+    match:
+      - type: status
+        value: 200
+      - type: header.contains
+        header: Server
+        value: "kong"
+      - type: body.contains
+        value: '"plugins"'
+      - type: body.contains
+        value: '"services"'
+
+  # Admin API /status endpoint
+  - type: http
+    path: /status
+    method: GET
+    match:
+      - type: status
+        value: 200
+      - type: header.contains
+        header: Server
+        value: "kong"
+      - type: body.contains
+        value: '"server"'
+      - type: body.contains
+        value: '"database"'
