@@ -46,7 +46,7 @@ You've discovered an open port during a security assessment. Is it Ollama on por
 
 | Feature | Description |
 |---------|-------------|
-| **32 LLM Services** | Detects Ollama, vLLM, LiteLLM, LocalAI, Hugging Face TGI, and 27 more |
+| **33 LLM Services** | Detects Ollama, vLLM, LiteLLM, LocalAI, Hugging Face TGI, and 28 more |
 | **Fast Scanning** | Concurrent probing with intelligent port-based prioritization |
 | **Model Discovery** | Extracts available models from identified endpoints |
 | **Specificity Scoring** | 1-100 scoring ranks results by most specific match (e.g., LiteLLM over generic OpenAI-compatible) |
@@ -82,7 +82,7 @@ julius probe https://target.example.com
 
 ## Supported LLM Services
 
-Julius identifies 32 LLM platforms across self-hosted, gateway, RAG/orchestration, and cloud-managed categories:
+Julius identifies 33 LLM platforms across self-hosted, gateway, RAG/orchestration, and cloud-managed categories:
 
 ### Self-Hosted LLM Servers
 
@@ -126,6 +126,7 @@ Julius identifies 32 LLM platforms across self-hosted, gateway, RAG/orchestratio
 | [LobeHub](https://lobehub.com) | 3210 | Multi-agent AI collaboration platform with chat UI |
 | [NextChat](https://github.com/ChatGPTNextWeb/ChatGPT-Next-Web) | 3000 | Self-hosted ChatGPT-style interface supporting multiple AI providers |
 | [Onyx](https://github.com/onyx-dot-app/onyx) | 3000 | Open source AI platform for enterprise search and chat with RAG |
+| [OpenClaw](https://github.com/openclaw/openclaw) | 18789 | AI agent gateway and control plane (formerly Clawdbot/Moltbot) |
 | [Open WebUI](https://github.com/open-webui/open-webui) | 3000 | ChatGPT-style interface for local LLMs |
 | [SillyTavern](https://sillytavernai.com) | 8000 | Character-based chat application |
 
