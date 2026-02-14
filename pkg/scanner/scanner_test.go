@@ -19,7 +19,7 @@ import (
 
 func TestNewScanner(t *testing.T) {
 	timeout := 5 * time.Second
-	s := NewScanner(timeout, 10)
+	s := NewScanner(timeout, 10, 10*1024*1024, nil)
 
 	require.NotNil(t, s, "NewScanner should not return nil")
 	assert.NotNil(t, s.client, "Scanner.client should not be nil")
@@ -28,10 +28,10 @@ func TestNewScanner(t *testing.T) {
 }
 
 func TestNewScanner_DefaultConcurrency(t *testing.T) {
-	s := NewScanner(5*time.Second, 0)
+	s := NewScanner(5*time.Second, 0, 10*1024*1024, nil)
 	assert.Equal(t, 10, s.concurrency, "should default to 10 concurrency")
 
-	s2 := NewScanner(5*time.Second, -1)
+	s2 := NewScanner(5*time.Second, -1, 10*1024*1024, nil)
 	assert.Equal(t, 10, s2.concurrency, "should default to 10 for negative values")
 }
 
@@ -44,7 +44,7 @@ func TestDoRequest_Match(t *testing.T) {
 	}))
 	defer server.Close()
 
-	s := NewScanner(5*time.Second, 10)
+	s := NewScanner(5*time.Second, 10, 10*1024*1024, nil)
 	req := types.Request{
 		Type:   "http",
 		Path:   "/",
@@ -68,7 +68,7 @@ func TestDoRequest_NoMatch(t *testing.T) {
 	}))
 	defer server.Close()
 
-	s := NewScanner(5*time.Second, 10)
+	s := NewScanner(5*time.Second, 10, 10*1024*1024, nil)
 	req := types.Request{
 		Type:   "http",
 		Path:   "/",
@@ -92,7 +92,7 @@ func TestScan_ReturnsAllMatches(t *testing.T) {
 	}))
 	defer server.Close()
 
-	s := NewScanner(5*time.Second, 10)
+	s := NewScanner(5*time.Second, 10, 10*1024*1024, nil)
 	probes := []*types.Probe{
 		{
 			Name:        "specific-service",
@@ -141,7 +141,7 @@ func TestScan_SortsBySpecificity(t *testing.T) {
 	}))
 	defer server.Close()
 
-	s := NewScanner(5*time.Second, 10)
+	s := NewScanner(5*time.Second, 10, 10*1024*1024, nil)
 	probes := []*types.Probe{
 		{Name: "low", Specificity: 25, Requests: []types.Request{{Path: "/", RawMatch: []rules.RawRule{{Type: "status", Value: 200}}}}},
 		{Name: "high", Specificity: 100, Requests: []types.Request{{Path: "/", RawMatch: []rules.RawRule{{Type: "status", Value: 200}}}}},
@@ -166,7 +166,7 @@ func TestScan_NoMatch(t *testing.T) {
 	}))
 	defer server.Close()
 
-	s := NewScanner(5*time.Second, 10)
+	s := NewScanner(5*time.Second, 10, 10*1024*1024, nil)
 	probes := []*types.Probe{
 		{
 			Name:     "OpenAI",
@@ -202,7 +202,7 @@ func TestScanAll(t *testing.T) {
 	}))
 	defer server2.Close()
 
-	s := NewScanner(5*time.Second, 10)
+	s := NewScanner(5*time.Second, 10, 10*1024*1024, nil)
 	targets := []string{server1.URL, server2.URL}
 	probes := []*types.Probe{
 		{
@@ -252,7 +252,7 @@ func TestScanAll_SomeNoMatch(t *testing.T) {
 	}))
 	defer server2.Close()
 
-	s := NewScanner(5*time.Second, 10)
+	s := NewScanner(5*time.Second, 10, 10*1024*1024, nil)
 	targets := []string{server1.URL, server2.URL}
 	probes := []*types.Probe{
 		{
@@ -290,7 +290,7 @@ func TestDoRequest_WithBodyAndHeaders(t *testing.T) {
 	}))
 	defer server.Close()
 
-	s := NewScanner(5*time.Second, 10)
+	s := NewScanner(5*time.Second, 10, 10*1024*1024, nil)
 	req := types.Request{
 		Path:   "/test",
 		Method: "POST",
@@ -355,7 +355,7 @@ func TestScanWithModels(t *testing.T) {
 			}))
 			defer server.Close()
 
-			scanner := NewScanner(5*time.Second, 10)
+			scanner := NewScanner(5*time.Second, 10, 10*1024*1024, nil)
 			probes := []*types.Probe{
 				{
 					Name:     "ollama",
@@ -400,7 +400,7 @@ func TestScanWithoutModelsConfig(t *testing.T) {
 	}))
 	defer server.Close()
 
-	scanner := NewScanner(5*time.Second, 10)
+	scanner := NewScanner(5*time.Second, 10, 10*1024*1024, nil)
 	probes := []*types.Probe{
 		{
 			Name:     "test-service",
@@ -487,7 +487,7 @@ func TestFetchModels(t *testing.T) {
 			}))
 			defer server.Close()
 
-			scanner := NewScanner(5*time.Second, 10)
+			scanner := NewScanner(5*time.Second, 10, 10*1024*1024, nil)
 			models, err := scanner.fetchModels(server.URL, tt.config)
 
 			if tt.wantErr {
@@ -510,7 +510,7 @@ func TestFetchModelsWithHeaders(t *testing.T) {
 	}))
 	defer server.Close()
 
-	scanner := NewScanner(5*time.Second, 10)
+	scanner := NewScanner(5*time.Second, 10, 10*1024*1024, nil)
 	cfg := &types.ModelsConfig{
 		Path:    "/v1/models",
 		Method:  "GET",
@@ -767,7 +767,7 @@ func TestSingleflightDeduplication(t *testing.T) {
 	}))
 	defer server.Close()
 
-	s := NewScanner(5*time.Second, 10)
+	s := NewScanner(5*time.Second, 10, 10*1024*1024, nil)
 
 	// Simulate multiple goroutines hitting the same endpoint concurrently
 	var wg sync.WaitGroup
@@ -793,7 +793,7 @@ func TestCachePersistsAcrossCalls(t *testing.T) {
 	}))
 	defer server.Close()
 
-	s := NewScanner(5*time.Second, 10)
+	s := NewScanner(5*time.Second, 10, 10*1024*1024, nil)
 
 	// First call
 	s.doHTTPRequest(server.URL, "GET", "/v1/models", "", nil)
@@ -813,7 +813,7 @@ func TestDifferentURLsNotDeduplicated(t *testing.T) {
 	}))
 	defer server.Close()
 
-	s := NewScanner(5*time.Second, 10)
+	s := NewScanner(5*time.Second, 10, 10*1024*1024, nil)
 
 	// Different paths = different cache keys
 	s.doHTTPRequest(server.URL, "GET", "/v1/models", "", nil)
@@ -850,7 +850,7 @@ func TestConcurrentProbeExecution(t *testing.T) {
 		}
 	}
 
-	s := NewScanner(5*time.Second, 10)
+	s := NewScanner(5*time.Second, 10, 10*1024*1024, nil)
 	start := time.Now()
 	s.Scan(server.URL, probes, false)
 	elapsed := time.Since(start)
@@ -893,7 +893,7 @@ func TestConcurrencyLimit(t *testing.T) {
 	}
 
 	// Set concurrency limit to 5
-	s := NewScanner(5*time.Second, 5)
+	s := NewScanner(5*time.Second, 5, 10*1024*1024, nil)
 	s.Scan(server.URL, probes, false)
 
 	assert.LessOrEqual(t, maxConcurrent.Load(), int32(5), "should not exceed concurrency limit")
@@ -909,7 +909,7 @@ func TestCacheKeyIncludesMethod(t *testing.T) {
 	}))
 	defer server.Close()
 
-	s := NewScanner(5*time.Second, 10)
+	s := NewScanner(5*time.Second, 10, 10*1024*1024, nil)
 
 	// Same URL, different methods = different cache keys
 	s.doHTTPRequest(server.URL, "GET", "/v1/models", "", nil)
@@ -928,7 +928,7 @@ func TestCacheKeyIncludesBody(t *testing.T) {
 	}))
 	defer server.Close()
 
-	s := NewScanner(5*time.Second, 10)
+	s := NewScanner(5*time.Second, 10, 10*1024*1024, nil)
 
 	// Same URL and method, different body = different cache keys
 	s.doHTTPRequest(server.URL, "POST", "/v1/chat", `{"a":1}`, nil)
@@ -957,7 +957,7 @@ func TestScan_RequireAll_AllMatch(t *testing.T) {
 	}))
 	defer server.Close()
 
-	s := NewScanner(5*time.Second, 10)
+	s := NewScanner(5*time.Second, 10, 10*1024*1024, nil)
 	probes := []*types.Probe{
 		{
 			Name:    "test-all",
@@ -999,7 +999,7 @@ func TestScan_RequireAll_SomeFail(t *testing.T) {
 	}))
 	defer server.Close()
 
-	s := NewScanner(5*time.Second, 10)
+	s := NewScanner(5*time.Second, 10, 10*1024*1024, nil)
 	probes := []*types.Probe{
 		{
 			Name:    "test-all",
@@ -1038,7 +1038,7 @@ func TestScan_RequireAny_Default(t *testing.T) {
 	}))
 	defer server.Close()
 
-	s := NewScanner(5*time.Second, 10)
+	s := NewScanner(5*time.Second, 10, 10*1024*1024, nil)
 	probes := []*types.Probe{
 		{
 			Name: "test-any", // No require field = default "any"
@@ -1070,7 +1070,7 @@ func TestScan_RequireAll_EmptyRequests(t *testing.T) {
 	}))
 	defer server.Close()
 
-	s := NewScanner(5*time.Second, 10)
+	s := NewScanner(5*time.Second, 10, 10*1024*1024, nil)
 	probes := []*types.Probe{
 		{
 			Name:     "test-empty",

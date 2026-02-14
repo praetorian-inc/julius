@@ -1,16 +1,27 @@
 package runner
 
 import (
+	"crypto/tls"
+	"crypto/x509"
+	"fmt"
+	"os"
+
+	"github.com/praetorian-inc/julius/pkg/probe"
+	"github.com/praetorian-inc/julius/pkg/types"
+	"github.com/praetorian-inc/julius/probes"
 	"github.com/spf13/cobra"
 )
 
 var (
-	outputFormat string
-	probesDir    string
-	timeout      int
-	concurrency  int
-	verbose      bool
-	quiet        bool
+	outputFormat       string
+	probesDir          string
+	timeout            int
+	concurrency        int
+	verbose            bool
+	quiet              bool
+	maxResponseSize    int64
+	insecureSkipVerify bool
+	caCertFile         string
 )
 
 var rootCmd = &cobra.Command{
@@ -27,8 +38,42 @@ func init() {
 	rootCmd.PersistentFlags().IntVarP(&concurrency, "concurrency", "c", 10, "Maximum concurrent probe requests per target")
 	rootCmd.PersistentFlags().BoolVarP(&verbose, "verbose", "v", false, "Verbose output")
 	rootCmd.PersistentFlags().BoolVarP(&quiet, "quiet", "q", false, "Suppress non-match output")
+	rootCmd.PersistentFlags().Int64Var(&maxResponseSize, "max-response-size", 10*1024*1024, "Maximum response body size in bytes (default 10MB)")
+	rootCmd.PersistentFlags().BoolVar(&insecureSkipVerify, "insecure", false, "Skip TLS certificate verification")
+	rootCmd.PersistentFlags().StringVar(&caCertFile, "ca-cert", "", "Path to custom CA certificate file")
 }
 
 func Run() error {
 	return rootCmd.Execute()
+}
+
+// loadProbes loads probe definitions from the configured directory or embedded filesystem
+func loadProbes() ([]*types.Probe, error) {
+	if probesDir != "" {
+		return probe.LoadProbesFromDir(probesDir)
+	}
+	return probe.LoadProbesFromFS(probes.EmbeddedProbes, ".")
+}
+
+// buildTLSConfig constructs a TLS configuration based on the configured flags
+func buildTLSConfig() (*tls.Config, error) {
+	tlsConfig := &tls.Config{}
+
+	if insecureSkipVerify {
+		tlsConfig.InsecureSkipVerify = true
+	}
+
+	if caCertFile != "" {
+		caCert, err := os.ReadFile(caCertFile)
+		if err != nil {
+			return nil, fmt.Errorf("reading CA cert: %w", err)
+		}
+		caCertPool := x509.NewCertPool()
+		if !caCertPool.AppendCertsFromPEM(caCert) {
+			return nil, fmt.Errorf("failed to parse CA cert")
+		}
+		tlsConfig.RootCAs = caCertPool
+	}
+
+	return tlsConfig, nil
 }

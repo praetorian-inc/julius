@@ -58,7 +58,7 @@ func (s *Scanner) cachedRequest(req *http.Request, body []byte) (*http.Response,
 			return cached, nil
 		}
 
-		respBody, err := io.ReadAll(resp.Body)
+		respBody, err := io.ReadAll(io.LimitReader(resp.Body, s.maxResponseSize))
 		resp.Body.Close()
 		if err != nil {
 			slog.Error("Reading response body", "method", req.Method, "url", req.URL.String(), "err", err)

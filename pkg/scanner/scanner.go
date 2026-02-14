@@ -2,6 +2,7 @@ package scanner
 
 import (
 	"context"
+	"crypto/tls"
 	"fmt"
 	"io"
 	"net/http"
@@ -18,21 +19,35 @@ import (
 )
 
 type Scanner struct {
-	client      *http.Client
-	cache       sync.Map
-	inflight    singleflight.Group
-	concurrency int
+	client          *http.Client
+	cache           sync.Map
+	inflight        singleflight.Group
+	concurrency     int
+	maxResponseSize int64
 }
 
-func NewScanner(timeout time.Duration, concurrency int) *Scanner {
+func NewScanner(timeout time.Duration, concurrency int, maxResponseSize int64, tlsConfig *tls.Config) *Scanner {
 	if concurrency <= 0 {
 		concurrency = 10
 	}
+	if maxResponseSize <= 0 {
+		maxResponseSize = 10 * 1024 * 1024 // Default 10MB
+	}
+
+	client := &http.Client{
+		Timeout: timeout,
+	}
+
+	if tlsConfig != nil {
+		client.Transport = &http.Transport{
+			TLSClientConfig: tlsConfig,
+		}
+	}
+
 	return &Scanner{
-		client: &http.Client{
-			Timeout: timeout,
-		},
-		concurrency: concurrency,
+		client:          client,
+		concurrency:     concurrency,
+		maxResponseSize: maxResponseSize,
 	}
 }
 

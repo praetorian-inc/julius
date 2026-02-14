@@ -5,9 +5,6 @@ import (
 	"os"
 
 	"github.com/olekukonko/tablewriter"
-	"github.com/praetorian-inc/julius/pkg/probe"
-	"github.com/praetorian-inc/julius/pkg/types"
-	"github.com/praetorian-inc/julius/probes"
 	"github.com/spf13/cobra"
 )
 
@@ -20,19 +17,9 @@ Shows the name, description, port hint, and number of requests for each definiti
 }
 
 func runList(cmd *cobra.Command, args []string) error {
-	var loadedProbes []*types.Probe
-	var err error
-
-	if probesDir != "" {
-		loadedProbes, err = probe.LoadProbesFromDir(probesDir)
-		if err != nil {
-			return fmt.Errorf("loading probes from %s: %w", probesDir, err)
-		}
-	} else {
-		loadedProbes, err = probe.LoadProbesFromFS(probes.EmbeddedProbes, ".")
-		if err != nil {
-			return fmt.Errorf("loading embedded probes: %w", err)
-		}
+	loadedProbes, err := loadProbes()
+	if err != nil {
+		return fmt.Errorf("loading probes: %w", err)
 	}
 
 	if len(loadedProbes) == 0 {
