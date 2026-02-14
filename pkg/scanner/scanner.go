@@ -18,6 +18,14 @@ import (
 	"github.com/praetorian-inc/julius/pkg/types"
 )
 
+const (
+	// DefaultConcurrency is the default number of concurrent probe requests per target.
+	DefaultConcurrency = 10
+
+	// DefaultMaxResponseSize is the default maximum response body size in bytes (10MB).
+	DefaultMaxResponseSize int64 = 10 * 1024 * 1024
+)
+
 type Scanner struct {
 	client          *http.Client
 	cache           sync.Map
@@ -28,10 +36,10 @@ type Scanner struct {
 
 func NewScanner(timeout time.Duration, concurrency int, maxResponseSize int64, tlsConfig *tls.Config) *Scanner {
 	if concurrency <= 0 {
-		concurrency = 10
+		concurrency = DefaultConcurrency
 	}
 	if maxResponseSize <= 0 {
-		maxResponseSize = 10 * 1024 * 1024 // Default 10MB
+		maxResponseSize = DefaultMaxResponseSize
 	}
 
 	client := &http.Client{
@@ -39,9 +47,9 @@ func NewScanner(timeout time.Duration, concurrency int, maxResponseSize int64, t
 	}
 
 	if tlsConfig != nil {
-		client.Transport = &http.Transport{
-			TLSClientConfig: tlsConfig,
-		}
+		transport := http.DefaultTransport.(*http.Transport).Clone()
+		transport.TLSClientConfig = tlsConfig
+		client.Transport = transport
 	}
 
 	return &Scanner{

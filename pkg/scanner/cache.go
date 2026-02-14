@@ -67,6 +67,10 @@ func (s *Scanner) cachedRequest(req *http.Request, body []byte) (*http.Response,
 			return cached, nil
 		}
 
+		if int64(len(respBody)) == s.maxResponseSize {
+			slog.Warn("Response body truncated at size limit", "method", req.Method, "url", req.URL.String(), "limit", s.maxResponseSize)
+		}
+
 		resp.Body = nil // Clear to make it obvious this shouldn't be read
 
 		cached := &CachedResponse{Response: resp, Body: respBody}

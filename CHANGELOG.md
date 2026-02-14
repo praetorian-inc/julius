@@ -19,7 +19,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   s := scanner.NewScanner(timeout, concurrency)
 
   // After
-  s := scanner.NewScanner(timeout, concurrency, 10*1024*1024, nil)
+  s := scanner.NewScanner(timeout, concurrency, scanner.DefaultMaxResponseSize, nil)
   ```
 
 ### Added
