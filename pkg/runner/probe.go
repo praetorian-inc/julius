@@ -10,7 +10,6 @@ import (
 	"github.com/praetorian-inc/julius/pkg/probe"
 	"github.com/praetorian-inc/julius/pkg/scanner"
 	"github.com/praetorian-inc/julius/pkg/types"
-	"github.com/praetorian-inc/julius/probes"
 	"github.com/spf13/cobra"
 )
 
@@ -50,28 +49,29 @@ func runProbe(cmd *cobra.Command, args []string) error {
 		return fmt.Errorf("no targets specified. Use --help for usage information")
 	}
 
-	var loadedProbes []*types.Probe
-	if probesDir != "" {
-		loadedProbes, err = probe.LoadProbesFromDir(probesDir)
-		if err != nil {
-			return fmt.Errorf("loading probes from %s: %w", probesDir, err)
-		}
-	} else {
-		loadedProbes, err = probe.LoadProbesFromFS(probes.EmbeddedProbes, ".")
-		if err != nil {
-			return fmt.Errorf("loading embedded probes: %w", err)
-		}
+	loadedProbes, err := loadProbes()
+	if err != nil {
+		return fmt.Errorf("loading probes: %w", err)
 	}
 
 	if len(loadedProbes) == 0 {
 		return fmt.Errorf("no probe definitions found")
 	}
 
+	tlsConfig, err := buildTLSConfig()
+	if err != nil {
+		return fmt.Errorf("building TLS config: %w", err)
+	}
+
 	timeoutDuration := time.Duration(timeout) * time.Second
-	s := scanner.NewScanner(timeoutDuration, concurrency)
+	s := scanner.NewScanner(
+		scanner.WithTimeout(timeoutDuration),
+		scanner.WithConcurrency(concurrency),
+		scanner.WithMaxResponseSize(maxResponseSize),
+		scanner.WithTLSConfig(tlsConfig),
+	)
 
 	var allResults []types.Result
-	matchedTargets := make(map[string]bool)
 
 	for _, target := range targets {
 		targetPort := scanner.ExtractPort(target)
@@ -80,7 +80,6 @@ func runProbe(cmd *cobra.Command, args []string) error {
 		results := s.Scan(target, sortedProbes, augustusFlag)
 		if len(results) > 0 {
 			allResults = append(allResults, results...)
-			matchedTargets[target] = true
 		} else if !quiet {
 			fmt.Fprintf(os.Stderr, "No match found for %s\n", target)
 		}

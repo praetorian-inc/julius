@@ -5,6 +5,41 @@ All notable changes to Julius will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+### Breaking Changes
+
+- **`scanner.NewScanner()` signature changed**: Now requires two additional parameters:
+  - `maxResponseSize int64` - Maximum response body size in bytes
+  - `tlsConfig *tls.Config` - TLS configuration (can be nil for defaults)
+
+  **Migration:**
+  ```go
+  // Before
+  s := scanner.NewScanner(timeout, concurrency)
+
+  // After
+  s := scanner.NewScanner(timeout, concurrency, scanner.DefaultMaxResponseSize, nil)
+  ```
+
+### Added
+
+- `--max-response-size` flag to limit HTTP response body size (default 10MB)
+  - Protects against memory exhaustion from large responses
+- `--insecure` flag to skip TLS certificate verification
+- `--ca-cert` flag to specify custom CA certificate file for enterprise PKI environments
+- `loadProbes()` helper function to centralize probe loading logic
+
+### Fixed
+
+- Removed dead `matchedTargets` variable in `pkg/runner/probe.go`
+- Eliminated duplicate probe loading code between `probe.go` and `list.go`
+
+### Security
+
+- Added response body size limiting via `io.LimitReader` to prevent OOM from malicious servers
+- Added TLS configuration options for secure scanning in enterprise environments
+
 ## [0.1.2] - 2026-02-12
 
 ### Added

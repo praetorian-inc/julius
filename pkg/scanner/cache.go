@@ -58,13 +58,17 @@ func (s *Scanner) cachedRequest(req *http.Request, body []byte) (*http.Response,
 			return cached, nil
 		}
 
-		respBody, err := io.ReadAll(resp.Body)
+		respBody, err := io.ReadAll(io.LimitReader(resp.Body, s.maxResponseSize))
 		resp.Body.Close()
 		if err != nil {
 			slog.Error("Reading response body", "method", req.Method, "url", req.URL.String(), "err", err)
 			cached := &CachedResponse{Err: err}
 			s.cache.Store(key, cached)
 			return cached, nil
+		}
+
+		if int64(len(respBody)) == s.maxResponseSize {
+			slog.Warn("Response body truncated at size limit", "method", req.Method, "url", req.URL.String(), "limit", s.maxResponseSize)
 		}
 
 		resp.Body = nil // Clear to make it obvious this shouldn't be read

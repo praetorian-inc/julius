@@ -2,6 +2,7 @@ package scanner
 
 import (
 	"context"
+	"crypto/tls"
 	"fmt"
 	"io"
 	"net/http"
@@ -17,23 +18,31 @@ import (
 	"github.com/praetorian-inc/julius/pkg/types"
 )
 
+const (
+	DefaultConcurrency           = 10
+	DefaultMaxResponseSize int64 = 10 * 1024 * 1024
+)
+
 type Scanner struct {
-	client      *http.Client
-	cache       sync.Map
-	inflight    singleflight.Group
-	concurrency int
+	client          *http.Client
+	cache           sync.Map
+	inflight        singleflight.Group
+	concurrency     int
+	maxResponseSize int64
 }
 
-func NewScanner(timeout time.Duration, concurrency int) *Scanner {
-	if concurrency <= 0 {
-		concurrency = 10
+type Option func(*Scanner)
+
+func NewScanner(opts ...Option) *Scanner {
+	s := &Scanner{
+		client:          &http.Client{},
+		concurrency:     DefaultConcurrency,
+		maxResponseSize: DefaultMaxResponseSize,
 	}
-	return &Scanner{
-		client: &http.Client{
-			Timeout: timeout,
-		},
-		concurrency: concurrency,
+	for _, opt := range opts {
+		opt(s)
 	}
+	return s
 }
 
 func (s *Scanner) ScanAll(targets []string, probes []*types.Probe, augustus bool) []types.Result {
@@ -203,4 +212,36 @@ func (s *Scanner) doHTTPRequest(target, method, path, body string, headers map[s
 	}
 
 	return s.cachedRequest(req, bodyBytes)
+}
+
+func WithTimeout(d time.Duration) Option {
+	return func(s *Scanner) {
+		s.client.Timeout = d
+	}
+}
+
+func WithConcurrency(n int) Option {
+	return func(s *Scanner) {
+		if n > 0 {
+			s.concurrency = n
+		}
+	}
+}
+
+func WithMaxResponseSize(n int64) Option {
+	return func(s *Scanner) {
+		if n > 0 {
+			s.maxResponseSize = n
+		}
+	}
+}
+
+func WithTLSConfig(cfg *tls.Config) Option {
+	return func(s *Scanner) {
+		if cfg != nil {
+			transport := http.DefaultTransport.(*http.Transport).Clone()
+			transport.TLSClientConfig = cfg
+			s.client.Transport = transport
+		}
+	}
 }
