@@ -20,6 +20,8 @@ var (
 	concurrency        int
 	verbose            bool
 	quiet              bool
+	showBanner         bool
+	noColor            bool
 	maxResponseSize    int64
 	insecureSkipVerify bool
 	caCertFile         string
@@ -30,6 +32,12 @@ var rootCmd = &cobra.Command{
 	Short: "Julius - LLM Service Fingerprinting Tool",
 	Long: `Julius is a tool for fingerprinting LLM services by sending HTTP probes
 and analyzing responses. It helps identify LLM platforms and available models.`,
+	PersistentPreRun: func(cmd *cobra.Command, args []string) {
+		useColor := isColorEnabled(noColor)
+		if showBanner && !quiet && outputFormat == "table" {
+			printBanner(useColor)
+		}
+	},
 }
 
 func init() {
@@ -42,6 +50,8 @@ func init() {
 	rootCmd.PersistentFlags().Int64Var(&maxResponseSize, "max-response-size", scanner.DefaultMaxResponseSize, "Maximum response body size in bytes (default 10MB)")
 	rootCmd.PersistentFlags().BoolVar(&insecureSkipVerify, "insecure", false, "Skip TLS certificate verification")
 	rootCmd.PersistentFlags().StringVar(&caCertFile, "ca-cert", "", "Path to custom CA certificate file")
+	rootCmd.PersistentFlags().BoolVar(&showBanner, "banner", true, "Show ASCII banner")
+	rootCmd.PersistentFlags().BoolVar(&noColor, "no-color", false, "Disable color output")
 }
 
 func Run() error {
