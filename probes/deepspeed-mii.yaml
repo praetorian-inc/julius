@@ -24,26 +24,3 @@ requests:
         header: Server
         value: "Werkzeug"
 
-  # Newer FastAPI-based entrypoint (mii.entrypoints.api_server).
-  # /health returns {"status":"ok"} with uvicorn header.
-  # We match the specific "ok" value to exclude other services (e.g., Open WebUI
-  # returns {"status":true}) and exclude vLLM's /version endpoint.
-  - type: http
-    path: /health
-    method: GET
-    match:
-      - type: status
-        value: 200
-      - type: content-type
-        value: application/json
-      - type: body.contains
-        value: '"status":"ok"'
-      - type: header.contains
-        header: Server
-        value: "uvicorn"
-      - type: body.contains
-        not: true
-        value: '"healthy_endpoints"'
-      - type: body.contains
-        not: true
-        value: '"version"'
