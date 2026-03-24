@@ -28,18 +28,16 @@ requests:
       - type: body.contains
         value: "accounts/fireworks/models/"
 
-  # Fireworks inference responses include fireworks-prefixed performance headers.
-  # A POST to chat/completions without auth returns 401 but the /inference/ path
-  # prefix plus a Fireworks-identifying header or error distinguishes it.
+
+  # Without auth, /inference/v1/models returns a Fireworks-specific error
+  # containing docs.fireworks.ai URL. The /inference/v1/ path prefix plus
+  # the Fireworks docs URL is a strong fingerprint.
   - type: http
-    path: /inference/v1/chat/completions
-    method: POST
-    headers:
-      Content-Type: application/json
-    body: '{"model":"accounts/fireworks/models/llama-v3p1-8b-instruct","messages":[{"role":"user","content":"hi"}]}'
+    path: /inference/v1/models
+    method: GET
     match:
-      - type: header.contains
-        value: "fireworks-"
+      - type: body.contains
+        value: "docs.fireworks.ai"
 
 models:
   path: /inference/v1/models

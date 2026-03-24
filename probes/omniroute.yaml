@@ -32,15 +32,6 @@ requests:
       - type: body.contains
         value: "isCustom"
 
-  # Detection via X-OmniRoute-Cache header on the OpenAI-compatible
-  # models endpoint. OmniRoute sets this header (HIT or MISS) on all
-  # non-streaming responses. The "X-OmniRoute-" prefix is unique.
-  - type: http
-    path: /v1/models
-    method: GET
-    match:
-      - type: header.contains
-        value: "X-OmniRoute-Cache"
 
 models:
   path: /v1/models

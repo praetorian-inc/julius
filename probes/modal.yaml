@@ -53,7 +53,8 @@ requests:
       - type: body.contains
         value: '"owned_by"'
       - type: header.contains
-        value: "access-control-allow-origin"
+        header: access-control-allow-origin
+        value: "*"
 
   # Pattern 2: OpenAI-compatible /v1/models returning vLLM-style response
   # vLLM on Modal returns owned_by: "vllm" which narrows the match
@@ -84,7 +85,8 @@ requests:
       - type: body.contains
         value: "swagger-ui"
       - type: header.contains
-        value: "access-control-allow-origin"
+        header: access-control-allow-origin
+        value: "*"
 
 models:
   path: /v1/models
