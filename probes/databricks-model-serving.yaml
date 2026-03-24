@@ -1,0 +1,67 @@
+# probes/databricks-model-serving.yaml
+# Reference: https://docs.databricks.com/api/workspace/servingendpoints
+name: databricks-model-serving
+description: Databricks Model Serving endpoints for real-time ML inference
+category: cloud-managed
+port_hint: 443
+specificity: 82
+api_docs: https://docs.databricks.com/api/workspace/servingendpoints
+
+requests:
+  # Databricks Serving Endpoints API — unique /api/2.0/serving-endpoints path.
+  # Without auth, returns 401 with Databricks-specific error body containing
+  # "error_code" (numeric) and a message referencing authorization/credentials.
+  # The /api/2.0/ prefix and /serving-endpoints path together are unique to Databricks.
+  - type: http
+    path: /api/2.0/serving-endpoints
+    method: GET
+    match:
+      - type: status
+        value: 401
+      - type: content-type
+        value: application/json
+      - type: body.contains
+        value: '"error_code"'
+      - type: body.contains
+        value: "serving endpoint"
+
+  # Alternate detection: Databricks may return a different 401 message format
+  # referencing credential type. The /api/2.0/serving-endpoints path is still
+  # Databricks-unique, and "Credential was not sent" is a Databricks error string.
+  - type: http
+    path: /api/2.0/serving-endpoints
+    method: GET
+    match:
+      - type: status
+        value: 401
+      - type: content-type
+        value: application/json
+      - type: body.contains
+        value: '"error_code"'
+      - type: body.contains
+        value: "Credential was not sent"
+
+  # Databricks export-metrics endpoint — unique Prometheus-style metrics path
+  # under the serving-endpoints namespace. Even unauthenticated, the 401 error
+  # with this Databricks-specific path confirms the service.
+  - type: http
+    path: /api/2.0/serving-endpoints/_/metrics
+    method: GET
+    match:
+      - type: status
+        value: 401
+      - type: body.contains
+        value: '"error_code"'
+
+models:
+  path: /api/2.0/serving-endpoints
+  method: GET
+  extract: ".endpoints[].name"
+
+augustus:
+  generator: openai
+  config_template:
+    endpoint: "$TARGET"
+    model: "$MODEL"
+    api_key: "$API_KEY"
+    timeout: 180

@@ -1,0 +1,49 @@
+# probes/deepspeed-mii.yaml
+# Reference: https://github.com/deepspeedai/DeepSpeed-MII
+name: deepspeed-mii
+description: DeepSpeed-MII - high-throughput LLM inference powered by DeepSpeed
+category: self-hosted
+port_hint: 28080
+specificity: 80
+api_docs: https://github.com/deepspeedai/DeepSpeed-MII
+
+requests:
+  # Legacy/persistent deployment: Flask gateway with /mii/{deployment} path prefix.
+  # The "/mii/" prefix is defined as RESTFUL_API_PATH constant in mii/constants.py
+  # and is unique to DeepSpeed-MII. Any POST to /mii/* that returns JSON is a match.
+  # /healthz also exists but returns plain "ok" which is too generic on its own.
+  - type: http
+    path: /healthz
+    method: GET
+    match:
+      - type: status
+        value: 200
+      - type: body.contains
+        value: "ok"
+      - type: header.contains
+        header: Server
+        value: "Werkzeug"
+
+  # Newer FastAPI-based entrypoint (mii.entrypoints.api_server).
+  # /generate endpoint is somewhat common (vLLM uses it too), but combined
+  # with /health returning {"status":"ok"} and uvicorn header, it narrows.
+  # We exclude vLLM's /version endpoint to avoid false positives.
+  - type: http
+    path: /health
+    method: GET
+    match:
+      - type: status
+        value: 200
+      - type: content-type
+        value: application/json
+      - type: body.contains
+        value: '"status"'
+      - type: header.contains
+        header: Server
+        value: "uvicorn"
+      - type: body.contains
+        not: true
+        value: '"healthy_endpoints"'
+      - type: body.contains
+        not: true
+        value: '"version"'

@@ -1,0 +1,55 @@
+# probes/fireworks-ai.yaml
+# Reference: https://docs.fireworks.ai/api-reference/introduction
+name: fireworks-ai
+description: Fireworks AI - cloud inference platform for LLMs with OpenAI-compatible API
+category: cloud-managed
+port_hint: 443
+specificity: 85
+api_docs: https://docs.fireworks.ai/api-reference/introduction
+
+requests:
+  # Fireworks uses /inference/v1/ prefix — unique among OpenAI-compatible providers.
+  # GET on the models endpoint returns model list with Fireworks-specific model IDs
+  # containing "accounts/fireworks/models/" prefix.
+  - type: http
+    path: /inference/v1/models
+    method: GET
+    match:
+      - type: body.contains
+        value: "accounts/fireworks/models/"
+
+  # The native Fireworks model listing endpoint path is unique to Fireworks.
+  # Querying the public "fireworks" account models list returns model objects
+  # with the distinctive name format.
+  - type: http
+    path: /v1/accounts/fireworks/models
+    method: GET
+    match:
+      - type: body.contains
+        value: "accounts/fireworks/models/"
+
+  # Fireworks inference responses include fireworks-prefixed performance headers.
+  # A POST to chat/completions without auth returns 401 but the /inference/ path
+  # prefix plus a Fireworks-identifying header or error distinguishes it.
+  - type: http
+    path: /inference/v1/chat/completions
+    method: POST
+    headers:
+      Content-Type: application/json
+    body: '{"model":"accounts/fireworks/models/llama-v3p1-8b-instruct","messages":[{"role":"user","content":"hi"}]}'
+    match:
+      - type: header.contains
+        value: "fireworks-"
+
+models:
+  path: /inference/v1/models
+  method: GET
+  extract: ".data[].id"
+
+augustus:
+  generator: openai
+  config_template:
+    endpoint: "$TARGET/inference/v1"
+    model: "$MODEL"
+    api_key: "$API_KEY"
+    timeout: 180

@@ -1,0 +1,87 @@
+# probes/aws-bedrock.yaml
+# Reference: https://docs.aws.amazon.com/bedrock/latest/APIReference/welcome.html
+name: aws-bedrock
+description: AWS Bedrock - cloud-managed LLM service with foundation model hosting and inference (control plane and runtime)
+category: cloud-managed
+port_hint: 443
+specificity: 85
+api_docs: https://docs.aws.amazon.com/bedrock/latest/APIReference/welcome.html
+
+requests:
+  # Detection via Bedrock control plane ListFoundationModels endpoint.
+  # GET /foundation-models is unique to the Bedrock control plane service
+  # (bedrock.{region}.amazonaws.com). Without SigV4 auth, AWS returns 403
+  # with x-amzn-ErrorType header. The path itself is Bedrock-specific —
+  # no other AWS service uses /foundation-models.
+  - type: http
+    path: /foundation-models
+    method: GET
+    match:
+      - type: status
+        value: 403
+      - type: header.contains
+        value: "x-amzn-RequestId"
+      - type: header.contains
+        value: "x-amzn-ErrorType"
+
+  # Detection via Bedrock runtime Converse endpoint.
+  # POST /model/{modelId}/converse is exclusive to bedrock-runtime.
+  # An unauthenticated request returns 403 with AWS error headers.
+  # The /model/ path prefix with /converse suffix is Bedrock-only.
+  - type: http
+    path: /model/anthropic.claude-v2/converse
+    method: POST
+    headers:
+      Content-Type: application/json
+    body: '{}'
+    match:
+      - type: status
+        value: 403
+      - type: header.contains
+        value: "x-amzn-RequestId"
+      - type: header.contains
+        value: "x-amzn-ErrorType"
+
+  # Detection via Bedrock runtime InvokeModel endpoint.
+  # POST /model/{modelId}/invoke is the primary inference path, unique
+  # to bedrock-runtime. Unauthenticated → 403 + AWS error headers.
+  - type: http
+    path: /model/anthropic.claude-v2/invoke
+    method: POST
+    headers:
+      Content-Type: application/json
+    body: '{}'
+    match:
+      - type: status
+        value: 403
+      - type: header.contains
+        value: "x-amzn-RequestId"
+      - type: header.contains
+        value: "x-amzn-ErrorType"
+
+  # Detection via Bedrock guardrails endpoint.
+  # GET /guardrails is a Bedrock control plane path with no equivalent
+  # in other AWS services. Returns 403 without auth.
+  - type: http
+    path: /guardrails
+    method: GET
+    match:
+      - type: status
+        value: 403
+      - type: header.contains
+        value: "x-amzn-RequestId"
+      - type: header.contains
+        value: "x-amzn-ErrorType"
+
+models:
+  path: /foundation-models
+  method: GET
+  extract: ".modelSummaries[].modelId"
+
+augustus:
+  generator: openai
+  config_template:
+    endpoint: "$TARGET"
+    model: "$MODEL"
+    api_key: "$API_KEY"
+    timeout: 180

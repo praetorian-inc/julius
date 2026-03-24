@@ -1,0 +1,58 @@
+# probes/bifrost.yaml
+# Reference: https://github.com/maximhq/bifrost
+name: bifrost
+description: Bifrost AI Gateway - high-performance unified LLM gateway by MaximHQ
+category: gateway
+port_hint: 8080
+specificity: 80
+api_docs: https://docs.getbifrost.ai/
+
+requests:
+  # /api/config returns Bifrost-specific fields like is_db_connected, framework_config
+  - type: http
+    path: /api/config
+    method: GET
+    match:
+      - type: status
+        value: 200
+      - type: content-type
+        value: application/json
+      - type: body.contains
+        value: '"is_db_connected"'
+      - type: body.contains
+        value: '"framework_config"'
+
+  # /api/version is a Bifrost-specific endpoint
+  - type: http
+    path: /api/version
+    method: GET
+    match:
+      - type: status
+        value: 200
+      - type: content-type
+        value: application/json
+
+  # /health returns Bifrost-specific "db_pings" field
+  - type: http
+    path: /health
+    method: GET
+    match:
+      - type: status
+        value: 200
+      - type: content-type
+        value: application/json
+      - type: body.contains
+        value: '"db_pings"'
+
+models:
+  path: /v1/models
+  method: GET
+  extract: ".data[].id"
+
+augustus:
+  generator: openai
+  config_template:
+    endpoint: "$TARGET"
+    model: "$MODEL"
+    api_key: "not-needed"
+    timeout: 180

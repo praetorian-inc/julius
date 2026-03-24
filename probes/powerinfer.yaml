@@ -1,0 +1,52 @@
+# probes/powerinfer.yaml
+# Reference: https://github.com/SJTU-IPADS/PowerInfer/blob/main/examples/server/README.md
+#
+# LIMITATION: PowerInfer is a fork of llama.cpp (frozen at ~Nov 2023 vintage).
+# Its HTTP server is identical to that era's llama.cpp server with zero
+# PowerInfer-specific HTTP response markers. The Server header reads "llama.cpp",
+# the web UI title is "llama.cpp - chat", and the --vram-budget CLI flag (the
+# only PowerInfer addition) is not exposed via any HTTP endpoint.
+#
+# This probe detects the specific OLD llama.cpp API surface that PowerInfer uses:
+# it has /model.json and /completion but lacks the modern /v1/models endpoint
+# (which returns "owned_by":"llamacpp" in current llama.cpp). This narrows to
+# PowerInfer or same-era llama.cpp forks, but cannot definitively distinguish
+# between them. Specificity is scored accordingly.
+name: powerinfer
+description: PowerInfer CPU/GPU hybrid LLM inference engine (llama.cpp fork with activation locality)
+category: self-hosted
+port_hint: 8080
+specificity: 30
+api_docs: https://github.com/SJTU-IPADS/PowerInfer/blob/main/examples/server/README.md
+
+requests:
+  # PowerInfer serves /model.json returning generation settings JSON with a
+  # "model" key. This endpoint exists in the old llama.cpp fork PowerInfer is
+  # based on. Combined with Server: llama.cpp header, this identifies the
+  # llama.cpp family. Cannot distinguish PowerInfer from same-era llama.cpp.
+  - type: http
+    path: /model.json
+    method: GET
+    match:
+      - type: status
+        value: 200
+      - type: content-type
+        value: application/json
+      - type: header.contains
+        header: Server
+        value: "llama.cpp"
+
+  # The /props endpoint returns assistant_name and anti_prompt configuration.
+  # Present in PowerInfer's server, serves as secondary detection with the
+  # same Server header constraint.
+  - type: http
+    path: /props
+    method: GET
+    match:
+      - type: status
+        value: 200
+      - type: content-type
+        value: application/json
+      - type: header.contains
+        header: Server
+        value: "llama.cpp"

@@ -1,0 +1,46 @@
+# probes/privategpt.yaml
+# Reference: https://docs.privategpt.dev/api-reference/overview/api-reference-overview
+# GitHub: https://github.com/zylon-ai/private-gpt
+# Verified against: v0.6.2 source (private_gpt/server/ingest/ingest_router.py,
+#   private_gpt/open_ai/openai_models.py, private_gpt/server/health/health_router.py)
+name: privategpt
+description: PrivateGPT by Zylon - RAG pipeline for private document Q&A with LLMs
+category: rag-orchestration
+port_hint: 8001
+specificity: 85
+api_docs: https://docs.privategpt.dev/api-reference/overview/api-reference-overview
+
+requests:
+  # Primary: GET /v1/ingest/list returns IngestResponse with model="private-gpt"
+  # (Pydantic Literal["private-gpt"] in ingest_router.py). Works even with zero
+  # ingested docs (returns empty data array). Auth disabled by default.
+  - type: http
+    path: /v1/ingest/list
+    method: GET
+    match:
+      - type: status
+        value: 200
+      - type: content-type
+        value: application/json
+      - type: body.contains
+        value: '"model":"private-gpt"'
+
+  # Secondary: same endpoint, tolerates whitespace in JSON serialization
+  - type: http
+    path: /v1/ingest/list
+    method: GET
+    match:
+      - type: status
+        value: 200
+      - type: content-type
+        value: application/json
+      - type: body.contains
+        value: '"model": "private-gpt"'
+
+augustus:
+  generator: openai
+  config_template:
+    endpoint: "$TARGET"
+    model: "$MODEL"
+    api_key: "not-needed"
+    timeout: 180

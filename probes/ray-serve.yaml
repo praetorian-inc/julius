@@ -1,0 +1,38 @@
+# probes/ray-serve.yaml
+# Reference: https://docs.ray.io/en/latest/serve/api/index.html
+name: ray-serve
+description: Ray Serve scalable model serving on Ray cluster
+category: self-hosted
+port_hint: 8265
+specificity: 85
+api_docs: https://docs.ray.io/en/latest/serve/api/index.html
+
+requests:
+  # Ray dashboard API (port 8265): GET /api/serve/applications/
+  # Returns ServeInstanceDetails JSON schema with Ray-specific fields:
+  # controller_info, proxy_location, http_options, applications
+  - type: http
+    path: /api/serve/applications/
+    method: GET
+    match:
+      - type: status
+        value: 200
+      - type: content-type
+        value: application/json
+      - type: body.contains
+        value: '"controller_info"'
+      - type: body.contains
+        value: '"proxy_location"'
+
+  # Alternate match: SERVE_CONTROLLER_ACTOR actor name in response
+  # Unique to Ray Serve — no other service uses this naming convention
+  - type: http
+    path: /api/serve/applications/
+    method: GET
+    match:
+      - type: status
+        value: 200
+      - type: content-type
+        value: application/json
+      - type: body.contains
+        value: "SERVE_CONTROLLER_ACTOR"

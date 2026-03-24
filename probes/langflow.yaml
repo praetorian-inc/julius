@@ -1,0 +1,66 @@
+# probes/langflow.yaml
+# Reference: https://docs.langflow.org/api-reference-api-examples
+name: langflow
+description: Langflow - Open source low-code platform for building AI agents and RAG applications
+category: rag-orchestration
+port_hint: 7860
+specificity: 95
+api_docs: https://docs.langflow.org/
+
+requests:
+  # /api/v1/version requires no auth and returns {"version": "...", "main_version": "...", "package": "Langflow"}
+  - type: http
+    path: /api/v1/version
+    method: GET
+    match:
+      - type: status
+        value: 200
+      - type: content-type
+        value: application/json
+      - type: body.contains
+        value: '"package"'
+      - type: body.contains
+        value: "Langflow"
+
+  # /health_check validates Langflow database and chat services (no auth required)
+  # Response includes langflow-specific service health fields
+  - type: http
+    path: /health_check
+    method: GET
+    match:
+      - type: status
+        value: 200
+      - type: content-type
+        value: application/json
+      - type: body.contains
+        value: "chat"
+      # Exclude generic health endpoints that don't mention langflow-specific services
+      - type: body.contains
+        value: "db"
+
+  # Langflow serves its frontend with distinctive branding
+  - type: http
+    path: /
+    method: GET
+    match:
+      - type: status
+        value: 200
+      - type: body.contains
+        value: "Langflow"
+      # Distinguish from plain Gradio apps that share port 7860
+      - type: body.contains
+        not: true
+        value: "gradio-app"
+
+models:
+  path: /api/v1/flows/
+  method: GET
+  extract: ".[] | .name"
+
+augustus:
+  generator: openai
+  config_template:
+    endpoint: "$TARGET/api/v1/run/$MODEL"
+    model: "$MODEL"
+    api_key: "not-needed"
+    timeout: 180

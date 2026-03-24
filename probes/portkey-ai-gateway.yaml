@@ -1,0 +1,64 @@
+# probes/portkey-ai-gateway.yaml
+# Reference: https://github.com/Portkey-AI/gateway
+name: portkey-ai-gateway
+description: Portkey AI Gateway - blazing fast unified gateway for 200+ LLM providers
+category: gateway
+port_hint: 8787
+specificity: 90
+api_docs: https://portkey.ai/docs/
+
+requests:
+  # Root endpoint returns unique greeting (src/index.ts: app.get('/', (c) => c.text('AI Gateway says hey!')))
+  - type: http
+    path: /
+    method: GET
+    match:
+      - type: status
+        value: 200
+      - type: body.contains
+        value: "AI Gateway says hey!"
+
+  # Console UI served at /public/ in non-headless mode (src/start-server.ts)
+  - type: http
+    path: /public/
+    method: GET
+    match:
+      - type: status
+        value: 200
+      - type: content-type
+        value: text/html
+      - type: body.contains
+        value: "portkey"
+
+  # 404 response includes Portkey-specific JSON shape
+  - type: http
+    path: /nonexistent-probe-path
+    method: GET
+    match:
+      - type: status
+        value: 404
+      - type: content-type
+        value: application/json
+      - type: body.contains
+        value: '"Not Found"'
+      - type: body.contains
+        value: '"ok":false'
+    not:
+      # Exclude other frameworks that return generic 404 JSON
+      - type: body.contains
+        value: "litellm"
+      - type: body.contains
+        value: "FastAPI"
+
+models:
+  path: /v1/models
+  method: GET
+  extract: ".data[].id"
+
+augustus:
+  generator: openai
+  config_template:
+    endpoint: "$TARGET"
+    model: "$MODEL"
+    api_key: "not-needed"
+    timeout: 180

@@ -1,0 +1,53 @@
+# probes/cloudflare-ai-gateway.yaml
+# Reference: https://developers.cloudflare.com/ai-gateway/
+name: cloudflare-ai-gateway
+description: Cloudflare AI Gateway - cloud proxy for multiple AI providers with caching, rate limiting, and observability
+category: cloud-managed
+port_hint: 443
+specificity: 90
+api_docs: https://developers.cloudflare.com/ai-gateway/
+
+requests:
+  # Detection via cf-aig-log-id response header on /v1/models path.
+  # cf-aig-log-id is returned on ALL requests (including failures) per
+  # 2025-10-24 changelog. This header is exclusive to AI Gateway and
+  # never appears on regular Cloudflare CDN or other services.
+  - type: http
+    path: /v1/models
+    method: GET
+    match:
+      - type: header.contains
+        value: "cf-aig-log-id"
+
+  # Detection via cf-aig-cache-status header on the compat models endpoint.
+  # /compat/v1/models was added 2025-09-19 for listing available models
+  # with cost info — unique to AI Gateway's unified API.
+  - type: http
+    path: /compat/v1/models
+    method: GET
+    match:
+      - type: header.contains
+        value: "cf-aig-cache-status"
+
+  # Detection via cf-aig-log-id on the OpenAI-compatible chat endpoint.
+  # A GET to a POST-only endpoint still returns cf-aig-* headers on the
+  # error response, confirming the target is behind AI Gateway.
+  - type: http
+    path: /compat/chat/completions
+    method: GET
+    match:
+      - type: header.contains
+        value: "cf-aig-log-id"
+
+models:
+  path: /compat/v1/models
+  method: GET
+  extract: ".data[].id"
+
+augustus:
+  generator: openai
+  config_template:
+    endpoint: "$TARGET/compat"
+    model: "$MODEL"
+    api_key: "$API_KEY"
+    timeout: 180

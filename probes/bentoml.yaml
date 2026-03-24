@@ -1,0 +1,46 @@
+# probes/bentoml.yaml
+# Reference: https://docs.bentoml.com/en/latest/build-with-bentoml/services.html
+name: bentoml
+description: BentoML - AI application framework for serving models
+category: self-hosted
+port_hint: 3000
+specificity: 85
+api_docs: https://docs.bentoml.com/en/latest/reference/index.html
+
+requests:
+  # BentoML OpenAPI spec contains hardcoded contact info for BentoML Team
+  # Source: src/_bentoml_sdk/service/openapi.py sets contact=Contact(name="BentoML Team", email="contact@bentoml.com")
+  - type: http
+    path: /docs.json
+    method: GET
+    match:
+      - type: status
+        value: 200
+      - type: content-type
+        value: "application/json"
+      - type: body.contains
+        value: "BentoML Team"
+      - type: body.contains
+        value: "contact@bentoml.com"
+
+  # BentoML OpenAPI spec uses x-bentoml-name extension on all API routes
+  - type: http
+    path: /docs.json
+    method: GET
+    match:
+      - type: status
+        value: 200
+      - type: content-type
+        value: "application/json"
+      - type: body.contains
+        value: "x-bentoml-name"
+
+  # BentoML Prometheus metrics with bentoml_ namespace prefix
+  - type: http
+    path: /metrics
+    method: GET
+    match:
+      - type: status
+        value: 200
+      - type: body.contains
+        value: "bentoml_api_server"
