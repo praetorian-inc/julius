@@ -22,16 +22,6 @@ requests:
       - type: body.contains
         value: '"framework_config"'
 
-  # /api/version is a Bifrost-specific endpoint
-  - type: http
-    path: /api/version
-    method: GET
-    match:
-      - type: status
-        value: 200
-      - type: content-type
-        value: application/json
-
   # /health returns Bifrost-specific "db_pings" field
   - type: http
     path: /health

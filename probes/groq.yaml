@@ -22,21 +22,6 @@ requests:
       - type: body.contains
         value: '"invalid_api_key"'
 
-  # With valid auth, model list response contains x_groq or Groq-specific
-  # usage fields. The /openai/v1/ path prefix alone distinguishes from OpenAI.
-  - type: http
-    path: /openai/v1/models
-    method: GET
-    match:
-      - type: status
-        value: 200
-      - type: content-type
-        value: application/json
-      - type: body.contains
-        value: '"object"'
-      - type: body.contains
-        value: '"data"'
-
 models:
   path: /openai/v1/models
   method: GET

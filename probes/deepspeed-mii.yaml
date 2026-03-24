@@ -25,9 +25,9 @@ requests:
         value: "Werkzeug"
 
   # Newer FastAPI-based entrypoint (mii.entrypoints.api_server).
-  # /generate endpoint is somewhat common (vLLM uses it too), but combined
-  # with /health returning {"status":"ok"} and uvicorn header, it narrows.
-  # We exclude vLLM's /version endpoint to avoid false positives.
+  # /health returns {"status":"ok"} with uvicorn header.
+  # We match the specific "ok" value to exclude other services (e.g., Open WebUI
+  # returns {"status":true}) and exclude vLLM's /version endpoint.
   - type: http
     path: /health
     method: GET
@@ -37,7 +37,7 @@ requests:
       - type: content-type
         value: application/json
       - type: body.contains
-        value: '"status"'
+        value: '"status":"ok"'
       - type: header.contains
         header: Server
         value: "uvicorn"
