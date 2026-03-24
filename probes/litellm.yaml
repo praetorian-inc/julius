@@ -1,6 +1,6 @@
 # probes/litellm.yaml
 # Reference: https://docs.litellm.ai/docs/proxy/health
-# Advisory: https://github.com/BerriAI/litellm/issues/24512 (v1.82.8 supply chain compromise)
+# Advisory: https://github.com/BerriAI/litellm/issues/24512 (v1.82.7-v1.82.8 supply chain compromise)
 name: litellm
 description: LiteLLM Proxy - unified API gateway for multiple LLM providers
 category: gateway
@@ -43,7 +43,7 @@ requests:
         value: '"unhealthy_endpoints"'
 
   # /health/readiness is unauthenticated and returns litellm_version for version extraction
-  # Added for supply chain advisory tracking (v1.82.8 credential stealer)
+  # Added for supply chain advisory tracking (v1.82.7-v1.82.8 credential stealer)
   - type: http
     path: /health/readiness
     method: GET
