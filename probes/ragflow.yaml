@@ -1,0 +1,56 @@
+# probes/ragflow.yaml
+# Reference: https://ragflow.io/docs/dev/run_health_check
+# Source: github.com/infiniflow/ragflow api/apps/system_app.py
+name: ragflow
+description: RAGFlow - Open-source RAG engine by InfiniFlow with deep document understanding
+category: rag-orchestration
+port_hint: 80
+specificity: 90
+api_docs: https://ragflow.io/docs/http_api_reference
+
+requests:
+  # Request 1: Unauthenticated health check with RAGFlow-unique "doc_engine" field
+  # Returns: {"db":"ok","redis":"ok","doc_engine":"ok","storage":"ok","status":"ok"}
+  # The "doc_engine" key is unique to RAGFlow (tracks Elasticsearch/Infinity status)
+  - type: http
+    path: /v1/system/healthz
+    method: GET
+    match:
+      - type: status
+        value: 200
+      - type: content-type
+        value: application/json
+      - type: body.contains
+        value: '"doc_engine"'
+
+  # Request 2: Degraded health check (HTTP 500) still identifies RAGFlow
+  # When any backend service is down, healthz returns 500 with same JSON structure
+  - type: http
+    path: /v1/system/healthz
+    method: GET
+    match:
+      - type: status
+        value: 500
+      - type: content-type
+        value: application/json
+      - type: body.contains
+        value: '"doc_engine"'
+
+  # Request 3: Web UI serves SPA with <title>RAGFlow</title>
+  # Verified from web/index.html in source repository
+  - type: http
+    path: /
+    method: GET
+    match:
+      - type: status
+        value: 200
+      - type: body.contains
+        value: "<title>RAGFlow</title>"
+
+augustus:
+  generator: openai
+  config_template:
+    endpoint: "$TARGET"
+    model: "$MODEL"
+    api_key: "$API_KEY"
+    timeout: 180

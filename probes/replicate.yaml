@@ -1,0 +1,66 @@
+# probes/replicate.yaml
+# Reference: https://replicate.com/docs/reference/http
+name: replicate
+description: Replicate cloud ML platform with prediction-based API
+category: cloud-managed
+port_hint: 443
+specificity: 90
+api_docs: https://replicate.com/docs/reference/http
+
+requests:
+  # /v1/hardware is a Replicate-unique endpoint returning hardware SKUs.
+  # Response is a JSON array of {"name": "...", "sku": "..."} objects.
+  - type: http
+    path: /v1/hardware
+    method: GET
+    match:
+      - type: status
+        value: 200
+      - type: content-type
+        value: application/json
+      - type: body.contains
+        value: '"sku"'
+
+  # /v1/collections is a Replicate-unique endpoint for model collections.
+  # Response contains paginated results with replicate.com URLs.
+  - type: http
+    path: /v1/collections
+    method: GET
+    match:
+      - type: status
+        value: 200
+      - type: content-type
+        value: application/json
+      - type: body.contains
+        value: "replicate.com"
+
+  # /v1/predictions is the core Replicate endpoint. Response includes
+  # "predict_time" metric and api.replicate.com URLs — unique response shape.
+  - type: http
+    path: /v1/predictions
+    method: GET
+    match:
+      - type: status
+        value: 200
+      - type: content-type
+        value: application/json
+      - type: body.contains
+        value: "api.replicate.com"
+
+models:
+  path: /v1/models
+  method: GET
+  extract: ".results[] | .owner + \"/\" + .name"
+
+augustus:
+  generator: rest
+  config_template:
+    endpoint: "$TARGET/v1/models/$MODEL/predictions"
+    method: POST
+    api_key: "$API_KEY"
+    headers:
+      Content-Type: application/json
+      Prefer: wait=60
+    body: '{"input": {"prompt": "$PROMPT"}}'
+    response_path: "output"
+    timeout: 180

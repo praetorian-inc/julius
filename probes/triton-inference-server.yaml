@@ -1,0 +1,59 @@
+# probes/triton-inference-server.yaml
+# Reference: https://docs.nvidia.com/deeplearning/triton-inference-server/user-guide/docs/protocol/README.html
+name: triton-inference-server
+description: NVIDIA Triton Inference Server (KServe v2 protocol)
+category: self-hosted
+port_hint: 8000
+specificity: 90
+api_docs: https://docs.nvidia.com/deeplearning/triton-inference-server/user-guide/docs/protocol/README.html
+
+requests:
+  # Primary: GET /v2 returns server metadata with name "triton" and extensions array
+  # The "name" field contains "triton" which is unique to Triton Inference Server.
+  # Other KServe v2 servers (e.g. TF Serving, ONNX Runtime) return their own name.
+  - type: http
+    path: /v2
+    method: GET
+    match:
+      - type: status
+        value: 200
+      - type: content-type
+        value: application/json
+      - type: body.contains
+        value: '"name"'
+      - type: body.contains
+        value: '"extensions"'
+      - type: body.contains
+        value: "triton"
+
+  # Secondary: GET /v2 with model_repository extension marker
+  # Triton reports "model_repository" in extensions, a Triton-specific extension
+  - type: http
+    path: /v2
+    method: GET
+    match:
+      - type: status
+        value: 200
+      - type: content-type
+        value: application/json
+      - type: body.contains
+        value: '"extensions"'
+      - type: body.contains
+        value: "model_repository"
+      - type: body.contains
+        value: "statistics"
+
+  # Tertiary: Prometheus metrics on port 8002 with Triton-specific nv_inference_ prefix
+  - type: http
+    path: /metrics
+    method: GET
+    match:
+      - type: status
+        value: 200
+      - type: body.contains
+        value: "nv_inference_"
+
+models:
+  path: /v2/repository/index
+  method: POST
+  extract: ".[].name"

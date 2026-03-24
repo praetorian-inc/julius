@@ -1,0 +1,36 @@
+# probes/helicone.yaml
+# Reference: https://docs.helicone.ai/getting-started/self-host/docker
+name: helicone
+description: Helicone - open-source LLM observability platform and AI gateway
+category: gateway
+port_hint: 8585
+specificity: 80
+api_docs: https://docs.helicone.ai/
+
+requests:
+  # Jawn server healthcheck returns {"status":"healthy :)"}
+  # The smiley face in the JSON response is a distinctive Helicone marker.
+  # Source: valhalla/jawn/src/index.ts — app.get("/healthcheck", ...)
+  - type: http
+    path: /healthcheck
+    method: GET
+    match:
+      - type: status
+        value: 200
+      - type: content-type
+        value: application/json
+      - type: body.contains
+        value: '"healthy :)"'
+
+  # Jawn exposes a TSOA-generated OpenAPI spec at /download/swagger.json
+  # containing Helicone-specific API definitions (organization, session, etc.)
+  - type: http
+    path: /download/swagger.json
+    method: GET
+    match:
+      - type: status
+        value: 200
+      - type: content-type
+        value: application/json
+      - type: body.contains
+        value: "Helicone"

@@ -19,8 +19,6 @@ requests:
         value: "<title>OpenClaw Control</title>"
       - type: body.contains
         value: "<openclaw-app>"
-      - type: body.contains
-        value: "window.__OPENCLAW_CONTROL_UI_BASE_PATH__"
 
   # Legacy branding: Moltbot Control
   - type: http
@@ -33,8 +31,6 @@ requests:
         value: "<title>Moltbot Control</title>"
       - type: body.contains
         value: "<moltbot-app>"
-      - type: body.contains
-        value: "window.__CLAWDBOT_CONTROL_UI_BASE_PATH__"
 
   # Original branding: Clawdbot Control
   - type: http
@@ -47,5 +43,3 @@ requests:
         value: "<title>Clawdbot Control</title>"
       - type: body.contains
         value: "<clawdbot-app>"
-      - type: body.contains
-        value: "window.__CLAWDBOT_CONTROL_UI_BASE_PATH__"

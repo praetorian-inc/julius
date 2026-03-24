@@ -1,0 +1,37 @@
+# probes/quivr.yaml
+# Reference: https://github.com/QuivrHQ/quivr
+name: quivr
+description: Quivr - Open-source RAG platform for building AI assistants with brain-based knowledge management
+category: rag-orchestration
+port_hint: 5050
+specificity: 80
+api_docs: https://docs.quivr.app
+
+requests:
+  # Request 1: FastAPI auto-generated OpenAPI spec contains Quivr-unique route paths
+  # Source: backend/api/quivr_api/main.py registers brain_router (/brains/),
+  # knowledge_router (/knowledge/), and chat_router (/chat/) - this triple is unique to Quivr
+  - type: http
+    path: /openapi.json
+    method: GET
+    match:
+      - type: status
+        value: 200
+      - type: body.contains
+        value: "/brains/"
+      - type: body.contains
+        value: "/knowledge/"
+      - type: body.contains
+        value: "/chat/"
+
+  # Request 2: Quivr registers the /brains/ endpoint which returns 403 without auth
+  # The FastAPI HTTPBearer dependency raises 403 with "Authentication credentials missing"
+  # Source: backend/api/quivr_api/middlewares/auth/auth_bearer.py
+  - type: http
+    path: /brains/
+    method: GET
+    match:
+      - type: status
+        value: 403
+      - type: body.contains
+        value: "Authentication credentials missing"

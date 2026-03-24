@@ -1,0 +1,61 @@
+# probes/h2ogpt.yaml
+# Reference: https://github.com/h2oai/h2ogpt/blob/main/docs/README_CLIENT.md
+name: h2ogpt
+description: h2oGPT - private local GPT with document Q&A by H2O.ai
+category: rag-orchestration
+port_hint: 7860
+specificity: 85
+api_docs: https://github.com/h2oai/h2ogpt
+
+requests:
+  # h2oGPT-specific Gradio API: /info endpoint lists named_endpoints
+  # including submit_nochat_api which is unique to h2oGPT
+  - type: http
+    path: /info
+    method: GET
+    match:
+      - type: status
+        value: 200
+      - type: content-type
+        value: application/json
+      - type: body.contains
+        value: "submit_nochat_api"
+
+  # h2oGPT-specific Gradio API: model_names endpoint
+  # Only h2oGPT registers this api_name in Gradio
+  - type: http
+    path: /info
+    method: GET
+    match:
+      - type: status
+        value: 200
+      - type: content-type
+        value: application/json
+      - type: body.contains
+        value: "model_names"
+      - type: body.contains
+        value: "named_endpoints"
+
+  # h2oGPT branding in the Gradio HTML page
+  # The page title or body contains h2oGPT references
+  - type: http
+    path: /
+    method: GET
+    match:
+      - type: status
+        value: 200
+      - type: body.contains
+        value: "h2oGPT"
+
+models:
+  path: /api/model_names
+  method: POST
+  extract: ".[].base_model"
+
+augustus:
+  generator: openai
+  config_template:
+    endpoint: "$TARGET"
+    model: "$MODEL"
+    api_key: "not-needed"
+    timeout: 180

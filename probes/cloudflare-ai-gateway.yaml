@@ -1,0 +1,44 @@
+# probes/cloudflare-ai-gateway.yaml
+# Reference: https://developers.cloudflare.com/ai-gateway/
+name: cloudflare-ai-gateway
+description: Cloudflare AI Gateway - cloud proxy for multiple AI providers with caching, rate limiting, and observability
+category: cloud-managed
+port_hint: 443
+specificity: 90
+api_docs: https://developers.cloudflare.com/ai-gateway/
+
+requests:
+  # Detection via cf-aig-event-id response header on /v1/models path.
+  # This header (UUID value) is returned on ALL requests per 2025-10-24
+  # changelog. It is exclusive to AI Gateway — never appears on regular
+  # Cloudflare CDN or other services.
+  - type: http
+    path: /v1/models
+    method: GET
+    match:
+      - type: header.contains
+        header: cf-aig-event-id
+        value: "-"
+
+  # Detection via error body when gateway is not fully configured.
+  # Response includes Cloudflare AI Gateway-specific error code 2001.
+  - type: http
+    path: /v1/models
+    method: GET
+    match:
+      - type: content-type
+        value: application/json
+      - type: body.contains
+        value: '"AI Gateway"'
+models:
+  path: /compat/v1/models
+  method: GET
+  extract: ".data[].id"
+
+augustus:
+  generator: openai
+  config_template:
+    endpoint: "$TARGET/compat"
+    model: "$MODEL"
+    api_key: "$API_KEY"
+    timeout: 180

@@ -1,0 +1,47 @@
+# probes/omniroute.yaml
+# Reference: https://github.com/diegosouzapw/OmniRoute/blob/main/docs/API_REFERENCE.md
+name: omniroute
+description: OmniRoute - AI gateway for multi-provider LLMs with smart routing, load balancing, caching, and observability
+category: gateway
+port_hint: 20128
+specificity: 90
+api_docs: https://github.com/diegosouzapw/OmniRoute/blob/main/docs/API_REFERENCE.md
+
+requests:
+  # Detection via /api/cache which returns OmniRoute's distinctive
+  # two-tier cache stats. The "semanticCache" key with "hitRate" is
+  # unique to OmniRoute and not present in any other LLM gateway.
+  - type: http
+    path: /api/cache
+    method: GET
+    match:
+      - type: status
+        value: 200
+      - type: body.contains
+        value: "semanticCache"
+
+  # Detection via /api/acp/agents which lists detected coding agent
+  # runtimes. Response includes "isCustom" and "protocol" fields per
+  # agent — a structure exclusive to OmniRoute's ACP integration.
+  - type: http
+    path: /api/acp/agents
+    method: GET
+    match:
+      - type: status
+        value: 200
+      - type: body.contains
+        value: "isCustom"
+
+
+models:
+  path: /v1/models
+  method: GET
+  extract: ".data[].id"
+
+augustus:
+  generator: openai
+  config_template:
+    endpoint: "$TARGET/v1"
+    model: "$MODEL"
+    api_key: "$API_KEY"
+    timeout: 180
