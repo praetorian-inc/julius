@@ -9,8 +9,8 @@ api_docs: https://docs.sglang.io/basic_usage/native_api.html
 
 requests:
   # SGLang-native /server_info endpoint (new canonical name).
-  # Returns a large JSON with SGLang-unique fields like radix_eviction_policy,
-  # chunked_prefill_size, mem_fraction_static, and a "version" field.
+  # Older versions (<=0.4.x) return a compact JSON; newer versions dump full server args.
+  # mem_fraction_static + disaggregation_mode are present in both and unique to SGLang.
   - type: http
     path: /server_info
     method: GET
@@ -20,11 +20,9 @@ requests:
       - type: content-type
         value: application/json
       - type: body.contains
-        value: '"radix_eviction_policy"'
-      - type: body.contains
         value: '"mem_fraction_static"'
       - type: body.contains
-        value: '"chunked_prefill_size"'
+        value: '"disaggregation_mode"'
 
   # Deprecated alias — still present in current versions, same response.
   - type: http
@@ -36,11 +34,9 @@ requests:
       - type: content-type
         value: application/json
       - type: body.contains
-        value: '"radix_eviction_policy"'
-      - type: body.contains
         value: '"mem_fraction_static"'
       - type: body.contains
-        value: '"chunked_prefill_size"'
+        value: '"disaggregation_mode"'
 
   # SGLang-native /model_info endpoint.
   # Returns is_generation, has_image_understanding, has_audio_understanding —

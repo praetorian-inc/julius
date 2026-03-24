@@ -18,8 +18,10 @@ requests:
       - type: body.contains
         value: "Ollama is running"
 
-  # Secondary: /api/tags with Ollama-specific family markers
-  # Note: KoboldCpp also exposes /api/tags but with "family": "koboldcpp"
+  # Secondary: /api/tags with Ollama-specific markers
+  # Real Ollama includes "families" (array) in model details;
+  # Ollama-compat servers (SGLang, etc.) only include "family" (string).
+  # KoboldCpp also exposes /api/tags but with "family": "koboldcpp".
   - type: http
     path: /api/tags
     method: GET
@@ -31,7 +33,7 @@ requests:
       - type: body.contains
         value: '"models"'
       - type: body.contains
-        value: '"family":'
+        value: '"families"'
       # Exclude KoboldCpp which mimics Ollama's /api/tags endpoint
       - type: body.contains
         value: '"family": "koboldcpp"'
