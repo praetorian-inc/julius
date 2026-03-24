@@ -55,6 +55,34 @@ requests:
       - type: body.contains
         value: '"litellm_version"'
 
+  # /public/model_hub/info is unauthenticated and returns litellm_version for version extraction
+  # Added for supply chain advisory tracking (v1.82.7-v1.82.8 credential stealer)
+  - type: http
+    path: /public/model_hub/info
+    method: GET
+    match:
+      - type: status
+        value: 200
+      - type: content-type
+        value: application/json
+      - type: body.contains
+        value: '"litellm_version"'
+
+  # /openapi.json is unauthenticated and returns version for version extraction
+  # Added for supply chain advisory tracking (v1.82.7-v1.82.8 credential stealer)
+  - type: http
+    path: /openapi.json
+    method: GET
+    match:
+      - type: status
+        value: 200
+      - type: content-type
+        value: application/json
+      - type: body.contains
+        value: 'Proxy Server to call 100+ LLMs in the OpenAI format.'
+      - type: body.contains
+        value: 'chat/completions'
+      
 models:
   path: /v1/models
   method: GET
