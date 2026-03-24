@@ -8,7 +8,10 @@ specificity: 90
 api_docs: https://docs.dify.ai
 
 requests:
-  # Request 1: /apps with status 200 (newer versions)
+  # Primary: /apps page contains Dify-specific body data attributes.
+  # data-public-edition and /console/api path are present across all Dify
+  # versions (old <title>Dify</title> detection broke on newer JS-rendered versions,
+  # and marketplace.dify.ai is absent in pre-marketplace versions).
   - type: http
     path: /apps
     method: GET
@@ -16,19 +19,12 @@ requests:
       - type: status
         value: 200
       - type: body.contains
-        value: "<title>Dify</title>"
-
-  # Request 2: /apps with status 500 (older/misconfigured versions)
-  - type: http
-    path: /apps
-    method: GET
-    match:
-      - type: status
-        value: 500
+        value: 'data-public-edition'
       - type: body.contains
-        value: "<title>Dify</title>"
+        value: '/console/api'
 
-  # Request 5: Root path with status 200
+  # Secondary: root / redirects to /apps (307) or serves directly.
+  # Some deployments serve the app at root with the same Dify markers.
   - type: http
     path: /
     method: GET
@@ -36,5 +32,6 @@ requests:
       - type: status
         value: 200
       - type: body.contains
-        value: "<title>Dify</title>"
-
+        value: 'data-public-edition'
+      - type: body.contains
+        value: '/console/api'

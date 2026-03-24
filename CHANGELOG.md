@@ -22,6 +22,25 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   s := scanner.NewScanner(timeout, concurrency, scanner.DefaultMaxResponseSize, nil)
   ```
 
+### Added (Probes)
+
+- **30 new LLM service probes** bringing the total from 33 to 63:
+  - **Self-hosted**: SGLang, BentoML, Baseten Truss, DeepSpeed-MII, MLC LLM, Petals, PowerInfer, Ray Serve, TensorRT-LLM, Triton Inference Server
+  - **Cloud-managed**: AWS Bedrock, Azure OpenAI, Cloudflare AI Gateway, Databricks Model Serving, Fireworks AI, Google Vertex AI, Groq, Modal, Replicate, Together AI
+  - **Gateways**: Bifrost, Helicone, OmniRoute, Portkey AI Gateway, TensorZero
+  - **RAG/orchestration**: h2oGPT, Langflow, PrivateGPT, Quivr, RAGFlow
+
+### Fixed (Probes)
+
+- **SGLang**: Fixed `/server_info` match rules for cross-version compatibility (older versions lack `radix_eviction_policy`)
+- **Ollama**: Fixed `/api/tags` false positive on Ollama-compatible servers (SGLang, etc.) by requiring `"families"` field
+- **Dify**: Fixed detection for newer versions that render title via JavaScript; now uses `data-public-edition` + `/console/api` body data attributes
+- **Flowise**: Updated title match from outdated string to `flowiseai.com` (present in all versions)
+- **Bifrost**: Removed overly generic `/api/version` block that matched KoboldCpp, Open WebUI, and other services
+- **DeepSpeed-MII**: Removed `/health` block entirely (`{"status":"ok"}` with uvicorn is too common across FastAPI apps)
+- **Groq**: Removed generic `/openai/v1/models` 200-status block that matched KoboldCpp and other OpenAI-compat servers
+- **AWS Bedrock, Cloudflare AI Gateway, Fireworks AI, Modal, OmniRoute**: Fixed `header.contains` rules that used header names in the `value` field without a `header` field, causing matches to always fail on HTTP/2
+
 ### Added
 
 - `--max-response-size` flag to limit HTTP response body size (default 10MB)

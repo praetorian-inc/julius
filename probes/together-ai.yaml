@@ -1,0 +1,50 @@
+# probes/together-ai.yaml
+# Reference: https://docs.together.ai/reference/models-1
+name: together-ai
+description: Together AI cloud inference platform for open-source models
+category: cloud-managed
+port_hint: 443
+specificity: 85
+api_docs: https://docs.together.ai/reference/models-1
+
+requests:
+  # Together-specific: 401 error message references api.together.xyz domain
+  # No auth needed — the error body itself fingerprints the service
+  - type: http
+    path: /v1/models
+    method: GET
+    match:
+      - type: status
+        value: 401
+      - type: content-type
+        value: application/json
+      - type: body.contains
+        value: "api.together.xyz"
+
+  # Together-specific: authenticated model list includes "pricing" object
+  # unique to Together (hourly/input/output/base/finetune fields)
+  - type: http
+    path: /v1/models
+    method: GET
+    match:
+      - type: status
+        value: 200
+      - type: content-type
+        value: application/json
+      - type: body.contains
+        value: '"pricing"'
+      - type: body.contains
+        value: '"organization"'
+
+models:
+  path: /v1/models
+  method: GET
+  extract: ".[].id"
+
+augustus:
+  generator: openai
+  config_template:
+    endpoint: "$TARGET"
+    model: "$MODEL"
+    api_key: "$API_KEY"
+    timeout: 180

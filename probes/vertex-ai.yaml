@@ -1,0 +1,52 @@
+# probes/vertex-ai.yaml
+# Reference: https://cloud.google.com/vertex-ai/docs/reference/rest
+name: vertex-ai
+description: Google Vertex AI (aiplatform.googleapis.com) - ML training and generative AI platform
+category: cloud-managed
+port_hint: 443
+specificity: 92
+api_docs: https://cloud.google.com/vertex-ai/docs/reference/rest
+
+# Detection strategy:
+# 1. The discovery document at /$discovery/rest?version=v1 is unauthenticated and
+#    returns JSON containing "name": "aiplatform" and "title": "Vertex AI API".
+#    This is the strongest signal — unique to Vertex AI.
+# 2. Hitting a Vertex AI resource path without auth returns a structured Google
+#    error referencing aiplatform.googleapis.com, distinguishing it from other
+#    Google Cloud APIs.
+
+requests:
+  # Primary: Discovery document — publicly accessible, no auth needed.
+  # Returns JSON with kind=discovery#restDescription, name=aiplatform.
+  - type: http
+    path: /$discovery/rest?version=v1
+    method: GET
+    match:
+      - type: content-type
+        value: application/json
+      - type: body.contains
+        value: '"name": "aiplatform"'
+      - type: body.contains
+        value: '"title": "Vertex AI API"'
+
+  # Secondary: Unauthenticated request to a Vertex AI resource path.
+  # Returns 401/403 with Google-structured error mentioning aiplatform.
+  - type: http
+    path: /v1/projects/test/locations/us-central1/models
+    method: GET
+    match:
+      - type: body.contains
+        value: "aiplatform.googleapis.com"
+
+models:
+  path: /v1/projects/{project}/locations/{location}/models
+  method: GET
+  extract: ".models[].name"
+
+augustus:
+  generator: openai
+  config_template:
+    endpoint: "$TARGET/v1/projects/$PROJECT/locations/$LOCATION/endpoints/openapi"
+    model: "$MODEL"
+    api_key: "$API_KEY"
+    timeout: 180

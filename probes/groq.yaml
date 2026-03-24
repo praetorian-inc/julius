@@ -1,0 +1,36 @@
+# probes/groq.yaml
+# Reference: https://console.groq.com/docs/api-reference
+name: groq
+description: Groq Cloud LPU Inference API (OpenAI-compatible at /openai/v1/ path)
+category: cloud-managed
+port_hint: 443
+specificity: 80
+api_docs: https://console.groq.com/docs/api-reference
+
+requests:
+  # Groq uses /openai/v1/ path prefix — unique among cloud LLM providers.
+  # OpenAI uses /v1/, Azure uses /openai/deployments/, etc.
+  # Without auth, returns 401 with Groq-specific "invalid_api_key" code.
+  - type: http
+    path: /openai/v1/models
+    method: GET
+    match:
+      - type: status
+        value: 401
+      - type: content-type
+        value: application/json
+      - type: body.contains
+        value: '"invalid_api_key"'
+
+models:
+  path: /openai/v1/models
+  method: GET
+  extract: ".data[].id"
+
+augustus:
+  generator: openai
+  config_template:
+    endpoint: "$TARGET"
+    model: "$MODEL"
+    api_key: "$API_KEY"
+    timeout: 180

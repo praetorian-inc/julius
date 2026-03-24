@@ -15,7 +15,7 @@ requests:
       - type: status
         value: 200
       - type: body.contains
-        value: "Flowise - Build AI Agents, Visually"
+        value: "flowiseai.com"
       - type: body.contains
         value: "FlowiseAI"
 

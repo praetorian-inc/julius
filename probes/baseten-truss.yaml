@@ -1,0 +1,37 @@
+# probes/baseten-truss.yaml
+# Reference: https://github.com/basetenlabs/truss
+name: baseten-truss
+description: Baseten Truss - open-source ML model serving framework
+category: self-hosted
+port_hint: 8080
+specificity: 92
+api_docs: https://docs.baseten.co/truss/overview
+
+requests:
+  # Truss FastAPI app hardcodes title="Baseten Inference Server" in its OpenAPI spec.
+  # Source: truss/templates/server/truss_server.py -> create_application()
+  # docs_url and redoc_url are disabled, but /openapi.json is still served by FastAPI.
+  - type: http
+    path: /openapi.json
+    method: GET
+    match:
+      - type: status
+        value: 200
+      - type: content-type
+        value: "application/json"
+      - type: body.contains
+        value: "Baseten Inference Server"
+
+  # Truss registers a predict route with colon syntax: /v1/models/{model_name}:predict
+  # This path pattern is distinctive to Truss (not KServe, TGI, vLLM, etc.) and
+  # appears in the OpenAPI spec alongside loaded/schema sibling routes.
+  - type: http
+    path: /openapi.json
+    method: GET
+    match:
+      - type: status
+        value: 200
+      - type: body.contains
+        value: "/v1/models/{model_name}:predict"
+      - type: body.contains
+        value: "/v1/models/{model_name}/loaded"

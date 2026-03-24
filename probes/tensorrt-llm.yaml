@@ -1,0 +1,64 @@
+# probes/tensorrt-llm.yaml
+# Reference: https://nvidia.github.io/TensorRT-LLM/commands/trtllm-serve.html
+# Source: https://github.com/NVIDIA/TensorRT-LLM/blob/main/tensorrt_llm/serve/openai_server.py
+name: tensorrt-llm
+description: NVIDIA TensorRT-LLM inference server (trtllm-serve)
+category: self-hosted
+port_hint: 8000
+specificity: 80
+api_docs: https://nvidia.github.io/TensorRT-LLM/commands/trtllm-serve.html
+
+requests:
+  # Primary: /metrics returns a JSON array with TensorRT-LLM-specific iteration stats.
+  # Unlike vLLM/Triton which return Prometheus text format, trtllm-serve returns JSON
+  # containing fields like "inflightBatchingStats" and "kvCacheStats" unique to TensorRT-LLM.
+  # Source: openai_server.py get_iteration_stats() → generator.get_stats_async()
+  - type: http
+    path: /metrics
+    method: GET
+    match:
+      - type: status
+        value: 200
+      - type: content-type
+        value: application/json
+      - type: body.contains
+        value: "inflightBatchingStats"
+
+  # Secondary: /metrics with kvCacheStats marker (alternate field name in stats output)
+  - type: http
+    path: /metrics
+    method: GET
+    match:
+      - type: status
+        value: 200
+      - type: content-type
+        value: application/json
+      - type: body.contains
+        value: "kvCacheStats"
+      - type: body.contains
+        value: "iterLatencyMS"
+
+  # Tertiary: /health_generate is a trtllm-serve-specific endpoint that runs a
+  # minimal inference as a health check. No other LLM server exposes this path.
+  # Source: openai_server.py health_generate() → minimal ChatCompletionRequest
+  - type: http
+    path: /health_generate
+    method: GET
+    match:
+      - type: status
+        value: 200
+      - type: body.contains
+        value: "Generation health check OK"
+
+models:
+  path: /v1/models
+  method: GET
+  extract: ".data[].id"
+
+augustus:
+  generator: openai
+  config_template:
+    endpoint: "$TARGET"
+    model: "$MODEL"
+    api_key: "not-needed"
+    timeout: 180
