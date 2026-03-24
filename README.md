@@ -2,7 +2,7 @@
 
 # Julius: LLM Service Fingerprinting Tool
 
-> Identify Ollama, vLLM, LiteLLM, and 30+ AI services running on any endpoint in seconds.
+> Identify Ollama, vLLM, LiteLLM, and 60+ AI services running on any endpoint in seconds.
 
 [![Go Version](https://img.shields.io/badge/go-1.25+-blue.svg)](https://golang.org/)
 [![License](https://img.shields.io/github/license/praetorian-inc/julius)](LICENSE)
@@ -46,7 +46,7 @@ You've discovered an open port during a security assessment. Is it Ollama on por
 
 | Feature | Description |
 |---------|-------------|
-| **33 LLM Services** | Detects Ollama, vLLM, LiteLLM, LocalAI, Hugging Face TGI, and 28 more |
+| **63 LLM Services** | Detects Ollama, vLLM, LiteLLM, LocalAI, Hugging Face TGI, AWS Bedrock, and 57 more |
 | **Fast Scanning** | Concurrent probing with intelligent port-based prioritization |
 | **Model Discovery** | Extracts available models from identified endpoints |
 | **Specificity Scoring** | 1-100 scoring ranks results by most specific match (e.g., LiteLLM over generic OpenAI-compatible) |
@@ -82,59 +82,88 @@ julius probe https://target.example.com
 
 ## Supported LLM Services
 
-Julius identifies 33 LLM platforms across self-hosted, gateway, RAG/orchestration, and cloud-managed categories:
+Julius identifies 63 LLM platforms across self-hosted, gateway, RAG/orchestration, and cloud-managed categories:
 
-### Self-Hosted LLM Servers
+### Self-Hosted LLM Servers (25)
 
 | Service | Default Port | Description |
 |---------|--------------|-------------|
 | [Ollama](https://ollama.ai) | 11434 | Popular local LLM server with easy model management |
 | [vLLM](https://github.com/vllm-project/vllm) | 8000 | High-throughput LLM inference engine |
+| [SGLang](https://github.com/sgl-project/sglang) | 30000 | High-performance LLM serving engine |
 | [LocalAI](https://localai.io) | 8080 | OpenAI-compatible local AI server |
 | [llama.cpp](https://github.com/ggerganov/llama.cpp) | 8080 | CPU-optimized LLM inference |
 | [Hugging Face TGI](https://huggingface.co/docs/text-generation-inference) | 3000 | Text Generation Inference server |
-| [LM Studio](https://lmstudio.ai) | 1234 | Desktop LLM application with API server |
-| [Aphrodite Engine](https://github.com/PygmalionAI/aphrodite-engine) | 2242 | Large-scale LLM inference engine with OpenAI-compatible API |
-| [FastChat](https://github.com/lm-sys/FastChat) | 21001 | Open platform for training, serving, and evaluating LLM chatbots |
+| [NVIDIA NIM](https://developer.nvidia.com/nim) | 8000 | NVIDIA's enterprise inference microservices |
+| [NVIDIA TensorRT-LLM](https://github.com/NVIDIA/TensorRT-LLM) | 8000 | NVIDIA TensorRT-LLM inference server |
+| [NVIDIA Triton](https://developer.nvidia.com/triton-inference-server) | 8000 | NVIDIA Triton Inference Server (KServe v2) |
+| [BentoML](https://www.bentoml.com) | 3000 | AI application framework for serving models |
+| [Ray Serve](https://docs.ray.io/en/latest/serve/) | 8265 | Scalable model serving on Ray cluster |
+| [Aphrodite Engine](https://github.com/PygmalionAI/aphrodite-engine) | 2242 | Large-scale LLM inference engine |
+| [Baseten Truss](https://github.com/basetenlabs/truss) | 8080 | Open-source ML model serving framework |
+| [DeepSpeed-MII](https://github.com/deepspeedai/DeepSpeed-MII) | 28080 | High-throughput inference powered by DeepSpeed |
+| [FastChat](https://github.com/lm-sys/FastChat) | 21001 | Open platform for LLM chatbots |
 | [GPT4All](https://gpt4all.io) | 4891 | Run local models on any device |
 | [Gradio](https://gradio.app) | 7860 | ML model demo interfaces |
 | [Jan](https://jan.ai) | 1337 | Local OpenAI-compatible API server |
-| [KoboldCpp](https://github.com/LostRuins/koboldcpp) | 5001 | Easy-to-use AI text-generation software for GGML/GGUF models |
-| [NVIDIA NIM](https://developer.nvidia.com/nim) | 8000 | NVIDIA's enterprise inference microservices |
-| [TabbyAPI](https://github.com/theroyallab/tabbyAPI) | 5000 | FastAPI-based LLM server for ExLlama |
-| [Text Generation WebUI](https://github.com/oobabooga/text-generation-webui) | 5000 | Local LLM interface with OpenAI-compatible API |
-
-### Gateway/Proxy Services
+| [KoboldCpp](https://github.com/LostRuins/koboldcpp) | 5001 | AI text-generation for GGML/GGUF models |
+| [LM Studio](https://lmstudio.ai) | 1234 | Desktop LLM application with API server |
+| [MLC LLM](https://github.com/mlc-ai/mlc-llm) | 8000 | Universal deployment engine with ML compilation |
+| [Petals](https://github.com/bigscience-workshop/petals) | 5000 | Decentralized BitTorrent-style LLM inference |
+| [PowerInfer](https://github.com/SJTU-IPADS/PowerInfer) | 8080 | CPU/GPU hybrid inference engine |
+| [TabbyAPI](https://github.com/theroyallab/tabbyAPI) | 5000 | FastAPI-based server for ExLlama |
+| [Text Generation WebUI](https://github.com/oobabooga/text-generation-webui) | 5000 | Local LLM interface with API |
+### Gateway/Proxy Services (8)
 
 | Service | Default Port | Description |
 |---------|--------------|-------------|
 | [LiteLLM](https://github.com/BerriAI/litellm) | 4000 | Unified proxy for 100+ LLM providers |
-| [Kong AI Gateway](https://konghq.com) | 8000 | Enterprise API gateway with AI plugins |
-| [Envoy AI Gateway](https://gateway.envoyproxy.io) | 80 | Unified access to generative AI services built on Envoy Gateway |
+| [Bifrost](https://github.com/maximhq/bifrost) | 8080 | High-performance unified LLM gateway |
+| [Envoy AI Gateway](https://gateway.envoyproxy.io) | 80 | Unified access to generative AI services |
+| [Helicone](https://www.helicone.ai) | 8585 | Open-source LLM observability platform and gateway |
+| [Kong AI Gateway](https://konghq.com) | 8001 | Enterprise API gateway with AI plugins |
+| [OmniRoute](https://github.com/diegosouzapw/OmniRoute) | 20128 | AI gateway with smart routing and caching |
+| [Portkey AI Gateway](https://portkey.ai) | 8787 | Unified gateway for 200+ LLM providers |
+| [TensorZero](https://www.tensorzero.com) | 3000 | Rust-based LLM gateway with observability |
 
-### RAG & Orchestration Platforms
+### RAG & Orchestration Platforms (18)
 
 | Service | Default Port | Description |
 |---------|--------------|-------------|
-| [AnythingLLM](https://anythingllm.com) | 3001 | All-in-one AI application with RAG, agents, and multi-model support |
-| [AstrBot](https://github.com/Soulter/AstrBot) | 6185 | Multi-platform LLM chatbot framework with dashboard and plugin system |
+| [AnythingLLM](https://anythingllm.com) | 3001 | All-in-one AI application with RAG and agents |
+| [AstrBot](https://github.com/Soulter/AstrBot) | 6185 | Multi-platform LLM chatbot framework |
 | [BetterChatGPT](https://github.com/ztjhz/BetterChatGPT) | 3000 | Enhanced ChatGPT interface |
-| [Dify](https://dify.ai) | 80 | Open-source LLM app development platform with workflow orchestration |
-| [Flowise](https://flowiseai.com) | 3000 | Low-code platform for building AI agents and LLM workflows |
-| [HuggingFace Chat UI](https://github.com/huggingface/chat-ui) | 3000 | Open source ChatGPT-style interface powering HuggingChat |
-| [LibreChat](https://librechat.ai) | 3080 | Multi-provider chat interface with RAG support |
-| [LobeHub](https://lobehub.com) | 3210 | Multi-agent AI collaboration platform with chat UI |
-| [NextChat](https://github.com/ChatGPTNextWeb/ChatGPT-Next-Web) | 3000 | Self-hosted ChatGPT-style interface supporting multiple AI providers |
-| [Onyx](https://github.com/onyx-dot-app/onyx) | 3000 | Open source AI platform for enterprise search and chat with RAG |
-| [OpenClaw](https://github.com/openclaw/openclaw) | 18789 | AI agent gateway and control plane (formerly Clawdbot/Moltbot) |
+| [Dify](https://dify.ai) | 80 | LLM app development platform with workflow orchestration |
+| [Flowise](https://flowiseai.com) | 3000 | Low-code platform for AI agents and workflows |
+| [h2oGPT](https://github.com/h2oai/h2ogpt) | 7860 | Private local GPT with document Q&A |
+| [HuggingFace Chat UI](https://github.com/huggingface/chat-ui) | 3000 | Open source ChatGPT-style interface |
+| [Langflow](https://www.langflow.org) | 7860 | Low-code platform for AI agents and RAG |
+| [LibreChat](https://librechat.ai) | 3080 | Multi-provider chat interface with RAG |
+| [LobeHub](https://lobehub.com) | 3210 | Multi-agent AI collaboration platform |
+| [NextChat](https://github.com/ChatGPTNextWeb/ChatGPT-Next-Web) | 3000 | Self-hosted ChatGPT-style interface |
+| [Onyx](https://github.com/onyx-dot-app/onyx) | 3000 | Enterprise search and chat with RAG |
+| [OpenClaw](https://github.com/openclaw/openclaw) | 18789 | AI agent gateway and control plane |
 | [Open WebUI](https://github.com/open-webui/open-webui) | 3000 | ChatGPT-style interface for local LLMs |
+| [PrivateGPT](https://github.com/zylon-ai/private-gpt) | 8001 | Private document Q&A with LLMs |
+| [Quivr](https://github.com/QuivrHQ/quivr) | 5050 | RAG platform for AI assistants |
+| [RAGFlow](https://github.com/infiniflow/ragflow) | 80 | RAG engine with deep document understanding |
 | [SillyTavern](https://sillytavernai.com) | 8000 | Character-based chat application |
 
-### Cloud-Managed Services
+### Cloud-Managed Services (11)
 
 | Service | Default Port | Description |
 |---------|--------------|-------------|
+| [AWS Bedrock](https://aws.amazon.com/bedrock/) | 443 | Foundation model hosting and inference |
+| [Azure OpenAI](https://azure.microsoft.com/en-us/products/ai-services/openai-service) | 443 | Microsoft Azure OpenAI Service |
+| [Cloudflare AI Gateway](https://developers.cloudflare.com/ai-gateway/) | 443 | AI proxy with caching and observability |
+| [Databricks Model Serving](https://www.databricks.com) | 443 | Real-time ML inference endpoints |
+| [Fireworks AI](https://fireworks.ai) | 443 | Cloud inference platform for LLMs |
+| [Google Vertex AI](https://cloud.google.com/vertex-ai) | 443 | ML training and generative AI platform |
+| [Groq](https://groq.com) | 443 | LPU-accelerated cloud inference |
+| [Modal](https://modal.com) | 443 | Serverless AI compute platform |
+| [Replicate](https://replicate.com) | 443 | Cloud ML platform with prediction API |
 | [Salesforce Einstein](https://www.salesforce.com/einstein/) | 443 | Salesforce AI platform |
+| [Together AI](https://www.together.ai) | 443 | Cloud inference for open-source models |
 
 ### Generic Detection
 
@@ -343,7 +372,7 @@ LLM service fingerprinting identifies what **LLM server software** (Ollama, vLLM
 
 ### How is Julius different from Shodan-based detection?
 
-Tools like Cisco's Shodan-based Ollama detector query internet-wide scan databases. Julius performs **active probing** against specific targets you control, working offline without external dependencies. It also detects 30+ services versus single-service detection.
+Tools like Cisco's Shodan-based Ollama detector query internet-wide scan databases. Julius performs **active probing** against specific targets you control, working offline without external dependencies. It also detects 60+ services versus single-service detection.
 
 ### Is Julius safe for penetration testing?
 
