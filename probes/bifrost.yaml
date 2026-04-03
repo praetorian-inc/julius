@@ -5,6 +5,7 @@ description: Bifrost AI Gateway - high-performance unified LLM gateway by MaximH
 category: gateway
 port_hint: 8080
 specificity: 80
+require: all
 api_docs: https://docs.getbifrost.ai/
 
 requests:

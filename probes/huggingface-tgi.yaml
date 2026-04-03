@@ -7,6 +7,9 @@ specificity: 75
 api_docs: https://huggingface.co/docs/text-generation-inference/
 
 requests:
+  # /info returns TGI-specific fields including model_dtype, docker_label,
+  # and max_batch_total_tokens alongside model_id. The combination of these
+  # fields on /info is unique to TGI.
   - type: http
     path: /info
     method: GET
@@ -16,7 +19,13 @@ requests:
       - type: content-type
         value: application/json
       - type: body.contains
-        value: '"model_id":'
+        value: '"model_id"'
+      - type: body.contains
+        value: '"model_dtype"'
+      - type: body.contains
+        value: '"max_batch_total_tokens"'
+      - type: body.contains
+        value: '"docker_label"'
 
 models:
   path: /info

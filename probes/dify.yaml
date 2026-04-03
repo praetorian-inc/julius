@@ -8,10 +8,8 @@ specificity: 90
 api_docs: https://docs.dify.ai
 
 requests:
-  # Primary: /apps page contains Dify-specific body data attributes.
-  # data-public-edition and /console/api path are present across all Dify
-  # versions (old <title>Dify</title> detection broke on newer JS-rendered versions,
-  # and marketplace.dify.ai is absent in pre-marketplace versions).
+  # Primary: /apps page with Dify title tag (standard deployments).
+  # <title>Dify</title> is server-side rendered in all standard-path versions.
   - type: http
     path: /apps
     method: GET
@@ -19,12 +17,11 @@ requests:
       - type: status
         value: 200
       - type: body.contains
-        value: 'data-public-edition'
+        value: '<title>Dify</title>'
       - type: body.contains
-        value: '/console/api'
+        value: 'data-public-edition'
 
-  # Secondary: root / redirects to /apps (307) or serves directly.
-  # Some deployments serve the app at root with the same Dify markers.
+  # Secondary: root / for deployments that serve at root.
   - type: http
     path: /
     method: GET
@@ -32,6 +29,17 @@ requests:
       - type: status
         value: 200
       - type: body.contains
-        value: 'data-public-edition'
+        value: '<title>Dify</title>'
       - type: body.contains
-        value: '/console/api'
+        value: 'data-public-edition'
+
+  # Tertiary: catch subpath deployments where <title>Dify</title> is absent
+  # but apple-mobile-web-app-title is always present with "Dify".
+  - type: http
+    path: /
+    method: GET
+    match:
+      - type: body.contains
+        value: 'apple-mobile-web-app-title" content="Dify"'
+      - type: body.contains
+        value: 'data-public-edition'

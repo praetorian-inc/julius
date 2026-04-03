@@ -4,6 +4,7 @@ description: llama.cpp HTTP server
 category: self-hosted
 port_hint: 8080
 specificity: 50
+require: all
 api_docs: https://github.com/ggerganov/llama.cpp/blob/master/examples/server/README.md
 
 requests:

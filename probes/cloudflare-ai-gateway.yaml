@@ -19,17 +19,6 @@ requests:
       - type: header.contains
         header: cf-aig-event-id
         value: "-"
-
-  # Detection via error body when gateway is not fully configured.
-  # Response includes Cloudflare AI Gateway-specific error code 2001.
-  - type: http
-    path: /v1/models
-    method: GET
-    match:
-      - type: content-type
-        value: application/json
-      - type: body.contains
-        value: '"AI Gateway"'
 models:
   path: /compat/v1/models
   method: GET

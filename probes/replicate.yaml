@@ -4,48 +4,38 @@ name: replicate
 description: Replicate cloud ML platform with prediction-based API
 category: cloud-managed
 port_hint: 443
-specificity: 90
+specificity: 85
+require: all
 api_docs: https://replicate.com/docs/reference/http
 
 requests:
-  # /v1/hardware is a Replicate-unique endpoint returning hardware SKUs.
-  # Response is a JSON array of {"name": "...", "sku": "..."} objects.
+  # Replicate is cloud-only (api.replicate.com). All endpoints return 401
+  # without auth using RFC 7807 Problem Details format (application/problem+json).
+  # /v1/hardware is a Replicate-unique path (hardware SKU listing).
   - type: http
     path: /v1/hardware
     method: GET
     match:
       - type: status
-        value: 200
+        value: 401
       - type: content-type
-        value: application/json
+        value: application/problem+json
       - type: body.contains
-        value: '"sku"'
+        value: '"Unauthenticated"'
 
-  # /v1/collections is a Replicate-unique endpoint for model collections.
-  # Response contains paginated results with replicate.com URLs.
-  - type: http
-    path: /v1/collections
-    method: GET
-    match:
-      - type: status
-        value: 200
-      - type: content-type
-        value: application/json
-      - type: body.contains
-        value: "replicate.com"
-
-  # /v1/predictions is the core Replicate endpoint. Response includes
-  # "predict_time" metric and api.replicate.com URLs — unique response shape.
+  # /v1/predictions is the core Replicate endpoint. Requiring both
+  # Replicate-specific paths to return the same RFC 7807 401 error
+  # eliminates false positives from other APIs using Problem Details.
   - type: http
     path: /v1/predictions
     method: GET
     match:
       - type: status
-        value: 200
+        value: 401
       - type: content-type
-        value: application/json
+        value: application/problem+json
       - type: body.contains
-        value: "api.replicate.com"
+        value: '"Unauthenticated"'
 
 models:
   path: /v1/models

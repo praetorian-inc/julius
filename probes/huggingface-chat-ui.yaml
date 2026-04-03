@@ -5,6 +5,7 @@ description: HuggingFace Chat UI - Open source ChatGPT-style interface powering 
 category: rag-orchestration
 port_hint: 3000
 specificity: 90
+require: all
 api_docs: https://huggingface.co/docs/chat-ui/index
 
 requests:

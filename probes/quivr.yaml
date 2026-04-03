@@ -5,6 +5,7 @@ description: Quivr - Open-source RAG platform for building AI assistants with br
 category: rag-orchestration
 port_hint: 5050
 specificity: 80
+require: all
 api_docs: https://docs.quivr.app
 
 requests:

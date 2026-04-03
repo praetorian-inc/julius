@@ -4,11 +4,25 @@ name: lm-studio
 description: LM Studio local server
 category: self-hosted
 port_hint: 1234
-specificity: 70
+specificity: 95
 api_docs: https://lmstudio.ai/docs/api/server
 
 requests:
-  # LM Studio-specific: /api/v0/models endpoint (unique to LM Studio)
+  # /lmstudio-greeting is LM Studio's self-identification endpoint.
+  # Returns {"lmstudio": true} — used by the CLI itself to verify the server.
+  # Source: src/createClient.ts
+  - type: http
+    path: /lmstudio-greeting
+    method: GET
+    match:
+      - type: status
+        value: 200
+      - type: body.contains
+        value: '"lmstudio"'
+      - type: body.contains
+        value: "true"
+
+  # Fallback: /api/v0/models is an LM Studio-specific API path prefix.
   - type: http
     path: /api/v0/models
     method: GET

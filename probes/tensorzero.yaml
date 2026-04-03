@@ -19,26 +19,7 @@ requests:
       - type: body.contains
         value: "tensorzero_inferences_total"
 
-  # Secondary fingerprint: /health returns JSON with "gateway" key (TensorZero-specific shape)
-  # Response: {"gateway": "ok", "postgres": "ok"} or {"gateway": "ok", "clickhouse": "ok"}
-  - type: http
-    path: /health
-    method: GET
-    match:
-      - type: status
-        value: 200
-      - type: content-type
-        value: application/json
-      - type: body.contains
-        value: '"gateway"'
-      - type: body.contains
-        value: '"ok"'
-      # Exclude LiteLLM which also uses /health but returns "healthy_endpoints"
-      - type: body.contains
-        value: '"healthy_endpoints"'
-        not: true
-
-  # Tertiary fingerprint: /metrics with the latency overhead histogram metric
+  # Secondary fingerprint: /metrics with the latency overhead histogram metric
   - type: http
     path: /metrics
     method: GET

@@ -3,9 +3,12 @@ name: librechat
 description: LibreChat - Multi-model chat interface with RAG support
 category: rag-orchestration
 port_hint: 3080
+specificity: 90
+require: all
 api_docs: https://www.librechat.ai/docs
 
 requests:
+  # Homepage has hardcoded <title>LibreChat</title> in client/index.html.
   - type: http
     path: /
     method: GET
@@ -13,13 +16,17 @@ requests:
       - type: status
         value: 200
       - type: body.contains
-        value: "LibreChat"
+        value: "<title>LibreChat</title>"
 
+  # /api/config returns appTitle (defaults to "LibreChat") and
+  # helpAndFaqURL (defaults to "https://librechat.ai").
   - type: http
-    path: /api/endpoints
+    path: /api/config
     method: GET
     match:
       - type: status
         value: 200
+      - type: content-type
+        value: application/json
       - type: body.contains
-        value: '"openAI"'
+        value: "librechat.ai"

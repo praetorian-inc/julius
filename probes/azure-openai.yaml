@@ -7,11 +7,12 @@ port_hint: 443
 specificity: 92
 api_docs: https://learn.microsoft.com/en-us/azure/foundry/openai/reference
 
+require: all
+
 requests:
   # Azure-specific /openai/models path with mandatory api-version query param.
-  # Without a valid api-key header, Azure returns 401 with a distinctive error
-  # body containing "subscription key" — unique to Azure Cognitive Services.
-  # Regular OpenAI uses /v1/models and never mentions "subscription key".
+  # Without a valid api-key header, Azure returns 401 with a distinctive error:
+  # "Access denied due to invalid subscription key or wrong API endpoint"
   - type: http
     path: /openai/models?api-version=2024-10-21
     method: GET
@@ -21,11 +22,10 @@ requests:
       - type: content-type
         value: application/json
       - type: body.contains
-        value: "subscription key"
+        value: "Access denied due to invalid subscription key"
 
-  # Same detection via the deployments-scoped completions path, which is
-  # structurally unique to Azure OpenAI (/openai/deployments/{id}/...).
-  # A 404 or 401 with the same Azure error envelope confirms the service.
+  # Same detection via deployments path. Requiring both paths to return the
+  # same Azure-specific error confirms this is Azure OpenAI, not a docs page.
   - type: http
     path: /openai/deployments?api-version=2024-10-21
     method: GET
@@ -35,20 +35,7 @@ requests:
       - type: content-type
         value: application/json
       - type: body.contains
-        value: "subscription key"
-
-  # Azure API Management layer sometimes returns statusCode field instead.
-  # Matches the APIM-wrapped variant of the same 401 error.
-  - type: http
-    path: /openai/models?api-version=2024-10-21
-    method: GET
-    match:
-      - type: status
-        value: 401
-      - type: body.contains
-        value: '"statusCode"'
-      - type: body.contains
-        value: "cognitiveservices.azure.com"
+        value: "Access denied due to invalid subscription key"
 
 models:
   path: /openai/models?api-version=2024-10-21

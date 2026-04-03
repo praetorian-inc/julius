@@ -1,92 +1,24 @@
 # probes/modal.yaml
 # Reference: https://modal.com/docs/guide/webhooks
-#
-# Detection notes:
-# Modal is a serverless compute platform where all HTTP endpoints are
-# user-deployed functions. There is NO Modal platform-level REST API,
-# no Modal-specific response headers, and no standard health/version
-# endpoints. The platform is architecturally transparent — responses
-# come from user code (typically FastAPI/vLLM/Flask), not from Modal itself.
-#
-# Fingerprinting strategy:
-# 1. Domain: endpoints live on *.modal.run (strongest signal, but
-#    domain matching is outside probe scope)
-# 2. Auth headers: Modal endpoints optionally accept Modal-Key and
-#    Modal-Secret request headers for proxy auth, but these are
-#    request-side, not response-side markers
-# 3. Common deployment: Modal is heavily used for LLM serving via vLLM
-#    with OpenAI-compatible endpoints. We probe for this common pattern
-#    combined with CORS headers (Modal's @fastapi_endpoint decorator
-#    enables CORS by default)
-#
-# Specificity is low because:
-# - No platform-injected response headers or unique error signatures
-# - OpenAI-compatible API is not Modal-specific (also served by vLLM,
-#   TGI, etc. on any platform)
-# - CORS is common across many services
-#
-# The probe below targets the most common Modal LLM deployment pattern.
-# It will match any OpenAI-compatible endpoint with CORS enabled,
-# which is typical of Modal but not exclusive to it.
 name: modal
 description: Modal serverless AI platform (LLM serving via vLLM/FastAPI)
 category: cloud-managed
 port_hint: 443
-specificity: 30
+specificity: 95
 api_docs: https://modal.com/docs/guide/webhooks
 
 requests:
-  # Pattern 1: OpenAI-compatible /v1/models on a Modal endpoint
-  # Modal's vLLM examples deploy OpenAI-compatible servers. The
-  # access-control-allow-origin header is injected by Modal's default
-  # CORS policy on @fastapi_endpoint decorators.
+  # Modal's HTTP infrastructure returns "modal-http: invalid function call"
+  # on any 404. Requesting a guaranteed-invalid path triggers this on all
+  # Modal endpoints (active, stopped, or misconfigured).
   - type: http
-    path: /v1/models
+    path: /praetorian-nonexistent-probe-path
     method: GET
     match:
       - type: status
-        value: 200
-      - type: content-type
-        value: application/json
+        value: 404
       - type: body.contains
-        value: '"object"'
-      - type: body.contains
-        value: '"owned_by"'
-      - type: header.contains
-        header: access-control-allow-origin
-        value: "*"
-
-  # Pattern 2: OpenAI-compatible /v1/models returning vLLM-style response
-  # vLLM on Modal returns owned_by: "vllm" which narrows the match
-  # beyond generic OpenAI-compatible servers
-  - type: http
-    path: /v1/models
-    method: GET
-    match:
-      - type: status
-        value: 200
-      - type: content-type
-        value: application/json
-      - type: body.contains
-        value: '"owned_by":"vllm"'
-
-  # Pattern 3: FastAPI auto-generated docs endpoint
-  # Modal's @fastapi_endpoint(docs=True) serves Swagger UI at /docs.
-  # The page title contains "FastAPI" — not Modal-specific but common
-  # for Modal deployments using the fastapi_endpoint decorator.
-  - type: http
-    path: /docs
-    method: GET
-    match:
-      - type: status
-        value: 200
-      - type: content-type
-        value: text/html
-      - type: body.contains
-        value: "swagger-ui"
-      - type: header.contains
-        header: access-control-allow-origin
-        value: "*"
+        value: "modal-http: invalid function call"
 
 models:
   path: /v1/models

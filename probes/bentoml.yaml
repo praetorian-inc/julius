@@ -5,6 +5,7 @@ description: BentoML - AI application framework for serving models
 category: self-hosted
 port_hint: 3000
 specificity: 85
+require: all
 api_docs: https://docs.bentoml.com/en/latest/reference/index.html
 
 requests:
@@ -22,18 +23,6 @@ requests:
         value: "BentoML Team"
       - type: body.contains
         value: "contact@bentoml.com"
-
-  # BentoML OpenAPI spec uses x-bentoml-name extension on all API routes
-  - type: http
-    path: /docs.json
-    method: GET
-    match:
-      - type: status
-        value: 200
-      - type: content-type
-        value: "application/json"
-      - type: body.contains
-        value: "x-bentoml-name"
 
   # BentoML Prometheus metrics with bentoml_ namespace prefix
   - type: http

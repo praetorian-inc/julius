@@ -5,6 +5,7 @@ description: Baseten Truss - open-source ML model serving framework
 category: self-hosted
 port_hint: 8080
 specificity: 92
+require: all
 api_docs: https://docs.baseten.co/truss/overview
 
 requests:

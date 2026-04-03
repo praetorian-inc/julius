@@ -3,14 +3,30 @@ name: sillytavern
 description: SillyTavern - LLM frontend for roleplay/chat with character cards
 category: rag-orchestration
 port_hint: 8000
+specificity: 90
+require: all
 api_docs: https://docs.sillytavern.app/
 
 requests:
+  # manifest.json is a static file with hardcoded app name.
   - type: http
-    path: /
+    path: /manifest.json
+    method: GET
+    match:
+      - type: status
+        value: 200
+      - type: body.contains
+        value: '"name": "SillyTavern"'
+
+  # /version returns JSON with agent field containing "SillyTavern:{version}".
+  # Source: src/util.js
+  - type: http
+    path: /version
     method: GET
     match:
       - type: status
         value: 200
       - type: body.contains
         value: "SillyTavern"
+      - type: body.contains
+        value: '"pkgVersion"'

@@ -4,63 +4,34 @@ name: petals
 description: Petals - decentralized LLM inference, BitTorrent-style distributed serving
 category: self-hosted
 port_hint: 5000
-specificity: 80
+specificity: 95
 api_docs: https://github.com/bigscience-workshop/petals
 
 requests:
-  # Health monitor: /api/v1/state returns swarm state JSON with model_reports and bootstrap_states
-  # These keys are unique to Petals health monitor (health.petals.dev)
+  # Chat server homepage has hardcoded Petals branding baked into
+  # templates/index.html. All checks are present on every deployment.
   - type: http
-    path: /api/v1/state
-    method: GET
-    match:
-      - type: status
-        value: 200
-      - type: content-type
-        value: application/json
-      - type: body.contains
-        value: '"model_reports"'
-      - type: body.contains
-        value: '"bootstrap_states"'
-
-  # Health monitor: /api/v1/state also contains reachability_issues (Petals swarm-specific)
-  - type: http
-    path: /api/v1/state
-    method: GET
-    match:
-      - type: status
-        value: 200
-      - type: content-type
-        value: application/json
-      - type: body.contains
-        value: '"model_reports"'
-      - type: body.contains
-        value: '"reachability_issues"'
-
-  # Prometheus metrics from health monitor contain Petals-specific metrics
-  - type: http
-    path: /api/prometheus
+    path: /
     method: GET
     match:
       - type: status
         value: 200
       - type: body.contains
-        value: "servers_num_total"
+        value: "Decentralized platform for running large language models"
       - type: body.contains
-        value: "blocks_online_min"
+        value: "petals-infra"
+      - type: body.contains
+        value: "increase Petals capacity"
 
-  # Chat API: /api/v1/generate error response leaks petals/hivemind traceback
-  # A GET or empty POST to the generate endpoint returns {"ok": false, "traceback": "..."}
-  # with petals or hivemind in the traceback stack
+  # Health monitor homepage has hardcoded "Petals Health Monitor" title.
+  # Source: templates/index.html in health.petals.dev repo.
   - type: http
-    path: /api/v1/generate
-    method: POST
+    path: /
+    method: GET
     match:
       - type: status
         value: 200
-      - type: content-type
-        value: application/json
       - type: body.contains
-        value: '"ok"'
+        value: "Petals Health Monitor"
       - type: body.contains
-        value: '"traceback"'
+        value: "petals-infra"

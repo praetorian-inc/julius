@@ -5,10 +5,12 @@ description: Portkey AI Gateway - blazing fast unified gateway for 200+ LLM prov
 category: gateway
 port_hint: 8787
 specificity: 90
+require: all
 api_docs: https://portkey.ai/docs/
 
 requests:
-  # Root endpoint returns unique greeting (src/index.ts: app.get('/', (c) => c.text('AI Gateway says hey!')))
+  # Root endpoint returns unique greeting
+  # Source: src/index.ts — app.get('/', (c) => c.text('AI Gateway says hey!'))
   - type: http
     path: /
     method: GET
@@ -18,7 +20,8 @@ requests:
       - type: body.contains
         value: "AI Gateway says hey!"
 
-  # Console UI served at /public/ in non-headless mode (src/start-server.ts)
+  # Console UI served at /public/ in non-headless mode contains "portkey".
+  # Source: src/start-server.ts
   - type: http
     path: /public/
     method: GET
@@ -29,26 +32,6 @@ requests:
         value: text/html
       - type: body.contains
         value: "portkey"
-
-  # 404 response includes Portkey-specific JSON shape
-  - type: http
-    path: /nonexistent-probe-path
-    method: GET
-    match:
-      - type: status
-        value: 404
-      - type: content-type
-        value: application/json
-      - type: body.contains
-        value: '"Not Found"'
-      - type: body.contains
-        value: '"ok":false'
-    not:
-      # Exclude other frameworks that return generic 404 JSON
-      - type: body.contains
-        value: "litellm"
-      - type: body.contains
-        value: "FastAPI"
 
 models:
   path: /v1/models

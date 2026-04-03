@@ -18,29 +18,7 @@ requests:
       - type: content-type
         value: application/json
       - type: body.contains
-        value: '"healthy_endpoints"'
-
-  - type: http
-    path: /health
-    method: GET
-    match:
-      - type: status
-        value: 200
-      - type: content-type
-        value: application/json
-      - type: body.contains
         value: '"litellm_metadata"'
-
-  - type: http
-    path: /health
-    method: GET
-    match:
-      - type: status
-        value: 200
-      - type: content-type
-        value: application/json
-      - type: body.contains
-        value: '"unhealthy_endpoints"'
 
   # /health/readiness is unauthenticated and returns litellm_version for version extraction
   # Added for supply chain advisory tracking (v1.82.7-v1.82.8 credential stealer)
