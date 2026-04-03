@@ -6,37 +6,22 @@ description: RAGFlow - Open-source RAG engine by InfiniFlow with deep document u
 category: rag-orchestration
 port_hint: 80
 specificity: 90
+require: all
 api_docs: https://ragflow.io/docs/http_api_reference
 
 requests:
-  # Request 1: Unauthenticated health check with RAGFlow-unique "doc_engine" field
+  # Unauthenticated health check with RAGFlow-unique "doc_engine" field
   # Returns: {"db":"ok","redis":"ok","doc_engine":"ok","storage":"ok","status":"ok"}
-  # The "doc_engine" key is unique to RAGFlow (tracks Elasticsearch/Infinity status)
   - type: http
     path: /v1/system/healthz
     method: GET
     match:
-      - type: status
-        value: 200
       - type: content-type
         value: application/json
       - type: body.contains
         value: '"doc_engine"'
 
-  # Request 2: Degraded health check (HTTP 500) still identifies RAGFlow
-  # When any backend service is down, healthz returns 500 with same JSON structure
-  - type: http
-    path: /v1/system/healthz
-    method: GET
-    match:
-      - type: status
-        value: 500
-      - type: content-type
-        value: application/json
-      - type: body.contains
-        value: '"doc_engine"'
-
-  # Request 3: Web UI serves SPA with <title>RAGFlow</title>
+  # Web UI serves SPA with <title>RAGFlow</title>
   # Verified from web/index.html in source repository
   - type: http
     path: /

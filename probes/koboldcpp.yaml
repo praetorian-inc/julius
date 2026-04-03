@@ -5,6 +5,7 @@ description: KoboldCpp local LLM server - easy-to-use AI text-generation softwar
 category: self-hosted
 port_hint: 5001
 specificity: 95
+require: all
 api_docs: https://lite.koboldai.net/koboldcpp_api
 
 requests:

@@ -17,6 +17,7 @@ description: PowerInfer CPU/GPU hybrid LLM inference engine (llama.cpp fork with
 category: self-hosted
 port_hint: 8080
 specificity: 30
+require: all
 api_docs: https://github.com/SJTU-IPADS/PowerInfer/blob/main/examples/server/README.md
 
 requests:

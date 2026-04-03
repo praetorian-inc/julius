@@ -5,6 +5,7 @@ description: Helicone - open-source LLM observability platform and AI gateway
 category: gateway
 port_hint: 8585
 specificity: 80
+require: all
 api_docs: https://docs.helicone.ai/
 
 requests:

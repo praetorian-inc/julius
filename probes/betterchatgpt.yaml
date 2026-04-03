@@ -3,9 +3,13 @@ name: betterchatgpt
 description: Better ChatGPT - Enhanced ChatGPT UI clone
 category: rag-orchestration
 port_hint: 3000
+specificity: 90
 api_docs: https://github.com/ztjhz/BetterChatGPT
 
 requests:
+  # Pure frontend SPA. The index.html has a hardcoded title and unique
+  # meta description. Both are present on all deployments (Docker, Vercel,
+  # GitHub Pages) since nobody edits meta tags of a chat tool.
   - type: http
     path: /
     method: GET
@@ -14,3 +18,5 @@ requests:
         value: 200
       - type: body.contains
         value: "Better ChatGPT"
+      - type: body.contains
+        value: "Play and chat smarter with BetterChatGPT"

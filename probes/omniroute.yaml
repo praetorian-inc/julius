@@ -5,12 +5,12 @@ description: OmniRoute - AI gateway for multi-provider LLMs with smart routing, 
 category: gateway
 port_hint: 20128
 specificity: 90
+require: all
 api_docs: https://github.com/diegosouzapw/OmniRoute/blob/main/docs/API_REFERENCE.md
 
 requests:
-  # Detection via /api/cache which returns OmniRoute's distinctive
-  # two-tier cache stats. The "semanticCache" key with "hitRate" is
-  # unique to OmniRoute and not present in any other LLM gateway.
+  # /api/cache returns OmniRoute's two-tier cache stats with "semanticCache".
+  # X-OmniRoute-Cache header is documented on all OmniRoute responses.
   - type: http
     path: /api/cache
     method: GET
@@ -19,10 +19,11 @@ requests:
         value: 200
       - type: body.contains
         value: "semanticCache"
+      - type: header.contains
+        header: X-OmniRoute-Cache
+        value: ""
 
-  # Detection via /api/acp/agents which lists detected coding agent
-  # runtimes. Response includes "isCustom" and "protocol" fields per
-  # agent — a structure exclusive to OmniRoute's ACP integration.
+  # /api/acp/agents returns OmniRoute's ACP agent list with "isCustom".
   - type: http
     path: /api/acp/agents
     method: GET
@@ -31,6 +32,9 @@ requests:
         value: 200
       - type: body.contains
         value: "isCustom"
+      - type: header.contains
+        header: X-OmniRoute-Cache
+        value: ""
 
 
 models:

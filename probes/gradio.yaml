@@ -5,10 +5,23 @@ description: Gradio ML demo interfaces
 category: self-hosted
 port_hint: 7860
 specificity: 75
+require: all
 api_docs: https://www.gradio.app/docs/
 
 requests:
-  # Gradio config endpoint has specific structure
+  # Gradio HTML page contains the <gradio-app> custom element.
+  - type: http
+    path: /
+    method: GET
+    match:
+      - type: status
+        value: 200
+      - type: body.contains
+        value: "gradio-app"
+
+  # Gradio config endpoint returns JSON with Gradio-specific structure.
+  # "mode" + "components" on /config alone is generic, but combined with
+  # the gradio-app element on /, confirms this is a Gradio deployment.
   - type: http
     path: /config
     method: GET
@@ -21,25 +34,3 @@ requests:
         value: '"mode"'
       - type: body.contains
         value: '"components"'
-
-  # Gradio HTML page contains gradio-app element
-  - type: http
-    path: /
-    method: GET
-    match:
-      - type: status
-        value: 200
-      - type: body.contains
-        value: "gradio-app"
-
-  # Gradio API endpoint has named_endpoints
-  - type: http
-    path: /api/
-    method: GET
-    match:
-      - type: status
-        value: 200
-      - type: content-type
-        value: application/json
-      - type: body.contains
-        value: '"named_endpoints"'

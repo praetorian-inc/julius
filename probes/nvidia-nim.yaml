@@ -5,10 +5,13 @@ description: NVIDIA NIM enterprise containers
 category: self-hosted
 port_hint: 8000
 specificity: 75
+require: all
 api_docs: https://docs.nvidia.com/nim/large-language-models/latest/api-reference.html
 
 requests:
-  # NVIDIA NIM-specific: /v1/metadata endpoint with modelInfo
+  # NVIDIA NIM-specific: /v1/metadata returns modelInfo and assetInfo.
+  # Neither field name mentions "nvidia" or "nim" but the combination
+  # on this specific path is distinctive.
   - type: http
     path: /v1/metadata
     method: GET
@@ -19,22 +22,11 @@ requests:
         value: application/json
       - type: body.contains
         value: '"modelInfo"'
-
-  # NVIDIA NIM-specific: /v1/metadata with assetInfo
-  - type: http
-    path: /v1/metadata
-    method: GET
-    match:
-      - type: status
-        value: 200
-      - type: content-type
-        value: application/json
       - type: body.contains
         value: '"assetInfo"'
-      - type: body.contains
-        value: '"version"'
 
-  # NVIDIA NIM-specific: /v1/health/ready endpoint
+  # /v1/health/ready returns {"status": "ready"} — generic on its own
+  # but combined with /v1/metadata above, confirms NIM.
   - type: http
     path: /v1/health/ready
     method: GET

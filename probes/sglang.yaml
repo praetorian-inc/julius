@@ -72,6 +72,32 @@ requests:
       - type: body.contains
         value: '"has_audio_understanding"'
 
+  # OpenAI-compat /v1/models returns owned_by: "sglang" — hardcoded in
+  # sglang/srt/entrypoints/openai/protocol.py ModelCard class.
+  # Catches instances where native endpoints may be disabled.
+  - type: http
+    path: /v1/models
+    method: GET
+    match:
+      - type: status
+        value: 200
+      - type: content-type
+        value: application/json
+      - type: body.contains
+        value: '"owned_by":"sglang"'
+
+  # Same check, tolerates whitespace in JSON serialization
+  - type: http
+    path: /v1/models
+    method: GET
+    match:
+      - type: status
+        value: 200
+      - type: content-type
+        value: application/json
+      - type: body.contains
+        value: '"owned_by": "sglang"'
+
 models:
   path: /v1/models
   method: GET

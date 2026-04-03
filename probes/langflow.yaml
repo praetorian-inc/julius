@@ -5,6 +5,7 @@ description: Langflow - Open source low-code platform for building AI agents and
 category: rag-orchestration
 port_hint: 7860
 specificity: 95
+require: all
 api_docs: https://docs.langflow.org/
 
 requests:
@@ -33,24 +34,9 @@ requests:
       - type: content-type
         value: application/json
       - type: body.contains
-        value: "chat"
-      # Exclude generic health endpoints that don't mention langflow-specific services
+        value: '"chat":'
       - type: body.contains
-        value: "db"
-
-  # Langflow serves its frontend with distinctive branding
-  - type: http
-    path: /
-    method: GET
-    match:
-      - type: status
-        value: 200
-      - type: body.contains
-        value: "Langflow"
-      # Distinguish from plain Gradio apps that share port 7860
-      - type: body.contains
-        not: true
-        value: "gradio-app"
+        value: '"db":'
 
 models:
   path: /api/v1/flows/

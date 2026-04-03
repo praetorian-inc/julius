@@ -8,9 +8,9 @@ specificity: 80
 api_docs: https://console.groq.com/docs/api-reference
 
 requests:
-  # Groq uses /openai/v1/ path prefix — unique among cloud LLM providers.
-  # OpenAI uses /v1/, Azure uses /openai/deployments/, etc.
-  # Without auth, returns 401 with Groq-specific "invalid_api_key" code.
+  # Groq returns x-groq-region header on all responses (added by Groq's
+  # infrastructure, survives reverse proxy forwarding). Combined with 401 +
+  # "invalid_api_key" on the Groq-specific /openai/v1/ path prefix.
   - type: http
     path: /openai/v1/models
     method: GET
@@ -21,6 +21,21 @@ requests:
         value: application/json
       - type: body.contains
         value: '"invalid_api_key"'
+      - type: header.contains
+        header: x-groq-region
+        value: ""
+
+  # Some proxies expose Groq at root. The welcome message + x-groq-region
+  # header is a strong fingerprint even without the /openai/v1/ path.
+  - type: http
+    path: /
+    method: GET
+    match:
+      - type: body.contains
+        value: "Welcome to the Groq API"
+      - type: header.contains
+        header: x-groq-region
+        value: ""
 
 models:
   path: /openai/v1/models

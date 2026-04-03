@@ -8,21 +8,16 @@ specificity: 85
 api_docs: https://docs.together.ai/reference/models-1
 
 requests:
-  # Together-specific: 401 error message references api.together.xyz domain
-  # No auth needed — the error body itself fingerprints the service
+  # Together-specific: /v1/hardware 401 error references api.together.xyz domain.
   - type: http
-    path: /v1/models
+    path: /v1/hardware
     method: GET
     match:
-      - type: status
-        value: 401
-      - type: content-type
-        value: application/json
       - type: body.contains
-        value: "api.together.xyz"
+        value: "You can find your API key at https://api.together.xyz"
 
   # Together-specific: authenticated model list includes "pricing" object
-  # unique to Together (hourly/input/output/base/finetune fields)
+  # with Together-unique subfields (hourly/input/output/base/finetune).
   - type: http
     path: /v1/models
     method: GET
@@ -33,6 +28,8 @@ requests:
         value: application/json
       - type: body.contains
         value: '"pricing"'
+      - type: body.contains
+        value: '"finetune"'
       - type: body.contains
         value: '"organization"'
 

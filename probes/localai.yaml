@@ -8,7 +8,8 @@ specificity: 75
 api_docs: https://localai.io/api/
 
 requests:
-  # LocalAI-specific: metrics endpoint with LocalAI markers
+  # LocalAI Prometheus metrics with both "LocalAI" in help text
+  # and "localai_" metric prefix. Single block with all checks.
   - type: http
     path: /metrics
     method: GET
@@ -21,14 +22,6 @@ requests:
         value: "# TYPE"
       - type: body.contains
         value: "LocalAI"
-
-  # LocalAI-specific: metrics with localai_ prefix
-  - type: http
-    path: /metrics
-    method: GET
-    match:
-      - type: status
-        value: 200
       - type: body.contains
         value: "localai_"
 

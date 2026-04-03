@@ -9,8 +9,7 @@ api_docs: https://docs.ray.io/en/latest/serve/api/index.html
 
 requests:
   # Ray dashboard API (port 8265): GET /api/serve/applications/
-  # Returns ServeInstanceDetails JSON schema with Ray-specific fields:
-  # controller_info, proxy_location, http_options, applications
+  # Returns ServeInstanceDetails with Ray Serve-specific fields and actor names.
   - type: http
     path: /api/serve/applications/
     method: GET
@@ -23,16 +22,7 @@ requests:
         value: '"controller_info"'
       - type: body.contains
         value: '"proxy_location"'
-
-  # Alternate match: SERVE_CONTROLLER_ACTOR actor name in response
-  # Unique to Ray Serve — no other service uses this naming convention
-  - type: http
-    path: /api/serve/applications/
-    method: GET
-    match:
-      - type: status
-        value: 200
-      - type: content-type
-        value: application/json
       - type: body.contains
         value: "SERVE_CONTROLLER_ACTOR"
+      - type: body.contains
+        value: '"deploy_mode"'

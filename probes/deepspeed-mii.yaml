@@ -4,23 +4,36 @@ name: deepspeed-mii
 description: DeepSpeed-MII - high-throughput LLM inference powered by DeepSpeed
 category: self-hosted
 port_hint: 28080
-specificity: 80
+specificity: 90
 api_docs: https://github.com/deepspeedai/DeepSpeed-MII
 
 requests:
-  # Legacy/persistent deployment: Flask gateway with /mii/{deployment} path prefix.
-  # The "/mii/" prefix is defined as RESTFUL_API_PATH constant in mii/constants.py
-  # and is unique to DeepSpeed-MII. Any POST to /mii/* that returns JSON is a match.
-  # /healthz also exists but returns plain "ok" which is too generic on its own.
+  # OpenAI-compatible server: /v1/models returns owned_by: "deepspeed-mii"
+  # Hardcoded in mii/entrypoints/data_models.py ModelCard class.
   - type: http
-    path: /healthz
+    path: /v1/models
     method: GET
     match:
       - type: status
         value: 200
+      - type: content-type
+        value: application/json
       - type: body.contains
-        value: "ok"
-      - type: header.contains
-        header: Server
-        value: "Werkzeug"
+        value: '"deepspeed-mii"'
 
+  # Legacy Flask gateway: POST /mii/deepspeed-mii uses the default deployment name.
+  # RESTFUL_API_PATH="mii" in constants.py, default deployment_name="deepspeed-mii".
+  - type: http
+    path: /mii/deepspeed-mii
+    method: POST
+    headers:
+      Content-Type: application/json
+    body: '{"prompts": ["test"]}'
+    match:
+      - type: body.contains
+        value: '"text"'
+
+models:
+  path: /v1/models
+  method: GET
+  extract: ".data[].id"

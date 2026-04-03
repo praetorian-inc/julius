@@ -5,6 +5,7 @@ description: h2oGPT - private local GPT with document Q&A by H2O.ai
 category: rag-orchestration
 port_hint: 7860
 specificity: 85
+require: all
 api_docs: https://github.com/h2oai/h2ogpt
 
 requests:
@@ -21,23 +22,7 @@ requests:
       - type: body.contains
         value: "submit_nochat_api"
 
-  # h2oGPT-specific Gradio API: model_names endpoint
-  # Only h2oGPT registers this api_name in Gradio
-  - type: http
-    path: /info
-    method: GET
-    match:
-      - type: status
-        value: 200
-      - type: content-type
-        value: application/json
-      - type: body.contains
-        value: "model_names"
-      - type: body.contains
-        value: "named_endpoints"
-
-  # h2oGPT branding in the Gradio HTML page
-  # The page title or body contains h2oGPT references
+  # h2oGPT branding in the Gradio HTML page confirms the service name.
   - type: http
     path: /
     method: GET
