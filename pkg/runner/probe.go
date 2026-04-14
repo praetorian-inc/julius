@@ -4,6 +4,7 @@ import (
 	"bufio"
 	"fmt"
 	"os"
+	"strings"
 	"time"
 
 	"github.com/praetorian-inc/julius/pkg/output"
@@ -16,6 +17,7 @@ import (
 var (
 	targetsFile  string
 	augustusFlag bool
+	basePaths    string
 )
 
 var probeCmd = &cobra.Command{
@@ -57,6 +59,8 @@ func runProbe(cmd *cobra.Command, args []string) error {
 	if len(loadedProbes) == 0 {
 		return fmt.Errorf("no probe definitions found")
 	}
+
+	loadedProbes = expandWithBasePaths(loadedProbes)
 
 	tlsConfig, err := buildTLSConfig()
 	if err != nil {
@@ -146,8 +150,24 @@ func readTargetsFromReader(r *os.File) ([]string, error) {
 	return targets, nil
 }
 
+// expandWithBasePaths expands probes with base path prefixes from the --base-paths flag.
+func expandWithBasePaths(probes []*types.Probe) []*types.Probe {
+	if basePaths == "" {
+		return probes
+	}
+	raw := strings.Split(basePaths, ",")
+	parts := make([]string, 0, len(raw))
+	for _, p := range raw {
+		if t := strings.TrimSpace(p); t != "" {
+			parts = append(parts, t)
+		}
+	}
+	return probe.ExpandWithBasePaths(probes, parts)
+}
+
 func init() {
 	rootCmd.AddCommand(probeCmd)
 	probeCmd.Flags().StringVarP(&targetsFile, "file", "f", "", "Read targets from file")
 	probeCmd.Flags().BoolVar(&augustusFlag, "augustus", false, "Include Augustus generator configs in output")
+	probeCmd.Flags().StringVar(&basePaths, "base-paths", "", "Comma-separated path prefixes to prepend to probe paths (e.g., /api,/proxy)")
 }
