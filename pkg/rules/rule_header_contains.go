@@ -19,10 +19,7 @@ type HeaderContainsRule struct {
 func (r HeaderContainsRule) Match(resp *http.Response, body []byte) bool {
 	headerVal := resp.Header.Get(r.Header)
 	if headerVal == "" {
-		if r.Not {
-			return true
-		}
-		return false
+		return r.Not
 	}
 	result := strings.Contains(headerVal, r.Value)
 	if r.Not {
