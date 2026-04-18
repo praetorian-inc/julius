@@ -41,7 +41,7 @@ func TestDoRequest_Match(t *testing.T) {
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("X-Test-Header", "test-value")
 		w.WriteHeader(http.StatusOK)
-		w.Write([]byte("test response body"))
+		_, _ = w.Write([]byte("test response body"))
 	}))
 	defer server.Close()
 
@@ -65,7 +65,7 @@ func TestDoRequest_NoMatch(t *testing.T) {
 	// Create test server that returns non-matching response
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusOK)
-		w.Write([]byte("different body"))
+		_, _ = w.Write([]byte("different body"))
 	}))
 	defer server.Close()
 
@@ -89,7 +89,7 @@ func TestScan_ReturnsAllMatches(t *testing.T) {
 	// Create test server
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusOK)
-		w.Write([]byte(`{"object":"list","data":[]}`))
+		_, _ = w.Write([]byte(`{"object":"list","data":[]}`))
 	}))
 	defer server.Close()
 
@@ -138,7 +138,7 @@ func TestScan_ReturnsAllMatches(t *testing.T) {
 func TestScan_SortsBySpecificity(t *testing.T) {
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusOK)
-		w.Write([]byte(`OK`))
+		_, _ = w.Write([]byte(`OK`))
 	}))
 	defer server.Close()
 
@@ -154,6 +154,7 @@ func TestScan_SortsBySpecificity(t *testing.T) {
 
 	require.Len(t, results, 4)
 	assert.Equal(t, "high", results[0].Service)
+
 	assert.Equal(t, "medium", results[1].Service)
 	assert.Equal(t, "low", results[2].Service)
 	assert.Equal(t, "generic", results[3].Service)
@@ -163,7 +164,7 @@ func TestScan_NoMatch(t *testing.T) {
 	// Create test server that doesn't match any probe
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusOK)
-		w.Write([]byte("unknown service"))
+		_, _ = w.Write([]byte("unknown service"))
 	}))
 	defer server.Close()
 
@@ -193,13 +194,13 @@ func TestScanAll(t *testing.T) {
 	// Create two test servers
 	server1 := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusOK)
-		w.Write([]byte("openai response"))
+		_, _ = w.Write([]byte("openai response"))
 	}))
 	defer server1.Close()
 
 	server2 := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusOK)
-		w.Write([]byte("claude response"))
+		_, _ = w.Write([]byte("claude response"))
 	}))
 	defer server2.Close()
 
@@ -243,13 +244,13 @@ func TestScanAll_SomeNoMatch(t *testing.T) {
 	// Create servers - one matches, one doesn't
 	server1 := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusOK)
-		w.Write([]byte("openai response"))
+		_, _ = w.Write([]byte("openai response"))
 	}))
 	defer server1.Close()
 
 	server2 := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusOK)
-		w.Write([]byte("unknown service"))
+		_, _ = w.Write([]byte("unknown service"))
 	}))
 	defer server2.Close()
 
@@ -287,7 +288,7 @@ func TestDoRequest_WithBodyAndHeaders(t *testing.T) {
 		response := fmt.Sprintf(`{"body":"%s","content_type":"%s","auth":"%s"}`,
 			string(body), contentType, auth)
 		w.WriteHeader(200)
-		w.Write([]byte(response))
+		_, _ = w.Write([]byte(response))
 	}))
 	defer server.Close()
 
@@ -344,11 +345,11 @@ func TestScanWithModels(t *testing.T) {
 				switch r.URL.Path {
 				case "/api/tags":
 					w.WriteHeader(http.StatusOK)
-					w.Write([]byte(tt.fingerprint))
+					_, _ = w.Write([]byte(tt.fingerprint))
 				case "/api/models":
 					w.WriteHeader(tt.modelsStatus)
 					if tt.modelsResponse != "" {
-						w.Write([]byte(tt.modelsResponse))
+						_, _ = w.Write([]byte(tt.modelsResponse))
 					}
 				default:
 					w.WriteHeader(http.StatusNotFound)
@@ -397,7 +398,7 @@ func TestScanWithModels(t *testing.T) {
 func TestScanWithoutModelsConfig(t *testing.T) {
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusOK)
-		w.Write([]byte(`OK`))
+		_, _ = w.Write([]byte(`OK`))
 	}))
 	defer server.Close()
 
@@ -483,7 +484,7 @@ func TestFetchModels(t *testing.T) {
 			server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 				w.WriteHeader(tt.serverStatus)
 				if tt.serverResponse != "" {
-					w.Write([]byte(tt.serverResponse))
+					_, _ = w.Write([]byte(tt.serverResponse))
 				}
 			}))
 			defer server.Close()
@@ -507,7 +508,7 @@ func TestFetchModelsWithHeaders(t *testing.T) {
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		receivedAuth = r.Header.Get("Authorization")
 		w.WriteHeader(http.StatusOK)
-		w.Write([]byte(`{"data":[{"id":"model-1"}]}`))
+		_, _ = w.Write([]byte(`{"data":[{"id":"model-1"}]}`))
 	}))
 	defer server.Close()
 
@@ -764,7 +765,7 @@ func TestSingleflightDeduplication(t *testing.T) {
 		requestCount.Add(1)
 		time.Sleep(100 * time.Millisecond) // Simulate latency
 		w.WriteHeader(200)
-		w.Write([]byte(`{"object":"list","data":[]}`))
+		_, _ = w.Write([]byte(`{"object":"list","data":[]}`))
 	}))
 	defer server.Close()
 
@@ -776,7 +777,7 @@ func TestSingleflightDeduplication(t *testing.T) {
 		wg.Add(1)
 		go func() {
 			defer wg.Done()
-			s.doHTTPRequest(server.URL, "GET", "/v1/models", "", nil)
+			_, _, _ = s.doHTTPRequest(server.URL, "GET", "/v1/models", "", nil)
 		}()
 	}
 	wg.Wait()
@@ -790,16 +791,16 @@ func TestCachePersistsAcrossCalls(t *testing.T) {
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		requestCount.Add(1)
 		w.WriteHeader(200)
-		w.Write([]byte(`{}`))
+		_, _ = w.Write([]byte(`{}`))
 	}))
 	defer server.Close()
 
 	s := NewScanner(WithTimeout(5*time.Second))
 
 	// First call
-	s.doHTTPRequest(server.URL, "GET", "/v1/models", "", nil)
+	_, _, _ = s.doHTTPRequest(server.URL, "GET", "/v1/models", "", nil)
 	// Second call (should hit cache)
-	s.doHTTPRequest(server.URL, "GET", "/v1/models", "", nil)
+	_, _, _ = s.doHTTPRequest(server.URL, "GET", "/v1/models", "", nil)
 
 	assert.Equal(t, int32(1), requestCount.Load(), "second call should use cache")
 }
@@ -810,15 +811,15 @@ func TestDifferentURLsNotDeduplicated(t *testing.T) {
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		requestCount.Add(1)
 		w.WriteHeader(200)
-		w.Write([]byte(`{}`))
+		_, _ = w.Write([]byte(`{}`))
 	}))
 	defer server.Close()
 
 	s := NewScanner(WithTimeout(5*time.Second))
 
 	// Different paths = different cache keys
-	s.doHTTPRequest(server.URL, "GET", "/v1/models", "", nil)
-	s.doHTTPRequest(server.URL, "GET", "/v1/chat", "", nil)
+	_, _, _ = s.doHTTPRequest(server.URL, "GET", "/v1/models", "", nil)
+	_, _, _ = s.doHTTPRequest(server.URL, "GET", "/v1/chat", "", nil)
 
 	assert.Equal(t, int32(2), requestCount.Load(), "different URLs should not be deduplicated")
 }
@@ -833,7 +834,7 @@ func TestConcurrentProbeExecution(t *testing.T) {
 		mu.Unlock()
 		time.Sleep(50 * time.Millisecond)
 		w.WriteHeader(200)
-		w.Write([]byte(`{}`))
+		_, _ = w.Write([]byte(`{}`))
 	}))
 	defer server.Close()
 
@@ -875,7 +876,7 @@ func TestConcurrencyLimit(t *testing.T) {
 		time.Sleep(50 * time.Millisecond)
 		concurrentCount.Add(-1)
 		w.WriteHeader(200)
-		w.Write([]byte(`{}`))
+		_, _ = w.Write([]byte(`{}`))
 	}))
 	defer server.Close()
 
@@ -906,15 +907,15 @@ func TestCacheKeyIncludesMethod(t *testing.T) {
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		requestCount.Add(1)
 		w.WriteHeader(200)
-		w.Write([]byte(`{}`))
+		_, _ = w.Write([]byte(`{}`))
 	}))
 	defer server.Close()
 
 	s := NewScanner(WithTimeout(5*time.Second))
 
 	// Same URL, different methods = different cache keys
-	s.doHTTPRequest(server.URL, "GET", "/v1/models", "", nil)
-	s.doHTTPRequest(server.URL, "POST", "/v1/models", "", nil)
+	_, _, _ = s.doHTTPRequest(server.URL, "GET", "/v1/models", "", nil)
+	_, _, _ = s.doHTTPRequest(server.URL, "POST", "/v1/models", "", nil)
 
 	assert.Equal(t, int32(2), requestCount.Load(), "different methods should not be cached together")
 }
@@ -925,15 +926,15 @@ func TestCacheKeyIncludesBody(t *testing.T) {
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		requestCount.Add(1)
 		w.WriteHeader(200)
-		w.Write([]byte(`{}`))
+		_, _ = w.Write([]byte(`{}`))
 	}))
 	defer server.Close()
 
 	s := NewScanner(WithTimeout(5*time.Second))
 
 	// Same URL and method, different body = different cache keys
-	s.doHTTPRequest(server.URL, "POST", "/v1/chat", `{"a":1}`, nil)
-	s.doHTTPRequest(server.URL, "POST", "/v1/chat", `{"b":2}`, nil)
+	_, _, _ = s.doHTTPRequest(server.URL, "POST", "/v1/chat", `{"a":1}`, nil)
+	_, _, _ = s.doHTTPRequest(server.URL, "POST", "/v1/chat", `{"b":2}`, nil)
 
 	assert.Equal(t, int32(2), requestCount.Load(), "different bodies should not be cached together")
 }
@@ -948,10 +949,10 @@ func TestScan_RequireAll_AllMatch(t *testing.T) {
 		case "/v1/models":
 			w.Header().Set("Server", "uvicorn")
 			w.WriteHeader(200)
-			w.Write([]byte(`{"object":"list","data":[]}`))
+			_, _ = w.Write([]byte(`{"object":"list","data":[]}`))
 		case "/tokenize":
 			w.WriteHeader(200)
-			w.Write([]byte(`{"tokens":[1,2,3]}`))
+			_, _ = w.Write([]byte(`{"tokens":[1,2,3]}`))
 		default:
 			w.WriteHeader(404)
 		}
@@ -990,10 +991,10 @@ func TestScan_RequireAll_SomeFail(t *testing.T) {
 		switch r.URL.Path {
 		case "/v1/models":
 			w.WriteHeader(200)
-			w.Write([]byte(`{"object":"list","data":[]}`))
+			_, _ = w.Write([]byte(`{"object":"list","data":[]}`))
 		case "/tokenize":
 			w.WriteHeader(404) // This one fails
-			w.Write([]byte(`{"error":"not found"}`))
+			_, _ = w.Write([]byte(`{"error":"not found"}`))
 		default:
 			w.WriteHeader(404)
 		}
@@ -1032,7 +1033,7 @@ func TestScan_RequireAny_Default(t *testing.T) {
 			w.WriteHeader(404)
 		case "/tokenize":
 			w.WriteHeader(200)
-			w.Write([]byte(`{"tokens":[1,2,3]}`))
+			_, _ = w.Write([]byte(`{"tokens":[1,2,3]}`))
 		default:
 			w.WriteHeader(404)
 		}
@@ -1151,7 +1152,7 @@ func TestResponseSizeTruncation(t *testing.T) {
 	
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusOK)
-		w.Write(largeBody)
+		_, _ = w.Write(largeBody)
 	}))
 	defer server.Close()
 	

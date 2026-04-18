@@ -124,7 +124,7 @@ func loadTargets(args []string) ([]string, error) {
 		if err != nil {
 			return nil, fmt.Errorf("opening targets file: %w", err)
 		}
-		defer f.Close()
+		defer func() { _ = f.Close() }()
 
 		return readTargetsFromReader(f)
 	}
