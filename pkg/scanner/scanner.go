@@ -106,7 +106,7 @@ func (s *Scanner) Scan(target string, probes []*types.Probe, augustus bool) []ty
 		})
 	}
 
-	g.Wait()
+	_ = g.Wait()
 
 	// Sort by specificity (highest first)
 	sort.SliceStable(results, func(i, j int) bool {

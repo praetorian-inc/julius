@@ -19,10 +19,7 @@ type HeaderPrefixRule struct {
 func (r HeaderPrefixRule) Match(resp *http.Response, body []byte) bool {
 	headerVal := resp.Header.Get(r.Header)
 	if headerVal == "" {
-		if r.Not {
-			return true
-		}
-		return false
+		return r.Not
 	}
 	result := strings.HasPrefix(headerVal, r.Value)
 	if r.Not {
