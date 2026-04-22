@@ -29,6 +29,7 @@ type Scanner struct {
 	inflight        singleflight.Group
 	concurrency     int
 	maxResponseSize int64
+	headers         map[string]string
 }
 
 type Option func(*Scanner)
@@ -207,6 +208,11 @@ func (s *Scanner) doHTTPRequest(target, method, path, body string, headers map[s
 		return nil, nil, fmt.Errorf("creating request: %w", err)
 	}
 
+	// Apply global headers first (user-supplied via -H flag)
+	for key, value := range s.headers {
+		req.Header.Set(key, value)
+	}
+	// Apply per-probe headers (can override global headers)
 	for key, value := range headers {
 		req.Header.Set(key, value)
 	}
@@ -243,5 +249,11 @@ func WithTLSConfig(cfg *tls.Config) Option {
 			transport.TLSClientConfig = cfg
 			s.client.Transport = transport
 		}
+	}
+}
+
+func WithHeaders(headers map[string]string) Option {
+	return func(s *Scanner) {
+		s.headers = headers
 	}
 }

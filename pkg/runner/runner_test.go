@@ -105,6 +105,61 @@ o96z
 	assert.NotNil(t, tlsConfig.RootCAs, "RootCAs should be set")
 }
 
+func TestParseHeaders_ValidHeaders(t *testing.T) {
+	headers, err := parseHeaders([]string{
+		"Authorization: Bearer token123",
+		"X-Api-Key: abc123",
+	})
+	require.NoError(t, err)
+	assert.Equal(t, "Bearer token123", headers["Authorization"])
+	assert.Equal(t, "abc123", headers["X-Api-Key"])
+}
+
+func TestParseHeaders_TrimSpaces(t *testing.T) {
+	headers, err := parseHeaders([]string{"  X-Key  :  some-value  "})
+	require.NoError(t, err)
+	assert.Equal(t, "some-value", headers["X-Key"])
+}
+
+func TestParseHeaders_InvalidFormat(t *testing.T) {
+	_, err := parseHeaders([]string{"no-colon-here"})
+	assert.Error(t, err)
+	assert.Contains(t, err.Error(), "invalid header format")
+}
+
+func TestParseHeaders_EmptySlice(t *testing.T) {
+	headers, err := parseHeaders(nil)
+	require.NoError(t, err)
+	assert.Nil(t, headers)
+}
+
+func TestParseHeaders_ColonInValue(t *testing.T) {
+	headers, err := parseHeaders([]string{"Authorization: Bearer eyJ0eXAiOiJKV1Q:payload:sig"})
+	require.NoError(t, err)
+	assert.Equal(t, "Bearer eyJ0eXAiOiJKV1Q:payload:sig", headers["Authorization"])
+}
+
+func TestParseHeaders_EmptyKeyOrValue(t *testing.T) {
+	tests := []struct {
+		name    string
+		input   string
+		wantKey string
+		wantVal string
+	}{
+		{"empty value", "X-Key:", "X-Key", ""},
+		{"value with spaces only", "X-Key:   ", "X-Key", ""},
+		{"empty key", ": some-value", "", "some-value"},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			headers, err := parseHeaders([]string{tt.input})
+			require.NoError(t, err)
+			assert.Equal(t, tt.wantVal, headers[tt.wantKey])
+		})
+	}
+}
+
 func TestLoadProbes_ReturnsEmbeddedWhenNoDirSet(t *testing.T) {
 	// Save original value
 	origProbesDir := probesDir

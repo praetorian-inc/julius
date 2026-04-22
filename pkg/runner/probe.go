@@ -15,9 +15,10 @@ import (
 )
 
 var (
-	targetsFile  string
-	augustusFlag bool
-	basePaths    string
+	targetsFile   string
+	augustusFlag  bool
+	basePaths     string
+	customHeaders []string
 )
 
 var probeCmd = &cobra.Command{
@@ -67,12 +68,18 @@ func runProbe(cmd *cobra.Command, args []string) error {
 		return fmt.Errorf("building TLS config: %w", err)
 	}
 
+	headers, err := parseHeaders(customHeaders)
+	if err != nil {
+		return fmt.Errorf("parsing headers: %w", err)
+	}
+
 	timeoutDuration := time.Duration(timeout) * time.Second
 	s := scanner.NewScanner(
 		scanner.WithTimeout(timeoutDuration),
 		scanner.WithConcurrency(concurrency),
 		scanner.WithMaxResponseSize(maxResponseSize),
 		scanner.WithTLSConfig(tlsConfig),
+		scanner.WithHeaders(headers),
 	)
 
 	var allResults []types.Result
@@ -150,6 +157,22 @@ func readTargetsFromReader(r *os.File) ([]string, error) {
 	return targets, nil
 }
 
+// parseHeaders parses "Key: Value" strings from the --header flag into a map.
+func parseHeaders(raw []string) (map[string]string, error) {
+	if len(raw) == 0 {
+		return nil, nil
+	}
+	headers := make(map[string]string, len(raw))
+	for _, h := range raw {
+		key, value, ok := strings.Cut(h, ":")
+		if !ok {
+			return nil, fmt.Errorf("invalid header format %q (expected \"Key: Value\")", h)
+		}
+		headers[strings.TrimSpace(key)] = strings.TrimSpace(value)
+	}
+	return headers, nil
+}
+
 // expandWithBasePaths expands probes with base path prefixes from the --base-paths flag.
 func expandWithBasePaths(probes []*types.Probe) []*types.Probe {
 	if basePaths == "" {
@@ -170,4 +193,5 @@ func init() {
 	probeCmd.Flags().StringVarP(&targetsFile, "file", "f", "", "Read targets from file")
 	probeCmd.Flags().BoolVar(&augustusFlag, "augustus", false, "Include Augustus generator configs in output")
 	probeCmd.Flags().StringVar(&basePaths, "base-paths", "", "Comma-separated path prefixes to prepend to probe paths (e.g., /api,/proxy)")
+	probeCmd.Flags().StringArrayVarP(&customHeaders, "header", "H", nil, "Custom HTTP header (e.g., \"Authorization: Bearer token\"). Can be specified multiple times")
 }
