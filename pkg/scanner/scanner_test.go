@@ -1275,6 +1275,55 @@ func TestWithHeaders_EmptyMap(t *testing.T) {
 	assert.True(t, matched)
 }
 
+func TestScan_GlobalHeadersSentToModelsEndpoint(t *testing.T) {
+	var modelsReceivedAuth string
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if r.URL.Path == "/api/models" {
+			modelsReceivedAuth = r.Header.Get("Authorization")
+			w.WriteHeader(http.StatusOK)
+			_, _ = w.Write([]byte(`{"models":[{"name":"test-model"}]}`))
+			return
+		}
+		// Fingerprint endpoint
+		w.WriteHeader(http.StatusOK)
+		_, _ = w.Write([]byte("ok"))
+	}))
+	defer server.Close()
+
+	s := NewScanner(
+		WithTimeout(5*time.Second),
+		WithHeaders(map[string]string{
+			"Authorization": "Bearer models-token",
+		}),
+	)
+
+	probes := []*types.Probe{
+		{
+			Name:     "test-probe",
+			Category: "test",
+			Requests: []types.Request{
+				{
+					Path:   "/test",
+					Method: "GET",
+					RawMatch: []rules.RawRule{
+						{Type: "status", Value: 200},
+					},
+				},
+			},
+			Models: &types.ModelsConfig{
+				Path:    "/api/models",
+				Method:  "GET",
+				Extract: ".models[].name",
+			},
+		},
+	}
+
+	results := s.Scan(server.URL, probes, false)
+	require.Len(t, results, 1)
+	assert.Equal(t, []string{"test-model"}, results[0].Models)
+	assert.Equal(t, "Bearer models-token", modelsReceivedAuth, "global headers should be sent to models endpoint")
+}
+
 func TestResponseSizeTruncation(t *testing.T) {
 	// Create server that returns body larger than maxResponseSize
 	largeBody := make([]byte, 1024)

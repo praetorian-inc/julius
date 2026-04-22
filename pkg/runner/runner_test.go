@@ -140,24 +140,32 @@ func TestParseHeaders_ColonInValue(t *testing.T) {
 }
 
 func TestParseHeaders_EmptyKeyOrValue(t *testing.T) {
-	tests := []struct {
-		name    string
-		input   string
-		wantKey string
-		wantVal string
-	}{
-		{"empty value", "X-Key:", "X-Key", ""},
-		{"value with spaces only", "X-Key:   ", "X-Key", ""},
-		{"empty key", ": some-value", "", "some-value"},
-	}
+	t.Run("empty value", func(t *testing.T) {
+		headers, err := parseHeaders([]string{"X-Key:"})
+		require.NoError(t, err)
+		assert.Equal(t, "", headers["X-Key"])
+	})
 
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			headers, err := parseHeaders([]string{tt.input})
-			require.NoError(t, err)
-			assert.Equal(t, tt.wantVal, headers[tt.wantKey])
-		})
-	}
+	t.Run("value with spaces only", func(t *testing.T) {
+		headers, err := parseHeaders([]string{"X-Key:   "})
+		require.NoError(t, err)
+		assert.Equal(t, "", headers["X-Key"])
+	})
+
+	t.Run("empty key rejected", func(t *testing.T) {
+		_, err := parseHeaders([]string{": some-value"})
+		assert.Error(t, err)
+		assert.Contains(t, err.Error(), "empty header name")
+	})
+}
+
+func TestParseHeaders_DuplicateKeys(t *testing.T) {
+	headers, err := parseHeaders([]string{
+		"Authorization: Bearer first",
+		"Authorization: Bearer second",
+	})
+	require.NoError(t, err)
+	assert.Equal(t, "Bearer second", headers["Authorization"], "duplicate keys should use last-writer-wins")
 }
 
 func TestLoadProbes_ReturnsEmbeddedWhenNoDirSet(t *testing.T) {

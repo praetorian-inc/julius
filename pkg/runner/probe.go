@@ -158,6 +158,7 @@ func readTargetsFromReader(r *os.File) ([]string, error) {
 }
 
 // parseHeaders parses "Key: Value" strings from the --header flag into a map.
+// Duplicate keys use last-writer-wins semantics (same as curl -H).
 func parseHeaders(raw []string) (map[string]string, error) {
 	if len(raw) == 0 {
 		return nil, nil
@@ -168,7 +169,11 @@ func parseHeaders(raw []string) (map[string]string, error) {
 		if !ok {
 			return nil, fmt.Errorf("invalid header format %q (expected \"Key: Value\")", h)
 		}
-		headers[strings.TrimSpace(key)] = strings.TrimSpace(value)
+		key = strings.TrimSpace(key)
+		if key == "" {
+			return nil, fmt.Errorf("invalid header format %q (empty header name)", h)
+		}
+		headers[key] = strings.TrimSpace(value)
 	}
 	return headers, nil
 }
