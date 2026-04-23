@@ -105,6 +105,69 @@ o96z
 	assert.NotNil(t, tlsConfig.RootCAs, "RootCAs should be set")
 }
 
+func TestParseHeaders_ValidHeaders(t *testing.T) {
+	headers, err := parseHeaders([]string{
+		"Authorization: Bearer token123",
+		"X-Api-Key: abc123",
+	})
+	require.NoError(t, err)
+	assert.Equal(t, "Bearer token123", headers["Authorization"])
+	assert.Equal(t, "abc123", headers["X-Api-Key"])
+}
+
+func TestParseHeaders_TrimSpaces(t *testing.T) {
+	headers, err := parseHeaders([]string{"  X-Key  :  some-value  "})
+	require.NoError(t, err)
+	assert.Equal(t, "some-value", headers["X-Key"])
+}
+
+func TestParseHeaders_InvalidFormat(t *testing.T) {
+	_, err := parseHeaders([]string{"no-colon-here"})
+	assert.Error(t, err)
+	assert.Contains(t, err.Error(), "invalid header format")
+}
+
+func TestParseHeaders_EmptySlice(t *testing.T) {
+	headers, err := parseHeaders(nil)
+	require.NoError(t, err)
+	assert.Nil(t, headers)
+}
+
+func TestParseHeaders_ColonInValue(t *testing.T) {
+	headers, err := parseHeaders([]string{"Authorization: Bearer eyJ0eXAiOiJKV1Q:payload:sig"})
+	require.NoError(t, err)
+	assert.Equal(t, "Bearer eyJ0eXAiOiJKV1Q:payload:sig", headers["Authorization"])
+}
+
+func TestParseHeaders_EmptyKeyOrValue(t *testing.T) {
+	t.Run("empty value", func(t *testing.T) {
+		headers, err := parseHeaders([]string{"X-Key:"})
+		require.NoError(t, err)
+		assert.Equal(t, "", headers["X-Key"])
+	})
+
+	t.Run("value with spaces only", func(t *testing.T) {
+		headers, err := parseHeaders([]string{"X-Key:   "})
+		require.NoError(t, err)
+		assert.Equal(t, "", headers["X-Key"])
+	})
+
+	t.Run("empty key rejected", func(t *testing.T) {
+		_, err := parseHeaders([]string{": some-value"})
+		assert.Error(t, err)
+		assert.Contains(t, err.Error(), "empty header name")
+	})
+}
+
+func TestParseHeaders_DuplicateKeys(t *testing.T) {
+	headers, err := parseHeaders([]string{
+		"Authorization: Bearer first",
+		"Authorization: Bearer second",
+	})
+	require.NoError(t, err)
+	assert.Equal(t, "Bearer second", headers["Authorization"], "duplicate keys should use last-writer-wins")
+}
+
 func TestLoadProbes_ReturnsEmbeddedWhenNoDirSet(t *testing.T) {
 	// Save original value
 	origProbesDir := probesDir

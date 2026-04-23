@@ -1137,10 +1137,191 @@ func TestNewScanner_WithTLSConfig(t *testing.T) {
 	assert.True(t, transport.TLSClientConfig.InsecureSkipVerify, "InsecureSkipVerify should match")
 }
 
+func TestWithHeaders_AppliedToRequests(t *testing.T) {
+	var receivedHeaders http.Header
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		receivedHeaders = r.Header.Clone()
+		w.WriteHeader(http.StatusOK)
+		_, _ = w.Write([]byte("ok"))
+	}))
+	defer server.Close()
+
+	s := NewScanner(
+		WithTimeout(5*time.Second),
+		WithHeaders(map[string]string{
+			"Authorization": "Bearer test-token",
+			"X-Api-Key":     "abc123",
+		}),
+	)
+
+	req := types.Request{
+		Path:   "/test",
+		Method: "GET",
+		RawMatch: []rules.RawRule{
+			{Type: "status", Value: 200},
+		},
+	}
+
+	_, err := s.DoRequest(server.URL, req)
+	require.NoError(t, err)
+	assert.Equal(t, "Bearer test-token", receivedHeaders.Get("Authorization"))
+	assert.Equal(t, "abc123", receivedHeaders.Get("X-Api-Key"))
+}
+
+func TestWithHeaders_ProbeHeadersOverrideGlobal(t *testing.T) {
+	var receivedHeaders http.Header
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		receivedHeaders = r.Header.Clone()
+		w.WriteHeader(http.StatusOK)
+		_, _ = w.Write([]byte("ok"))
+	}))
+	defer server.Close()
+
+	s := NewScanner(
+		WithTimeout(5*time.Second),
+		WithHeaders(map[string]string{
+			"Authorization": "Bearer global-token",
+			"X-Global":      "global-value",
+		}),
+	)
+
+	req := types.Request{
+		Path:   "/test",
+		Method: "GET",
+		Headers: map[string]string{
+			"Authorization": "Bearer probe-token",
+		},
+		RawMatch: []rules.RawRule{
+			{Type: "status", Value: 200},
+		},
+	}
+
+	_, err := s.DoRequest(server.URL, req)
+	require.NoError(t, err)
+	assert.Equal(t, "Bearer probe-token", receivedHeaders.Get("Authorization"), "probe header should override global")
+	assert.Equal(t, "global-value", receivedHeaders.Get("X-Global"), "non-overridden global header should persist")
+}
+
+func TestWithHeaders_NilHeaders(t *testing.T) {
+	s := NewScanner(WithTimeout(5*time.Second), WithHeaders(nil))
+	assert.Nil(t, s.headers)
+}
+
 func TestNewScanner_DefaultMaxResponseSize(t *testing.T) {
 	s := NewScanner(WithTimeout(5*time.Second), WithMaxResponseSize(0))
 	
 	assert.Equal(t, int64(10*1024*1024), s.maxResponseSize, "maxResponseSize should default to 10MB when 0 is passed")
+}
+
+func TestScan_GlobalHeadersPropagateToRequests(t *testing.T) {
+	var receivedHeaders http.Header
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		receivedHeaders = r.Header.Clone()
+		w.WriteHeader(http.StatusOK)
+		_, _ = w.Write([]byte("ok"))
+	}))
+	defer server.Close()
+
+	s := NewScanner(
+		WithTimeout(5*time.Second),
+		WithHeaders(map[string]string{
+			"Authorization": "Bearer scan-token",
+		}),
+	)
+
+	probes := []*types.Probe{
+		{
+			Name:     "test-probe",
+			Category: "test",
+			Requests: []types.Request{
+				{
+					Path:   "/test",
+					Method: "GET",
+					RawMatch: []rules.RawRule{
+						{Type: "status", Value: 200},
+					},
+				},
+			},
+		},
+	}
+
+	results := s.Scan(server.URL, probes, false)
+	require.Len(t, results, 1)
+	assert.Equal(t, "Bearer scan-token", receivedHeaders.Get("Authorization"))
+}
+
+func TestWithHeaders_EmptyMap(t *testing.T) {
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.WriteHeader(http.StatusOK)
+		_, _ = w.Write([]byte("ok"))
+	}))
+	defer server.Close()
+
+	s := NewScanner(
+		WithTimeout(5*time.Second),
+		WithHeaders(map[string]string{}),
+	)
+
+	req := types.Request{
+		Path:   "/test",
+		Method: "GET",
+		RawMatch: []rules.RawRule{
+			{Type: "status", Value: 200},
+		},
+	}
+
+	matched, err := s.DoRequest(server.URL, req)
+	require.NoError(t, err)
+	assert.True(t, matched)
+}
+
+func TestScan_GlobalHeadersSentToModelsEndpoint(t *testing.T) {
+	var modelsReceivedAuth string
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if r.URL.Path == "/api/models" {
+			modelsReceivedAuth = r.Header.Get("Authorization")
+			w.WriteHeader(http.StatusOK)
+			_, _ = w.Write([]byte(`{"models":[{"name":"test-model"}]}`))
+			return
+		}
+		// Fingerprint endpoint
+		w.WriteHeader(http.StatusOK)
+		_, _ = w.Write([]byte("ok"))
+	}))
+	defer server.Close()
+
+	s := NewScanner(
+		WithTimeout(5*time.Second),
+		WithHeaders(map[string]string{
+			"Authorization": "Bearer models-token",
+		}),
+	)
+
+	probes := []*types.Probe{
+		{
+			Name:     "test-probe",
+			Category: "test",
+			Requests: []types.Request{
+				{
+					Path:   "/test",
+					Method: "GET",
+					RawMatch: []rules.RawRule{
+						{Type: "status", Value: 200},
+					},
+				},
+			},
+			Models: &types.ModelsConfig{
+				Path:    "/api/models",
+				Method:  "GET",
+				Extract: ".models[].name",
+			},
+		},
+	}
+
+	results := s.Scan(server.URL, probes, false)
+	require.Len(t, results, 1)
+	assert.Equal(t, []string{"test-model"}, results[0].Models)
+	assert.Equal(t, "Bearer models-token", modelsReceivedAuth, "global headers should be sent to models endpoint")
 }
 
 func TestResponseSizeTruncation(t *testing.T) {
