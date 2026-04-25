@@ -35,37 +35,37 @@ jobs:
         run: cd dist && sha256sum * > checksums.txt
 
       - name: Upload Linux amd64
-        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:
           name: julius-linux-amd64
           path: dist/julius-linux-amd64
 
       - name: Upload Linux arm64
-        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:
           name: julius-linux-arm64
           path: dist/julius-linux-arm64
 
       - name: Upload macOS amd64
-        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:
           name: julius-darwin-amd64
           path: dist/julius-darwin-amd64
 
       - name: Upload macOS arm64
-        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:
           name: julius-darwin-arm64
           path: dist/julius-darwin-arm64
 
       - name: Upload Windows amd64
-        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:
           name: julius-windows-amd64
           path: dist/julius-windows-amd64.exe
 
       - name: Upload checksums
-        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:
           name: checksums
           path: dist/checksums.txt
