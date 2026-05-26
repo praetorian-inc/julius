@@ -13,6 +13,7 @@ BUILD_DATE := $(shell date -u '+%Y-%m-%dT%H:%M:%SZ')
 
 # Linker flags to embed version info
 LDFLAGS := -s -w
+GOLANGCI_LINT_VERSION ?= v2.12.2
 
 # Default target
 .DEFAULT_GOAL := build
@@ -77,7 +78,14 @@ test-coverage: ## Run tests with coverage report
 # =============================================================================
 
 lint: ## Run linter
-	golangci-lint run ./...
+	@if command -v golangci-lint >/dev/null 2>&1; then \
+		golangci-lint run ./...; \
+	elif go install github.com/golangci/golangci-lint/v2/cmd/golangci-lint@$(GOLANGCI_LINT_VERSION) 2>/dev/null; then \
+		golangci-lint run ./...; \
+	else \
+		echo "golangci-lint not available, running go vet..."; \
+		go vet ./...; \
+	fi
 
 clean: ## Clean build artifacts
 	rm -rf $(BUILD_DIR) $(DIST_DIR)
