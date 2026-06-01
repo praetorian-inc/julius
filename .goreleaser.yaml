@@ -1,0 +1,41 @@
+# GoReleaser config for julius — build manifest consumed by the shared
+# public-workflows/go-release.yml. CI plumbing lives in .github/workflows/release.yml.
+version: 2
+
+project_name: julius
+
+builds:
+  - main: ./cmd/julius
+    binary: julius
+    env:
+      - CGO_ENABLED=0
+    ldflags:
+      - -s -w
+    goos:
+      - linux
+      - darwin
+      - windows
+    goarch:
+      - amd64
+      - arm64
+    ignore:
+      - goos: windows
+        goarch: arm64
+
+archives:
+  - formats: [tar.gz]
+    name_template: "{{ .ProjectName }}_{{ .Version }}_{{ .Os }}_{{ .Arch }}"
+    format_overrides:
+      - goos: windows
+        formats: [zip]
+
+checksum:
+  name_template: "checksums.txt"
+
+changelog:
+  sort: asc
+  filters:
+    exclude:
+      - "^docs:"
+      - "^test:"
+      - "^chore:"
