@@ -1,5 +1,3 @@
-# GoReleaser config for julius — build manifest consumed by the shared
-# public-workflows/go-release.yml. CI plumbing lives in .github/workflows/release.yml.
 version: 2
 
 project_name: julius
@@ -31,6 +29,21 @@ archives:
 
 checksum:
   name_template: "checksums.txt"
+
+sboms:
+  - artifacts: archive
+
+signs:
+  - cmd: cosign
+    certificate: "${artifact}.pem"
+    args:
+      - sign-blob
+      - "--output-certificate=${certificate}"
+      - "--output-signature=${signature}"
+      - "${artifact}"
+      - "--yes"
+    artifacts: checksum
+    output: true
 
 changelog:
   sort: asc
