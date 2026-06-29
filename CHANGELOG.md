@@ -7,6 +7,43 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added (Probes)
+
+- **mcp-server**: Fingerprints Model Context Protocol (MCP) servers over the Streamable
+  HTTP transport (spec 2025-06-18, JSON-RPC 2.0). Acts as a "is this URL an MCP server?
+  yes/no" classifier — it does NOT discover the endpoint path (that is the crawler /
+  Vespasian / registry job); it classifies the exact URL it is handed. Detects MCP without
+  an MCP client SDK across the states they appear in on the public internet:
+  - **Open servers**: unauthenticated `initialize` handshake matching the MCP-specific
+    result markers `protocolVersion` + `serverInfo` (verified live against the open
+    DeepWiki and Context7 MCP servers, which return the result as an SSE `data:` line).
+  - **OAuth-protected servers** (RFC 9728): `401` + `WWW-Authenticate` carrying
+    `resource_metadata`. Verified live against `https://mcp.upwork.com/mcp`.
+
+  Validated against 231 endpoints from the official MCP registry: ~79% identified as
+  `mcp-server`; the remainder are WAF-fronted (403) or auth-gated without an RFC 9728
+  header (bare `401`), neither of which exposes an MCP-specific signal to an unauthenticated
+  probe. A `Mcp-Session-Id`-header vector was evaluated and dropped — the spec sets that
+  header on the same response that carries `serverInfo`, so the init vector always matches
+  first; it had zero independent coverage across the corpus.
+
+  Keys on the MCP *semantic* layer, never on bare `"jsonrpc":"2.0"`, so it does not
+  false-positive on generic JSON-RPC services (verified: no match on api.github.com /
+  example.com). Every vector uses an empty request `path` so it tests the supplied URL
+  as-is, working whether the endpoint is at `/`, `/mcp`, `/api/mcp`, or a tenant path, and
+  making no path assumptions: the probe classifies the URL it is handed, so it matches
+  `https://mcp.upwork.com/mcp` but (correctly) not the bare host `https://mcp.upwork.com`,
+  whose root is not itself an MCP endpoint. Recovering the endpoint path from the RFC 9728
+  well-known doc is left to the upstream crawler. Specificity 90, under a dedicated `mcp`
+  category (MCP is a tool/resource protocol exposed to LLM clients, not an inference proxy
+  like the `gateway` probes) so downstream consumers can route it to MCP-specific handling.
+
+### Changed
+
+- Probe requests may now use an empty `path` to target the supplied URL exactly
+  (`target + "" = target`), letting a probe classify the URL it is handed rather than a
+  fixed sub-path. Probe validation updated accordingly.
+
 ## [0.2.1] - 2026-04-02
 
 ### Fixed (Probes) — False Positive Audit

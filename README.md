@@ -82,7 +82,7 @@ julius probe https://target.example.com
 
 ## Supported LLM Services
 
-Julius identifies 63 LLM platforms across self-hosted, gateway, RAG/orchestration, and cloud-managed categories:
+Julius identifies 64 LLM platforms across self-hosted, gateway, MCP, RAG/orchestration, and cloud-managed categories:
 
 ### Self-Hosted LLM Servers (25)
 
@@ -125,6 +125,12 @@ Julius identifies 63 LLM platforms across self-hosted, gateway, RAG/orchestratio
 | [OmniRoute](https://github.com/diegosouzapw/OmniRoute) | 20128 | AI gateway with smart routing and caching |
 | [Portkey AI Gateway](https://portkey.ai) | 8787 | Unified gateway for 200+ LLM providers |
 | [TensorZero](https://www.tensorzero.com) | 3000 | Rust-based LLM gateway with observability |
+
+### MCP Servers (1)
+
+| Service | Default Port | Description |
+|---------|--------------|-------------|
+| [MCP Server](https://modelcontextprotocol.io) | 443 | Model Context Protocol server (Streamable HTTP / JSON-RPC) exposing tools & resources to LLM clients |
 
 ### RAG & Orchestration Platforms (18)
 
