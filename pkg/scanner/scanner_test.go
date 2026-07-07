@@ -85,6 +85,61 @@ func TestDoRequest_NoMatch(t *testing.T) {
 	assert.False(t, matched, "DoRequest should return false for non-matching response")
 }
 
+func TestDoRequest_EmptyPath(t *testing.T) {
+	var receivedPath string
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		receivedPath = r.URL.Path
+		w.WriteHeader(http.StatusOK)
+		_, _ = w.Write([]byte(`{"protocolVersion":"2025-06-18","serverInfo":{"name":"test"}}`))
+	}))
+	defer server.Close()
+
+	s := NewScanner(WithTimeout(5 * time.Second))
+	req := types.Request{
+		Type:   "http",
+		Path:   "",
+		Method: "POST",
+		RawMatch: []rules.RawRule{
+			{Type: "body.contains", Value: `"protocolVersion"`},
+		},
+	}
+
+	matched, err := s.DoRequest(server.URL, req)
+	require.NoError(t, err)
+	assert.True(t, matched, "empty-path request should match against the target URL")
+	assert.Equal(t, "/", receivedPath, "empty path should hit the server root")
+}
+
+func TestDoRequest_EmptyPathWithTargetPath(t *testing.T) {
+	var receivedPath string
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		receivedPath = r.URL.Path
+		w.WriteHeader(http.StatusOK)
+		_, _ = w.Write([]byte(`{"protocolVersion":"2025-06-18","serverInfo":{"name":"test"}}`))
+	}))
+	defer server.Close()
+
+	s := NewScanner(WithTimeout(5 * time.Second))
+	req := types.Request{
+		Type:   "http",
+		Path:   "",
+		Method: "POST",
+		RawMatch: []rules.RawRule{
+			{Type: "body.contains", Value: `"protocolVersion"`},
+		},
+	}
+
+	matched, err := s.DoRequest(server.URL+"/mcp", req)
+	require.NoError(t, err)
+	assert.True(t, matched)
+	assert.Equal(t, "/mcp", receivedPath, "empty path should preserve the target's path")
+}
+
+func TestNormalizeTarget_PreservesTrailingSlashOnPath(t *testing.T) {
+	got := NormalizeTarget("https://example.com/mcp/")
+	assert.Equal(t, "https://example.com/mcp/", got, "trailing slash on path should be preserved")
+}
+
 func TestScan_ReturnsAllMatches(t *testing.T) {
 	// Create test server
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
