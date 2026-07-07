@@ -608,9 +608,9 @@ func TestNormalizeTarget(t *testing.T) {
 			want:   "https://example.com",
 		},
 		{
-			name:   "trailing slash with path",
+			name:   "trailing slash with path preserved",
 			target: "https://example.com/api/v1/",
-			want:   "https://example.com/api/v1",
+			want:   "https://example.com/api/v1/",
 		},
 		{
 			name:   "leading whitespace",
@@ -643,9 +643,9 @@ func TestNormalizeTarget(t *testing.T) {
 			want:   "https://example.com:8080",
 		},
 		{
-			name:   "no scheme with path and trailing slash",
+			name:   "no scheme with path and trailing slash preserved",
 			target: "example.com/api/",
-			want:   "https://example.com/api",
+			want:   "https://example.com/api/",
 		},
 		{
 			name:   "empty string",

@@ -21,7 +21,18 @@ func NormalizeTarget(target string) string {
 		target = "https://" + target
 	}
 
-	target = strings.TrimRight(target, "/")
+	u, err := url.Parse(target)
+	if err != nil {
+		return strings.TrimRight(target, "/")
+	}
+
+	// Strip trailing slashes from bare hosts (path is only slashes or empty).
+	// Preserve trailing slashes on real paths so empty-path probes
+	// test the exact URL supplied (e.g. https://host/mcp/).
+	if strings.Trim(u.Path, "/") == "" {
+		u.Path = ""
+		return u.String()
+	}
 
 	return target
 }

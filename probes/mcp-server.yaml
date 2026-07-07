@@ -57,9 +57,10 @@ requests:
         value: '"serverInfo"'
 
   # OAuth-protected server (RFC 9728): MCP servers MUST return 401 with a WWW-Authenticate
-  # header pointing at the protected-resource metadata. This is the state mcp.upwork.com and
-  # other gated production servers present to an unauthenticated probe — fingerprinted with
-  # no credentials. resource_metadata in WWW-Authenticate is MCP/RFC9728-specific.
+  # header pointing at the protected-resource metadata. resource_metadata alone is RFC 9728,
+  # not MCP-specific, so we also require MCP-Protocol-Version in the response headers (the
+  # MCP spec mandates servers include it in all responses). This prevents false-positives on
+  # non-MCP APIs that happen to use RFC 9728 OAuth challenges.
   - type: http
     path: ""
     method: POST
@@ -74,3 +75,6 @@ requests:
       - type: header.contains
         header: WWW-Authenticate
         value: resource_metadata
+      - type: header.contains
+        header: MCP-Protocol-Version
+        value: ""
