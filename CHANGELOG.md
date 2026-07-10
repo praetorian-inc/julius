@@ -18,7 +18,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
     result markers `protocolVersion` + `serverInfo` (verified live against the open
     DeepWiki and Context7 MCP servers, which return the result as an SSE `data:` line).
   - **OAuth-protected servers** (RFC 9728): `401` + `WWW-Authenticate` carrying
-    `resource_metadata`. Verified live against `https://mcp.upwork.com/mcp`.
+    `resource_metadata` + `MCP-Protocol-Version` response header.
 
   Validated against 231 endpoints from the official MCP registry: ~79% identified as
   `mcp-server`; the remainder are WAF-fronted (403) or auth-gated without an RFC 9728
@@ -31,9 +31,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   false-positive on generic JSON-RPC services (verified: no match on api.github.com /
   example.com). Every vector uses an empty request `path` so it tests the supplied URL
   as-is, working whether the endpoint is at `/`, `/mcp`, `/api/mcp`, or a tenant path, and
-  making no path assumptions: the probe classifies the URL it is handed, so it matches
-  `https://mcp.upwork.com/mcp` but (correctly) not the bare host `https://mcp.upwork.com`,
-  whose root is not itself an MCP endpoint. Recovering the endpoint path from the RFC 9728
+  making no path assumptions: the probe classifies the URL it is handed, matching a
+  path-suffixed MCP endpoint but correctly not matching the bare host whose root is not
+  itself an MCP endpoint. Recovering the endpoint path from the RFC 9728
   well-known doc is left to the upstream crawler. Specificity 90, under a dedicated `mcp`
   category (MCP is a tool/resource protocol exposed to LLM clients, not an inference proxy
   like the `gateway` probes) so downstream consumers can route it to MCP-specific handling.
