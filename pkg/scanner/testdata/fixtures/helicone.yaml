@@ -1,0 +1,30 @@
+# Golden-file fixtures for the helicone probe.
+# Validated by pkg/scanner/fixture_test.go against probes/helicone.yaml.
+probe: helicone
+cases:
+  - name: positive
+    match: true
+    responses:
+      "/healthcheck":
+        status: 200
+        headers:
+          Content-Type: application/json
+        body: '{"status":"healthy :)"}'
+      "/download/swagger.json":
+        status: 200
+        headers:
+          Content-Type: application/json
+        body: '{"openapi":"3.0.0","info":{"title":"Helicone API","version":"1.0.0"},"paths":{"/v1/organization":{},"/v1/session":{}},"components":{"schemas":{"HeliconeRequest":{}}}}'
+  - name: negative-generic-healthcheck
+    match: false
+    responses:
+      "/healthcheck":
+        status: 200
+        headers:
+          Content-Type: application/json
+        body: '{"status":"ok"}'
+      "/download/swagger.json":
+        status: 200
+        headers:
+          Content-Type: application/json
+        body: '{"openapi":"3.0.0","info":{"title":"Generic API","version":"1.0.0"},"paths":{}}'

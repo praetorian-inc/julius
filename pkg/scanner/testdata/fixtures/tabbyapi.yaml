@@ -1,0 +1,20 @@
+# Golden-file fixtures for the tabbyapi probe.
+# Validated by pkg/scanner/fixture_test.go against probes/tabbyapi.yaml.
+probe: tabbyapi
+cases:
+  - name: positive
+    match: true
+    responses:
+      "/.well-known/serviceinfo":
+        status: 200
+        headers:
+          Content-Type: application/json
+        body: '{"version":"0.0.1","software":{"name":"TabbyAPI","version":"0.0.1","repository":"https://github.com/theroyallab/tabbyAPI","homepage":"https://github.com/theroyallab/tabbyAPI"},"api":{"openai":{"version":"1.0","name":"OpenAI API","rel":"https://theroyallab.github.io/tabbyAPI"}}}'
+  - name: negative-different-server
+    match: false
+    responses:
+      "/.well-known/serviceinfo":
+        status: 200
+        headers:
+          Content-Type: application/json
+        body: '{"version":"0.0.1","software":{"name":"vLLM","version":"0.6.3","repository":"https://github.com/vllm-project/vllm"}}'

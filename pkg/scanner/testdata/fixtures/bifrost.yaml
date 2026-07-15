@@ -1,0 +1,30 @@
+# Golden-file fixtures for the bifrost probe.
+# Validated by pkg/scanner/fixture_test.go against probes/bifrost.yaml.
+probe: bifrost
+cases:
+  - name: positive
+    match: true
+    responses:
+      "/api/config":
+        status: 200
+        headers:
+          Content-Type: application/json
+        body: '{"client_config":{"drop_excess_requests":false,"initial_pool_size":300,"prometheus_labels":[]},"is_db_connected":true,"is_cache_connected":false,"framework_config":{"enable_logging":true,"enable_governance":true},"version":"1.2.3"}'
+      "/health":
+        status: 200
+        headers:
+          Content-Type: application/json
+        body: '{"status":"ok","db_pings":{"config_db":"ok","logs_db":"ok"}}'
+  - name: negative-generic-health
+    match: false
+    responses:
+      "/api/config":
+        status: 200
+        headers:
+          Content-Type: application/json
+        body: '{"client_config":{"drop_excess_requests":false,"initial_pool_size":300},"is_db_connected":true,"framework_config":{"enable_logging":true}}'
+      "/health":
+        status: 200
+        headers:
+          Content-Type: application/json
+        body: '{"status":"ok"}'

@@ -1,0 +1,30 @@
+# Golden-file fixtures for the aws-bedrock probe.
+# Validated by pkg/scanner/fixture_test.go against probes/aws-bedrock.yaml.
+probe: aws-bedrock
+cases:
+  - name: positive
+    match: true
+    responses:
+      "/foundation-models":
+        status: 403
+        headers:
+          Content-Type: application/json
+        body: '{"Message":"Authorization header is missing"}'
+      "/guardrails":
+        status: 403
+        headers:
+          Content-Type: application/json
+        body: '{"Message":"Authorization header is missing"}'
+  - name: negative-guardrails-generic-403
+    match: false
+    responses:
+      "/foundation-models":
+        status: 403
+        headers:
+          Content-Type: application/json
+        body: '{"Message":"Authorization header is missing"}'
+      "/guardrails":
+        status: 403
+        headers:
+          Content-Type: application/json
+        body: '{"message":"Forbidden"}'

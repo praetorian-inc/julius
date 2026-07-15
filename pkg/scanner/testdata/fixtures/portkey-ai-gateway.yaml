@@ -1,0 +1,30 @@
+# Golden-file fixtures for the portkey-ai-gateway probe.
+# Validated by pkg/scanner/fixture_test.go against probes/portkey-ai-gateway.yaml.
+probe: portkey-ai-gateway
+cases:
+  - name: positive
+    match: true
+    responses:
+      "/":
+        status: 200
+        headers:
+          Content-Type: text/plain; charset=utf-8
+        body: 'AI Gateway says hey!'
+      "/public/":
+        status: 200
+        headers:
+          Content-Type: text/html; charset=utf-8
+        body: '<!doctype html><html lang="en"><head><meta charset="utf-8"><title>portkey ai gateway console</title><link rel="icon" href="/public/portkey-favicon.svg"></head><body><div id="root"></div><script type="module" src="/public/assets/index.js"></script></body></html>'
+  - name: negative-console-not-portkey-branded
+    match: false
+    responses:
+      "/":
+        status: 200
+        headers:
+          Content-Type: text/plain; charset=utf-8
+        body: 'AI Gateway says hey!'
+      "/public/":
+        status: 200
+        headers:
+          Content-Type: text/html; charset=utf-8
+        body: '<!doctype html><html lang="en"><head><title>Admin Console</title></head><body><div id="root"></div></body></html>'

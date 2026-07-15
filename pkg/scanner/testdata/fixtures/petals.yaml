@@ -1,0 +1,20 @@
+# Golden-file fixtures for the petals probe.
+# Validated by pkg/scanner/fixture_test.go against probes/petals.yaml.
+probe: petals
+cases:
+  - name: positive-chat-server
+    match: true
+    responses:
+      "/":
+        status: 200
+        headers:
+          Content-Type: text/html; charset=utf-8
+        body: '<!doctype html><html lang="en"><head><meta charset="utf-8"><title>Petals &ndash; Decentralized platform for running large language models</title></head><body><h1>Decentralized platform for running large language models</h1><p>Run 100B+ language models at home, BitTorrent-style. Powered by <a href="https://github.com/petals-infra/chat.petals.dev">petals-infra</a>.</p><p>Want to increase Petals capacity? Run a server and share your GPU.</p></body></html>'
+  - name: negative-missing-capacity-marker
+    match: false
+    responses:
+      "/":
+        status: 200
+        headers:
+          Content-Type: text/html; charset=utf-8
+        body: '<!doctype html><html lang="en"><head><title>Some LLM Chat</title></head><body><h1>Decentralized platform for running large language models</h1><p>Hosted at <a href="https://github.com/petals-infra/chat.petals.dev">petals-infra</a>.</p></body></html>'

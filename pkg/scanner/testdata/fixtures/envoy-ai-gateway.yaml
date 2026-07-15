@@ -1,0 +1,20 @@
+# Golden-file fixtures for the envoy-ai-gateway probe.
+# Validated by pkg/scanner/fixture_test.go against probes/envoy-ai-gateway.yaml.
+probe: envoy-ai-gateway
+cases:
+  - name: positive
+    match: true
+    responses:
+      "/v1/models":
+        status: 200
+        headers:
+          Content-Type: application/json
+        body: '{"object":"list","data":[{"id":"gpt-4o-mini","object":"model","created":1700000000,"owned_by":"Envoy AI Gateway"}]}'
+  - name: negative-openai-owner
+    match: false
+    responses:
+      "/v1/models":
+        status: 200
+        headers:
+          Content-Type: application/json
+        body: '{"object":"list","data":[{"id":"gpt-4o-mini","object":"model","created":1700000000,"owned_by":"openai"}]}'

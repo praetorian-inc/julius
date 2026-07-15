@@ -1,0 +1,33 @@
+# Golden-file fixtures for the mlc-llm probe.
+# Validated by pkg/scanner/fixture_test.go against probes/mlc-llm.yaml.
+# mlc-llm is require:any: /v1/models (owned_by "MLC-LLM") OR /openapi.json
+# exposing the MLC-specific /microserving/prep_recv path.
+probe: mlc-llm
+cases:
+  # Real MLC LLM engine: OpenAI-shaped /v1/models owned_by MLC-LLM, and an
+  # OpenAPI spec that mounts the MLC microserving endpoints.
+  - name: positive
+    match: true
+    responses:
+      /v1/models:
+        status: 200
+        headers:
+          Content-Type: application/json
+        body: '{"object":"list","data":[{"id":"Llama-3-8B-Instruct-q4f16_1-MLC","object":"model","created":1700000000,"owned_by":"MLC-LLM"}]}'
+      /openapi.json:
+        status: 200
+        headers:
+          Content-Type: application/json
+        body: '{"openapi":"3.1.0","info":{"title":"MLC-LLM","version":"0.1.0"},"paths":{"/v1/chat/completions":{},"/microserving/prep_recv":{"post":{"summary":"Prep Recv"}}}}'
+
+  # A generic OpenAI-compatible server: /v1/models is well-formed JSON but is
+  # owned_by openai, not MLC-LLM, and it exposes no microserving path. Guards
+  # the "MLC-LLM" discriminator.
+  - name: negative-not-mlc
+    match: false
+    responses:
+      /v1/models:
+        status: 200
+        headers:
+          Content-Type: application/json
+        body: '{"object":"list","data":[{"id":"gpt-4","object":"model","created":1700000000,"owned_by":"openai"}]}'

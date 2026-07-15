@@ -1,0 +1,33 @@
+# Golden-file fixtures for the nextchat probe.
+# Validated by pkg/scanner/fixture_test.go against probes/nextchat.yaml.
+# nextchat is require:any: the web manifest naming NextChat OR /api/config with
+# the NextChat-specific config fields.
+probe: nextchat
+cases:
+  # Real NextChat: web manifest with NextChat name/short_name, and the config
+  # endpoint exposing NextChat-specific flags.
+  - name: positive
+    match: true
+    responses:
+      /site.webmanifest:
+        status: 200
+        headers:
+          Content-Type: application/manifest+json
+        body: '{"name": "NextChat","short_name": "NextChat","icons":[{"src":"/android-chrome-192x192.png","sizes":"192x192","type":"image/png"}],"theme_color":"#ffffff","background_color":"#ffffff","display":"standalone"}'
+      /api/config:
+        status: 200
+        headers:
+          Content-Type: application/json
+        body: '{"needCode": false,"hideUserApiKey": false,"disableGPT4": false,"hideBalanceQuery": true,"disableFastLink": false,"customModels": "","defaultModel": "gpt-3.5-turbo"}'
+
+  # A different self-hosted chat UI whose manifest carries its own name (not
+  # NextChat) and which exposes no /api/config. Guards the NextChat name
+  # discriminator.
+  - name: negative-other-chat-ui
+    match: false
+    responses:
+      /site.webmanifest:
+        status: 200
+        headers:
+          Content-Type: application/manifest+json
+        body: '{"name": "My Chat","short_name": "My Chat","icons":[],"display":"standalone"}'

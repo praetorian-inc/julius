@@ -1,0 +1,42 @@
+# Golden-file fixtures for the llama-cpp probe.
+# Validated by pkg/scanner/fixture_test.go against probes/llama-cpp.yaml.
+# llama-cpp is require:all: /v1/models (owned_by":"llamacpp") AND /health with a
+# "Server: llama.cpp" response header.
+probe: llama-cpp
+cases:
+  # Real llama.cpp server: OpenAI-shaped /v1/models owned_by llamacpp, plus a
+  # /health that llama.cpp serves with its Server header.
+  - name: positive
+    match: true
+    responses:
+      /v1/models:
+        status: 200
+        headers:
+          Content-Type: application/json
+          Server: llama.cpp
+        body: '{"object":"list","data":[{"id":"llama-2-7b-chat.Q4_K_M.gguf","object":"model","created":1700000000,"owned_by":"llamacpp"}]}'
+      /health:
+        status: 200
+        headers:
+          Content-Type: application/json
+          Server: llama.cpp
+        body: '{"status":"ok"}'
+
+  # An OpenAI-compatible server behind a reverse proxy: /v1/models even claims
+  # owned_by llamacpp, but /health is served by nginx, not llama.cpp. Breaks the
+  # Server-header discriminator only.
+  - name: negative-not-llamacpp-server
+    match: false
+    responses:
+      /v1/models:
+        status: 200
+        headers:
+          Content-Type: application/json
+          Server: nginx
+        body: '{"object":"list","data":[{"id":"llama-2-7b-chat.Q4_K_M.gguf","object":"model","created":1700000000,"owned_by":"llamacpp"}]}'
+      /health:
+        status: 200
+        headers:
+          Content-Type: application/json
+          Server: nginx
+        body: '{"status":"ok"}'

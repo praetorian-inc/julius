@@ -1,0 +1,28 @@
+# Golden-file fixtures for the koboldcpp probe.
+# Validated by pkg/scanner/fixture_test.go against probes/koboldcpp.yaml.
+probe: koboldcpp
+cases:
+  - name: positive
+    match: true
+    responses:
+      "/api/extra/version":
+        status: 200
+        headers:
+          Content-Type: application/json
+        body: '{"result": "KoboldCpp","version": "1.58"}'
+      "/v1/models":
+        status: 200
+        headers:
+          Content-Type: application/json
+        body: '{"object":"list","data":[{"id":"koboldcpp/dolphin-2.6-mistral-7b.Q4_K_M.gguf","object":"model","created":1700000000,"owned_by": "koboldcpp"}]}'
+  - name: negative-openai-compatible-server
+    match: false
+    responses:
+      "/api/extra/version":
+        status: 404
+        body: ''
+      "/v1/models":
+        status: 200
+        headers:
+          Content-Type: application/json
+        body: '{"object":"list","data":[{"id":"gpt-3.5-turbo","object":"model","created":1677610602,"owned_by": "openai"}]}'

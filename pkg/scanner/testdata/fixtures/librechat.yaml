@@ -1,0 +1,30 @@
+# Golden-file fixtures for the librechat probe.
+# Validated by pkg/scanner/fixture_test.go against probes/librechat.yaml.
+probe: librechat
+cases:
+  - name: positive
+    match: true
+    responses:
+      "/":
+        status: 200
+        headers:
+          Content-Type: text/html
+        body: '<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"/><title>LibreChat</title><link rel="icon" href="/assets/favicon.ico"/></head><body><div id="root"></div></body></html>'
+      "/api/config":
+        status: 200
+        headers:
+          Content-Type: application/json
+        body: '{"appTitle":"LibreChat","socialLogins":["google","github"],"helpAndFaqURL":"https://librechat.ai","registrationEnabled":true,"emailLoginEnabled":true}'
+  - name: negative-generic-chat-app
+    match: false
+    responses:
+      "/":
+        status: 200
+        headers:
+          Content-Type: text/html
+        body: '<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"/><title>My Chat App</title></head><body><div id="root"></div></body></html>'
+      "/api/config":
+        status: 200
+        headers:
+          Content-Type: application/json
+        body: '{"appTitle":"My Chat App","helpAndFaqURL":"https://example.com/help"}'

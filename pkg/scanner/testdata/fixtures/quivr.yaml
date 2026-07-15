@@ -1,0 +1,30 @@
+# Golden-file fixtures for the quivr probe.
+# Validated by pkg/scanner/fixture_test.go against probes/quivr.yaml.
+probe: quivr
+cases:
+  - name: positive
+    match: true
+    responses:
+      "/openapi.json":
+        status: 200
+        headers:
+          Content-Type: application/json
+        body: '{"openapi":"3.1.0","info":{"title":"Quivr API","version":"0.1.0"},"paths":{"/brains/":{"get":{"summary":"Retrieve Brains","tags":["brain"]}},"/knowledge/":{"get":{"summary":"List Knowledge","tags":["knowledge"]}},"/chat/":{"get":{"summary":"Get Chats","tags":["chat"]}}}}'
+      "/brains/":
+        status: 403
+        headers:
+          Content-Type: application/json
+        body: '{"detail":"Authentication credentials missing"}'
+  - name: negative-brains-generic-auth-message
+    match: false
+    responses:
+      "/openapi.json":
+        status: 200
+        headers:
+          Content-Type: application/json
+        body: '{"openapi":"3.1.0","info":{"title":"Quivr API","version":"0.1.0"},"paths":{"/brains/":{"get":{"summary":"Retrieve Brains"}},"/knowledge/":{"get":{"summary":"List Knowledge"}},"/chat/":{"get":{"summary":"Get Chats"}}}}'
+      "/brains/":
+        status: 403
+        headers:
+          Content-Type: application/json
+        body: '{"detail":"Not authenticated"}'

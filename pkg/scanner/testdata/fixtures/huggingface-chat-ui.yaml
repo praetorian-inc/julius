@@ -1,0 +1,30 @@
+# Golden-file fixtures for the huggingface-chat-ui probe.
+# Validated by pkg/scanner/fixture_test.go against probes/huggingface-chat-ui.yaml.
+probe: huggingface-chat-ui
+cases:
+  - name: positive
+    match: true
+    responses:
+      "/api/v2/public-config":
+        status: 200
+        headers:
+          Content-Type: application/json
+        body: '{"PUBLIC_APP_NAME":"ChatUI","PUBLIC_APP_ASSETS":"https://huggingface.co/chat/assets","PUBLIC_APP_DESCRIPTION":"Making the community best AI chat models available to everyone.","PUBLIC_APP_COLOR":"blue"}'
+      "/chatui/manifest.json":
+        status: 200
+        headers:
+          Content-Type: application/json
+        body: '{"name":"ChatUI","short_name":"ChatUI","icons":[{"src":"/chatui/icon.png","sizes":"512x512"}],"start_url": "/chat","display":"standalone","background_color":"#ffffff"}'
+  - name: negative-custom-app-name
+    match: false
+    responses:
+      "/api/v2/public-config":
+        status: 200
+        headers:
+          Content-Type: application/json
+        body: '{"PUBLIC_APP_NAME":"MyCorp Assistant","PUBLIC_APP_ASSETS":"https://example.com/assets","PUBLIC_APP_DESCRIPTION":"Internal chatbot"}'
+      "/chatui/manifest.json":
+        status: 200
+        headers:
+          Content-Type: application/json
+        body: '{"name":"MyCorp Assistant","short_name":"Assistant","start_url": "/chat","display":"standalone"}'

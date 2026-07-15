@@ -1,0 +1,33 @@
+# Golden-file fixtures for the lm-studio probe.
+# Validated by pkg/scanner/fixture_test.go against probes/lm-studio.yaml.
+# lm-studio is require:any: /lmstudio-greeting ({"lmstudio":true}) OR the
+# LM Studio-specific /api/v0/models path.
+probe: lm-studio
+cases:
+  # Real LM Studio server: the self-identification greeting endpoint plus the
+  # LM Studio-specific /api/v0/models listing.
+  - name: positive
+    match: true
+    responses:
+      /lmstudio-greeting:
+        status: 200
+        headers:
+          Content-Type: application/json
+        body: '{"lmstudio":true}'
+      /api/v0/models:
+        status: 200
+        headers:
+          Content-Type: application/json
+        body: '{"object":"list","data":[{"id":"qwen2.5-7b-instruct","object":"model","type":"llm","publisher":"lmstudio-community","arch":"qwen2","state":"loaded","max_context_length":32768}]}'
+
+  # A server that answers the greeting path but reports lmstudio:false (not a
+  # live LM Studio server), and has no /api/v0/models. Guards the greeting's
+  # "true" discriminator.
+  - name: negative-greeting-false
+    match: false
+    responses:
+      /lmstudio-greeting:
+        status: 200
+        headers:
+          Content-Type: application/json
+        body: '{"lmstudio":false}'

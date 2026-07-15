@@ -1,0 +1,25 @@
+# Golden-file fixtures for the sglang probe.
+# Validated by pkg/scanner/fixture_test.go against probes/sglang.yaml.
+probe: sglang
+cases:
+  - name: positive
+    match: true
+    responses:
+      "/server_info":
+        status: 200
+        headers:
+          Content-Type: application/json
+        body: '{"model_path":"meta-llama/Llama-3.1-8B-Instruct","tokenizer_path":"meta-llama/Llama-3.1-8B-Instruct","mem_fraction_static":0.88,"max_running_requests":2048,"context_length":131072,"disaggregation_mode":"null","attention_backend":"flashinfer","version":"0.4.6"}'
+  - name: negative-non-sglang-server
+    match: false
+    responses:
+      "/server_info":
+        status: 200
+        headers:
+          Content-Type: application/json
+        body: '{"model_path":"meta-llama/Llama-3.1-8B-Instruct","mem_fraction_static":0.9,"max_num_seqs":256}'
+      "/v1/models":
+        status: 200
+        headers:
+          Content-Type: application/json
+        body: '{"object":"list","data":[{"id":"meta-llama/Llama-3.1-8B-Instruct","object":"model","owned_by":"vllm"}]}'

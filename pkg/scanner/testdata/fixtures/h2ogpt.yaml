@@ -1,0 +1,30 @@
+# Golden-file fixtures for the h2ogpt probe.
+# Validated by pkg/scanner/fixture_test.go against probes/h2ogpt.yaml.
+probe: h2ogpt
+cases:
+  - name: positive
+    match: true
+    responses:
+      "/info":
+        status: 200
+        headers:
+          Content-Type: application/json
+        body: '{"named_endpoints":{"/submit_nochat_api":{"parameters":[{"label":"data","type":"object","python_type":{"type":"Any"}}],"returns":[{"label":"response","type":"string"}]},"/submit_nochat":{"parameters":[],"returns":[]}},"unnamed_endpoints":{}}'
+      "/":
+        status: 200
+        headers:
+          Content-Type: text/html
+        body: '<!DOCTYPE html><html><head><title>h2oGPT</title></head><body><gradio-app>h2oGPT - Private Q&A and Chat with your own Documents</gradio-app></body></html>'
+  - name: negative-generic-gradio
+    match: false
+    responses:
+      "/info":
+        status: 200
+        headers:
+          Content-Type: application/json
+        body: '{"named_endpoints":{"/predict":{"parameters":[{"label":"input","type":"string"}],"returns":[{"label":"output","type":"string"}]}},"unnamed_endpoints":{}}'
+      "/":
+        status: 200
+        headers:
+          Content-Type: text/html
+        body: '<!DOCTYPE html><html><head><title>Gradio</title></head><body><gradio-app></gradio-app></body></html>'

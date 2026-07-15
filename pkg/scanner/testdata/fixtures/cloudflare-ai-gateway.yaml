@@ -1,0 +1,25 @@
+# Golden-file fixtures for the cloudflare-ai-gateway probe.
+# Validated by pkg/scanner/fixture_test.go against probes/cloudflare-ai-gateway.yaml.
+probe: cloudflare-ai-gateway
+cases:
+  - name: positive
+    match: true
+    responses:
+      "/v1/models":
+        status: 401
+        headers:
+          Content-Type: application/json
+          Server: cloudflare
+          cf-aig-event-id: 3f7c9a1e-2b4d-4c8a-9f1e-6d2b7a4c8e15
+          cf-ray: 8e2a1b3c4d5e6f70-EWR
+        body: '{"error":{"message":"Authentication error","type":"authentication_error"}}'
+  - name: negative-plain-cloudflare-cdn
+    match: false
+    responses:
+      "/v1/models":
+        status: 404
+        headers:
+          Content-Type: text/html; charset=UTF-8
+          Server: cloudflare
+          cf-ray: 8e2a1b3c4d5e6f70-EWR
+        body: '<!DOCTYPE html><html><head><title>404 Not Found</title></head><body>Not Found</body></html>'

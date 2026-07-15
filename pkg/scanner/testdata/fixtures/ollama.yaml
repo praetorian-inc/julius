@@ -1,0 +1,60 @@
+# Golden-file fixtures for the ollama probe.
+# Validated by pkg/scanner/fixture_test.go against probes/ollama.yaml.
+# ollama is require:all: both / and /api/tags must match.
+probe: ollama
+cases:
+  # Real Ollama: root returns the plain-text banner, /api/tags returns models
+  # with the "families" array (present on genuine Ollama, absent on compat servers).
+  - name: positive
+    match: true
+    responses:
+      /:
+        status: 200
+        headers:
+          Content-Type: text/plain; charset=utf-8
+        body: "Ollama is running"
+      /api/tags:
+        status: 200
+        headers:
+          Content-Type: application/json
+        body: '{"models":[{"name":"llama3.2:latest","model":"llama3.2:latest","size":2019393189,"details":{"family":"llama","families":["llama"],"parameter_size":"3.2B","quantization_level":"Q4_K_M"}}]}'
+
+  # KoboldCpp mimics /api/tags but reports "family": "koboldcpp"; its root has no
+  # "Ollama is running" banner. The require:all root check rejects it.
+  - name: negative-koboldcpp
+    match: false
+    responses:
+      /:
+        status: 200
+        headers:
+          Content-Type: text/html
+        body: "<html><body>KoboldCpp</body></html>"
+      /api/tags:
+        status: 200
+        headers:
+          Content-Type: application/json
+        body: '{"models":[{"name":"koboldcpp/model","model":"koboldcpp/model","details":{"family":"koboldcpp"}}]}'
+
+  # Guards the koboldcpp carve-out directly: root passes, but /api/tags carries
+  # "family": "koboldcpp", so the negated body rule on /api/tags must reject it.
+  - name: negative-koboldcpp-behind-banner
+    match: false
+    responses:
+      /:
+        status: 200
+        headers:
+          Content-Type: text/plain; charset=utf-8
+        body: "Ollama is running"
+      /api/tags:
+        status: 200
+        headers:
+          Content-Type: application/json
+        body: '{"models": [{"name": "m", "model": "m", "details": {"family": "koboldcpp", "families": ["koboldcpp"]}}]}'
+
+  # An unrelated service that answers neither endpoint the way Ollama does.
+  - name: negative-unrelated
+    match: false
+    responses:
+      /:
+        status: 404
+        body: "not found"

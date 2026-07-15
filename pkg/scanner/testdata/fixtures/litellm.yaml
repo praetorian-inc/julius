@@ -1,0 +1,33 @@
+# Golden-file fixtures for the litellm probe.
+# Validated by pkg/scanner/fixture_test.go against probes/litellm.yaml.
+# litellm is require:any: matching any one request (here /health) is enough.
+probe: litellm
+cases:
+  # Real LiteLLM proxy: unauthenticated /health returns per-endpoint status
+  # objects that carry litellm_metadata. /health/readiness also exposes the
+  # version for good measure.
+  - name: positive
+    match: true
+    responses:
+      /health:
+        status: 200
+        headers:
+          Content-Type: application/json
+        body: '{"healthy_endpoints":[{"model":"openai/gpt-3.5-turbo","litellm_metadata":{"model_group":"gpt-3.5-turbo","deployment":"azure/chatgpt-v-2"}}],"unhealthy_endpoints":[],"healthy_count":1,"unhealthy_count":0}'
+      /health/readiness:
+        status: 200
+        headers:
+          Content-Type: application/json
+        body: '{"status":"connected","db":"connected","cache":null,"litellm_version":"1.61.3","success_callbacks":[]}'
+
+  # A different LLM proxy exposing a generic /health endpoint: valid JSON, 200,
+  # but no litellm_metadata (and none of the other litellm markers on the other
+  # paths). Guards the litellm_metadata discriminator.
+  - name: negative-generic-health
+    match: false
+    responses:
+      /health:
+        status: 200
+        headers:
+          Content-Type: application/json
+        body: '{"status":"healthy","endpoints":[{"model":"gpt-4","status":"ok"}]}'

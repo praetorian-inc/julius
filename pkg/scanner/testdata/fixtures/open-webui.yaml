@@ -1,0 +1,40 @@
+# Golden-file fixtures for the open-webui probe.
+# Validated by pkg/scanner/fixture_test.go against probes/open-webui.yaml.
+probe: open-webui
+cases:
+  - name: positive
+    match: true
+    responses:
+      "/api/config":
+        status: 200
+        headers:
+          Content-Type: application/json
+        body: '{"status":true,"name":"Open WebUI","version":"0.5.20","default_locale":"","oauth":{"providers":{}},"features":{"auth":true,"enable_signup":true,"enable_login_form":true,"enable_web_search":false,"enable_image_generation":false}}'
+      "/api/version":
+        status: 200
+        headers:
+          Content-Type: application/json
+        body: '{"version":"0.5.20","deployment_id":"f3a9c2e1-4b7d-4a1e-9c3a-2b8e6d1f0a44"}'
+      "/":
+        status: 200
+        headers:
+          Content-Type: text/html; charset=utf-8
+        body: '<!doctype html><html lang="en"><head><meta charset="utf-8"><title>Open WebUI</title><link rel="manifest" href="/manifest.json"><link rel="icon" href="/static/favicon.png"></head><body><div id="app"></div><script>window.name="open-webui";</script><script type="module" src="/_app/immutable/entry/start.js"></script></body></html>'
+  - name: negative-version-missing-deployment-id
+    match: false
+    responses:
+      "/api/config":
+        status: 200
+        headers:
+          Content-Type: application/json
+        body: '{"status":true,"name":"Open WebUI","version":"0.5.20","features":{"auth":true}}'
+      "/api/version":
+        status: 200
+        headers:
+          Content-Type: application/json
+        body: '{"version":"0.5.20"}'
+      "/":
+        status: 200
+        headers:
+          Content-Type: text/html; charset=utf-8
+        body: '<!doctype html><html><head><title>Open WebUI</title></head><body><div id="app"></div><script>window.name="open-webui";</script></body></html>'

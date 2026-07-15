@@ -1,0 +1,30 @@
+# Golden-file fixtures for the replicate probe.
+# Validated by pkg/scanner/fixture_test.go against probes/replicate.yaml.
+probe: replicate
+cases:
+  - name: positive
+    match: true
+    responses:
+      "/v1/hardware":
+        status: 401
+        headers:
+          Content-Type: application/problem+json
+        body: '{"detail":"You did not pass a valid authentication token.","status":401,"title":"Unauthenticated","type":"about:blank"}'
+      "/v1/predictions":
+        status: 401
+        headers:
+          Content-Type: application/problem+json
+        body: '{"detail":"You did not pass a valid authentication token.","status":401,"title":"Unauthenticated","type":"about:blank"}'
+  - name: negative-different-problem-title
+    match: false
+    responses:
+      "/v1/hardware":
+        status: 401
+        headers:
+          Content-Type: application/problem+json
+        body: '{"detail":"Access token is missing.","status":401,"title":"Unauthorized","type":"about:blank"}'
+      "/v1/predictions":
+        status: 401
+        headers:
+          Content-Type: application/problem+json
+        body: '{"detail":"Access token is missing.","status":401,"title":"Unauthorized","type":"about:blank"}'

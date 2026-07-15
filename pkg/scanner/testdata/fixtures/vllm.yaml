@@ -1,0 +1,54 @@
+# Golden-file fixtures for the vllm probe.
+# Validated by pkg/scanner/fixture_test.go against probes/vllm.yaml.
+# vllm is require:all: /v1/models (with uvicorn Server header) AND /version.
+probe: vllm
+cases:
+  # Real vLLM: OpenAI-shaped /v1/models served by uvicorn, plus /version.
+  - name: positive
+    match: true
+    responses:
+      /v1/models:
+        status: 200
+        headers:
+          Content-Type: application/json
+          Server: uvicorn
+        body: '{"object":"list","data":[{"id":"meta-llama/Llama-3.1-8B-Instruct","object":"model","owned_by":"vllm"}]}'
+      /version:
+        status: 200
+        headers:
+          Content-Type: application/json
+        body: '{"version":"0.6.3"}'
+
+  # An OpenAI-compatible server that is NOT vLLM: no uvicorn Server header on
+  # /v1/models. Guards the uvicorn discriminator.
+  - name: negative-not-uvicorn
+    match: false
+    responses:
+      /v1/models:
+        status: 200
+        headers:
+          Content-Type: application/json
+          Server: nginx
+        body: '{"object":"list","data":[{"id":"gpt-4","object":"model"}]}'
+      /version:
+        status: 200
+        headers:
+          Content-Type: application/json
+        body: '{"version":"1.0.0"}'
+
+  # /version carries "deployment_id" (a managed-service marker vLLM lacks); the
+  # negated body rule on /version must reject it even though /v1/models matches.
+  - name: negative-deployment-id
+    match: false
+    responses:
+      /v1/models:
+        status: 200
+        headers:
+          Content-Type: application/json
+          Server: uvicorn
+        body: '{"object":"list","data":[]}'
+      /version:
+        status: 200
+        headers:
+          Content-Type: application/json
+        body: '{"version":"0.6.3","deployment_id":"dep-123"}'

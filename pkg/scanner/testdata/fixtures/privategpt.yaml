@@ -1,0 +1,20 @@
+# Golden-file fixtures for the privategpt probe.
+# Validated by pkg/scanner/fixture_test.go against probes/privategpt.yaml.
+probe: privategpt
+cases:
+  - name: positive
+    match: true
+    responses:
+      "/v1/ingest/list":
+        status: 200
+        headers:
+          Content-Type: application/json
+        body: '{"object":"list","model":"private-gpt","data":[{"object":"ingest.document","doc_id":"e1f2a3b4","doc_metadata":{"file_name":"handbook.pdf","page_label":"1"}}]}'
+  - name: negative-different-model
+    match: false
+    responses:
+      "/v1/ingest/list":
+        status: 200
+        headers:
+          Content-Type: application/json
+        body: '{"object":"list","model":"gpt-4o","data":[]}'

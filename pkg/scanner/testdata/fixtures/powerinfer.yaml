@@ -1,0 +1,34 @@
+# Golden-file fixtures for the powerinfer probe.
+# Validated by pkg/scanner/fixture_test.go against probes/powerinfer.yaml.
+probe: powerinfer
+cases:
+  - name: positive
+    match: true
+    responses:
+      "/model.json":
+        status: 200
+        headers:
+          Content-Type: application/json
+          Server: llama.cpp
+        body: '{"model":"ReluLLaMA-7B","seed":-1,"temperature":0.8,"top_k":40,"top_p":0.95,"n_predict":-1,"n_keep":0,"stop":[]}'
+      "/props":
+        status: 200
+        headers:
+          Content-Type: application/json
+          Server: llama.cpp
+        body: '{"assistant_name":"","anti_prompt":"","user_name":"","default_generation_settings":{"seed":-1,"temperature":0.8}}'
+  - name: negative-props-wrong-server
+    match: false
+    responses:
+      "/model.json":
+        status: 200
+        headers:
+          Content-Type: application/json
+          Server: llama.cpp
+        body: '{"model":"ReluLLaMA-7B","seed":-1,"temperature":0.8}'
+      "/props":
+        status: 200
+        headers:
+          Content-Type: application/json
+          Server: Werkzeug/3.0.1 Python/3.11
+        body: '{"assistant_name":"","anti_prompt":"","user_name":""}'

@@ -1,0 +1,38 @@
+# Golden-file fixtures for the bentoml probe.
+# Validated by pkg/scanner/fixture_test.go against probes/bentoml.yaml.
+probe: bentoml
+cases:
+  - name: positive
+    match: true
+    responses:
+      "/docs.json":
+        status: 200
+        headers:
+          Content-Type: application/json
+        body: '{"openapi":"3.0.2","info":{"title":"Summarization","description":"","contact":{"name":"BentoML Team","email":"contact@bentoml.com"},"version":"None"},"tags":[{"name":"Infrastructure"},{"name":"Service APIs"}],"paths":{"/summarize":{"post":{"tags":["Service APIs"]}}}}'
+      "/metrics":
+        status: 200
+        headers:
+          Content-Type: text/plain; version=0.0.4; charset=utf-8
+        body: |
+          # HELP bentoml_api_server_request_total Total number of HTTP requests
+          # TYPE bentoml_api_server_request_total counter
+          bentoml_api_server_request_total{endpoint="/summarize",http_response_code="200",service_name="summarization"} 3.0
+          # HELP bentoml_api_server_request_duration_seconds Request duration
+          # TYPE bentoml_api_server_request_duration_seconds histogram
+  - name: negative-generic-prometheus-metrics
+    match: false
+    responses:
+      "/docs.json":
+        status: 200
+        headers:
+          Content-Type: application/json
+        body: '{"openapi":"3.0.2","info":{"title":"Summarization","description":"","contact":{"name":"BentoML Team","email":"contact@bentoml.com"},"version":"None"},"paths":{}}'
+      "/metrics":
+        status: 200
+        headers:
+          Content-Type: text/plain; version=0.0.4; charset=utf-8
+        body: |
+          # HELP process_cpu_seconds_total Total user and system CPU time spent in seconds.
+          # TYPE process_cpu_seconds_total counter
+          process_cpu_seconds_total 1.23

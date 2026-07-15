@@ -1,0 +1,25 @@
+# Golden-file fixtures for the tensorrt-llm probe.
+# Validated by pkg/scanner/fixture_test.go against probes/tensorrt-llm.yaml.
+probe: tensorrt-llm
+cases:
+  - name: positive
+    match: true
+    responses:
+      "/metrics":
+        status: 200
+        headers:
+          Content-Type: application/json
+        body: '[{"iter":128,"iterLatencyMS":12.47,"newActiveRequestsQueueLatencyMS":0.31,"numActiveRequests":4,"numQueuedRequests":0,"inflightBatchingStats":{"numContextRequests":1,"numGenRequests":3,"numScheduledRequests":4,"microBatchId":0},"kvCacheStats":{"allocNewBlocks":12,"allocTotalBlocks":512,"freeNumBlocks":500,"usedNumBlocks":12,"tokensPerBlock":64,"reusedBlocks":0}}]'
+  - name: negative-prometheus-metrics
+    match: false
+    responses:
+      "/metrics":
+        status: 200
+        headers:
+          Content-Type: text/plain
+        body: "# HELP vllm:num_requests_running Number of requests currently running.\n# TYPE vllm:num_requests_running gauge\nvllm:num_requests_running{model_name=\"meta-llama/Llama-3.1-8B\"} 3.0\n# HELP vllm:gpu_cache_usage_perc GPU KV-cache usage.\nvllm:gpu_cache_usage_perc{model_name=\"meta-llama/Llama-3.1-8B\"} 0.42\n"
+      "/v1/models":
+        status: 200
+        headers:
+          Content-Type: application/json
+        body: '{"object":"list","data":[{"id":"meta-llama/Llama-3.1-8B","object":"model","owned_by":"vllm"}]}'

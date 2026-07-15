@@ -1,0 +1,36 @@
+# Golden-file fixtures for the azure-openai probe.
+# Validated by pkg/scanner/fixture_test.go against probes/azure-openai.yaml.
+# azure-openai is require:all: both /openai/models and /openai/deployments must
+# return the Azure-specific 401 error.
+probe: azure-openai
+cases:
+  # Real Azure OpenAI: both paths 401 with the distinctive subscription-key error.
+  - name: positive
+    match: true
+    responses:
+      /openai/models?api-version=2024-10-21:
+        status: 401
+        headers:
+          Content-Type: application/json
+        body: '{"error":{"code":"401","message":"Access denied due to invalid subscription key or wrong API endpoint. Make sure to provide a valid key for an active subscription."}}'
+      /openai/deployments?api-version=2024-10-21:
+        status: 401
+        headers:
+          Content-Type: application/json
+        body: '{"error":{"code":"401","message":"Access denied due to invalid subscription key or wrong API endpoint. Make sure to provide a valid key for an active subscription."}}'
+
+  # A generic 401 without the Azure phrase. Guards the body marker: status +
+  # content-type alone must not match.
+  - name: negative-generic-401
+    match: false
+    responses:
+      /openai/models?api-version=2024-10-21:
+        status: 401
+        headers:
+          Content-Type: application/json
+        body: '{"error":{"message":"Unauthorized"}}'
+      /openai/deployments?api-version=2024-10-21:
+        status: 401
+        headers:
+          Content-Type: application/json
+        body: '{"error":{"message":"Unauthorized"}}'

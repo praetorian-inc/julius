@@ -1,0 +1,20 @@
+# Golden-file fixtures for the triton-inference-server probe.
+# Validated by pkg/scanner/fixture_test.go against probes/triton-inference-server.yaml.
+probe: triton-inference-server
+cases:
+  - name: positive
+    match: true
+    responses:
+      "/v2":
+        status: 200
+        headers:
+          Content-Type: application/json
+        body: '{"name":"triton","version":"2.52.0","extensions":["classification","sequence","model_repository","model_repository(unload_dependents)","schedule_policy","model_configuration","system_shared_memory","cuda_shared_memory","binary_tensor_data","parameters","statistics","trace","logging"]}'
+  - name: negative-other-kserve-server
+    match: false
+    responses:
+      "/v2":
+        status: 200
+        headers:
+          Content-Type: application/json
+        body: '{"name":"onnxruntime","version":"1.16.0","extensions":["binary_tensor_data"]}'

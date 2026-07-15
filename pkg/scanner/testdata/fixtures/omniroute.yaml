@@ -1,0 +1,38 @@
+# Golden-file fixtures for the omniroute probe.
+# Validated by pkg/scanner/fixture_test.go against probes/omniroute.yaml.
+# omniroute is require:all: /api/cache AND /api/acp/agents, both carrying the
+# X-OmniRoute-Cache header.
+probe: omniroute
+cases:
+  # Real OmniRoute: cache-stats and ACP-agents endpoints with the infra header.
+  - name: positive
+    match: true
+    responses:
+      /api/cache:
+        status: 200
+        headers:
+          Content-Type: application/json
+          X-OmniRoute-Cache: MISS
+        body: '{"semanticCache":{"enabled":true,"hits":0},"exactCache":{"enabled":true}}'
+      /api/acp/agents:
+        status: 200
+        headers:
+          Content-Type: application/json
+          X-OmniRoute-Cache: MISS
+        body: '{"agents":[{"id":"default","isCustom":false}]}'
+
+  # Endpoints return the right bodies but WITHOUT the X-OmniRoute-Cache header.
+  # Guards the header discriminator.
+  - name: negative-no-omniroute-header
+    match: false
+    responses:
+      /api/cache:
+        status: 200
+        headers:
+          Content-Type: application/json
+        body: '{"semanticCache":{"enabled":true}}'
+      /api/acp/agents:
+        status: 200
+        headers:
+          Content-Type: application/json
+        body: '{"agents":[{"id":"default","isCustom":false}]}'

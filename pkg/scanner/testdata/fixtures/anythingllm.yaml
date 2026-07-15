@@ -1,0 +1,20 @@
+# Golden-file fixtures for the anythingllm probe.
+# Validated by pkg/scanner/fixture_test.go against probes/anythingllm.yaml.
+probe: anythingllm
+cases:
+  - name: positive
+    match: true
+    responses:
+      "/api/setup-complete":
+        status: 200
+        headers:
+          Content-Type: application/json
+        body: '{"results":{"CanViewChatHistory":true,"VectorDB":"lancedb","LLMProvider":"ollama","OllamaLLMBasePath":"http://127.0.0.1:11434","AnythingLLMOllamaModelPref":"llama3.2:latest","EmbeddingEngine":"native","PGVectorTableName":"anythingllm_vectors","MultiUserMode":false}}'
+  - name: negative-generic-json-settings
+    match: false
+    responses:
+      "/api/setup-complete":
+        status: 200
+        headers:
+          Content-Type: application/json
+        body: '{"results":{"VectorDB":"chroma","LLMProvider":"openai","MultiUserMode":false}}'

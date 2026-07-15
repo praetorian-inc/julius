@@ -1,0 +1,30 @@
+# Golden-file fixtures for the sillytavern probe.
+# Validated by pkg/scanner/fixture_test.go against probes/sillytavern.yaml.
+probe: sillytavern
+cases:
+  - name: positive
+    match: true
+    responses:
+      "/manifest.json":
+        status: 200
+        headers:
+          Content-Type: application/json
+        body: '{"name": "SillyTavern", "short_name": "SillyTavern", "display": "standalone", "start_url": "/", "background_color": "#36393f", "theme_color": "#36393f", "icons": [{"src": "/img/icons/android-chrome-192x192.png", "sizes": "192x192", "type": "image/png"}]}'
+      "/version":
+        status: 200
+        headers:
+          Content-Type: application/json
+        body: '{"pkgVersion":"1.12.6","gitRevision":"a1b2c3d","gitBranch":"release","commitDate":"2025-01-08","agent":"SillyTavern:1.12.6:a1b2c3d"}'
+  - name: negative-different-frontend
+    match: false
+    responses:
+      "/manifest.json":
+        status: 200
+        headers:
+          Content-Type: application/json
+        body: '{"name": "LibreChat", "short_name": "LibreChat", "display": "standalone", "start_url": "/"}'
+      "/version":
+        status: 200
+        headers:
+          Content-Type: application/json
+        body: '{"version":"0.7.5","build":"a1b2c3d"}'

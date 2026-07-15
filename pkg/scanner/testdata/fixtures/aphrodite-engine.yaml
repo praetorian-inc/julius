@@ -1,0 +1,20 @@
+# Golden-file fixtures for the aphrodite-engine probe.
+# Validated by pkg/scanner/fixture_test.go against probes/aphrodite-engine.yaml.
+probe: aphrodite-engine
+cases:
+  - name: positive
+    match: true
+    responses:
+      "/.well-known/serviceinfo":
+        status: 200
+        headers:
+          Content-Type: application/json
+        body: '{"version":"0.2","software":{"name":"Aphrodite Engine","version":"0.6.4.post1","repository":"https://github.com/aphrodite-engine/aphrodite-engine","homepage":"https://aphrodite.pygmalion.chat"},"api":{"openai":{"name":"OpenAI API","rel_url":"/v1","version":"1.0","docs":"https://platform.openai.com/docs/api-reference"}}}'
+  - name: negative-other-serviceinfo-software
+    match: false
+    responses:
+      "/.well-known/serviceinfo":
+        status: 200
+        headers:
+          Content-Type: application/json
+        body: '{"version":"0.2","software":{"name":"vLLM","version":"0.6.3","repository":"https://github.com/vllm-project/vllm"},"api":{"openai":{"name":"OpenAI API","rel_url":"/v1","version":"1.0"}}}'

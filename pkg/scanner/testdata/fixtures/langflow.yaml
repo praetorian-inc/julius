@@ -1,0 +1,30 @@
+# Golden-file fixtures for the langflow probe.
+# Validated by pkg/scanner/fixture_test.go against probes/langflow.yaml.
+probe: langflow
+cases:
+  - name: positive
+    match: true
+    responses:
+      "/api/v1/version":
+        status: 200
+        headers:
+          Content-Type: application/json
+        body: '{"version":"1.0.19","main_version":"1.0.19","package":"Langflow"}'
+      "/health_check":
+        status: 200
+        headers:
+          Content-Type: application/json
+        body: '{"status":"ok","chat":"ok","db":"ok"}'
+  - name: negative-generic-health
+    match: false
+    responses:
+      "/api/v1/version":
+        status: 200
+        headers:
+          Content-Type: application/json
+        body: '{"version":"1.0.0","package":"Some Other Platform"}'
+      "/health_check":
+        status: 200
+        headers:
+          Content-Type: application/json
+        body: '{"status":"healthy"}'

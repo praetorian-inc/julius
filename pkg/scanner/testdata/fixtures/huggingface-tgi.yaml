@@ -1,0 +1,20 @@
+# Golden-file fixtures for the huggingface-tgi probe.
+# Validated by pkg/scanner/fixture_test.go against probes/huggingface-tgi.yaml.
+probe: huggingface-tgi
+cases:
+  - name: positive
+    match: true
+    responses:
+      "/info":
+        status: 200
+        headers:
+          Content-Type: application/json
+        body: '{"model_id":"bigscience/bloom-560m","model_sha":"e985a63cdc139290c5f700ff1929f0b5942cced2","model_dtype":"torch.float16","model_device_type":"cuda","max_concurrent_requests":128,"max_batch_total_tokens":16000,"max_input_length":1024,"max_total_tokens":2048,"docker_label":"sha-2d5c7b4","version":"1.4.0"}'
+  - name: negative-other-inference-server
+    match: false
+    responses:
+      "/info":
+        status: 200
+        headers:
+          Content-Type: application/json
+        body: '{"model_id":"bigscience/bloom-560m","model_dtype":"torch.float16","max_batch_total_tokens":16000,"version":"0.9.0"}'

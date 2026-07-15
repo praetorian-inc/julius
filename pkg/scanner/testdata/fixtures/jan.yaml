@@ -1,0 +1,20 @@
+# Golden-file fixtures for the jan probe.
+# Validated by pkg/scanner/fixture_test.go against probes/jan.yaml.
+probe: jan
+cases:
+  - name: positive
+    match: true
+    responses:
+      "/openapi.json":
+        status: 200
+        headers:
+          Content-Type: application/json
+        body: '{"openapi":"3.0.0","info":{"title": "Jan API Server Endpoints","version":"0.1.0","description":"Jan API Server"},"paths":{"/v1/models":{},"/v1/chat/completions":{}}}'
+  - name: negative-generic-openapi
+    match: false
+    responses:
+      "/openapi.json":
+        status: 200
+        headers:
+          Content-Type: application/json
+        body: '{"openapi":"3.0.0","info":{"title": "FastAPI","version":"0.1.0"},"paths":{"/v1/models":{},"/v1/chat/completions":{}}}'

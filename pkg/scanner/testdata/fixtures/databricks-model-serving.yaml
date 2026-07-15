@@ -1,0 +1,30 @@
+# Golden-file fixtures for the databricks-model-serving probe.
+# Validated by pkg/scanner/fixture_test.go against probes/databricks-model-serving.yaml.
+probe: databricks-model-serving
+cases:
+  - name: positive
+    match: true
+    responses:
+      "/api/2.0/serving-endpoints":
+        status: 401
+        headers:
+          Content-Type: application/json
+        body: '{"error_code": 401, "message": "Missing authorization details for accessing model serving endpoints"}'
+      "/api/2.0/serving-endpoints/_/metrics":
+        status: 401
+        headers:
+          Content-Type: application/json
+        body: '{"error_code": 401, "message": "Missing authorization details for accessing model serving endpoints"}'
+  - name: negative-metrics-generic-401
+    match: false
+    responses:
+      "/api/2.0/serving-endpoints":
+        status: 401
+        headers:
+          Content-Type: application/json
+        body: '{"error_code": 401, "message": "Missing authorization details for accessing model serving endpoints"}'
+      "/api/2.0/serving-endpoints/_/metrics":
+        status: 401
+        headers:
+          Content-Type: application/json
+        body: '{"message": "Unauthorized"}'

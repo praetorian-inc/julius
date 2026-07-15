@@ -1,0 +1,20 @@
+# Golden-file fixtures for the baseten-truss probe.
+# Validated by pkg/scanner/fixture_test.go against probes/baseten-truss.yaml.
+probe: baseten-truss
+cases:
+  - name: positive
+    match: true
+    responses:
+      "/openapi.json":
+        status: 200
+        headers:
+          Content-Type: application/json
+        body: '{"openapi":"3.1.0","info":{"title":"Baseten Inference Server","version":"0.1.0"},"paths":{"/v1/models/{model_name}:predict":{"post":{"summary":"Predict","operationId":"predict_v1_models__model_name__predict_post"}},"/v1/models/{model_name}/loaded":{"get":{"summary":"Model Loaded","operationId":"model_loaded_v1_models__model_name__loaded_get"}},"/v1/models/{model_name}:schema":{"get":{"summary":"Schema"}}}}'
+  - name: negative-default-fastapi-openapi
+    match: false
+    responses:
+      "/openapi.json":
+        status: 200
+        headers:
+          Content-Type: application/json
+        body: '{"openapi":"3.1.0","info":{"title":"FastAPI","version":"0.1.0"},"paths":{"/predict":{"post":{"summary":"Predict"}},"/health":{"get":{"summary":"Health"}}}}'

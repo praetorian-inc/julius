@@ -1,0 +1,44 @@
+# Golden-file fixtures for the openai-compatible probe.
+# Validated by pkg/scanner/fixture_test.go against probes/openai-compatible.yaml.
+# Generic fallback detector (specificity 1): any OpenAI-shaped API endpoint.
+probe: openai-compatible
+cases:
+  # Standard OpenAI /v1/models list response.
+  - name: positive-models
+    match: true
+    responses:
+      /v1/models:
+        status: 200
+        headers:
+          Content-Type: application/json
+        body: '{"object":"list","data":[{"id":"gpt-4","object":"model","owned_by":"openai"}]}'
+
+  # Endpoint exists but requires auth: 401 with an OpenAI-style error envelope.
+  - name: positive-unauthorized
+    match: true
+    responses:
+      /v1/models:
+        status: 401
+        headers:
+          Content-Type: application/json
+        body: '{"error":{"message":"Missing bearer token","type":"invalid_request_error"}}'
+
+  # A plain web server, not an API: HTML with no object/data markers.
+  - name: negative-html
+    match: false
+    responses:
+      /v1/models:
+        status: 200
+        headers:
+          Content-Type: text/html
+        body: "<!doctype html><html><body>Welcome</body></html>"
+
+  # JSON but not OpenAI-shaped: lacks the "object"/"data" (and "error") markers.
+  - name: negative-wrong-json
+    match: false
+    responses:
+      /v1/models:
+        status: 200
+        headers:
+          Content-Type: application/json
+        body: '{"status":"ok","models":["a","b"]}'
