@@ -7,6 +7,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed (Probes)
+
+- **deepspeed-mii**: Gated vector 2 (legacy Flask `POST /mii/deepspeed-mii`) with
+  `status: 200` + `content-type: application/json`. It previously matched any response
+  containing the substring `"text"`, causing false positives against non-DeepSpeed JSON
+  endpoints (surfaced during the 231-server MCP corpus validation).
+
 ## [0.2.1] - 2026-04-02
 
 ### Fixed (Probes) — False Positive Audit

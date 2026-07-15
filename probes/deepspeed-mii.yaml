@@ -30,6 +30,10 @@ requests:
       Content-Type: application/json
     body: '{"prompts": ["test"]}'
     match:
+      - type: status
+        value: 200
+      - type: content-type
+        value: application/json
       - type: body.contains
         value: '"text"'
 
