@@ -14,7 +14,7 @@ negation, or a broken `require: all`/`require: any` chain.
 ## Format
 
 ```yaml
-probe: ollama          # must equal the probe's `name` (and the filename stem)
+probe: ollama          # must equal the probe's `name`
 cases:
   - name: positive     # unique, descriptive case name
     match: true        # expected overall probe result against these responses
@@ -48,12 +48,23 @@ Notes:
   the required markers present and any negated markers absent — exact JSON
   validity is not required, but realistic bodies make the fixtures better docs
   and better regression guards.
+- **Scope: match behavior only.** The harness scans with `augustus=false` and
+  asserts only the overall match boolean. A probe's model extraction (the
+  `models:` JQ config, run under `augustus`) is intentionally out of scope and
+  is not exercised here.
 
 ## Coverage requirement
 
 `TestEveryProbeHasFixture` fails the build if any shipped probe lacks a fixture
 with **at least one positive and one negative case**. When you add a probe, add
 its fixture here.
+
+The gate enforces *at least one* negative — it does **not** enforce one negative
+per discriminator. A probe with multiple independent discriminators (e.g. a
+`require: all` chain of markers across several paths) can regress a second
+discriminator uncaught if only one near-miss negative exists. For such probes,
+add one negative per discriminator so each is guarded from the loosening
+direction — see `ollama.yaml` / `vllm.yaml` for the pattern.
 
 ## Refinement status
 
