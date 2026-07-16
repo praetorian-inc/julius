@@ -20,4 +20,5 @@ cases:
         body: '{"object":"list","data":[{"id":"mistralai/Mistral-7B-Instruct-v0.2","object":"model","created":1700000000,"owned_by":"vllm"}]}'
       "/mii/deepspeed-mii":
         status: 404
+        method: POST
         body: 'Not Found'

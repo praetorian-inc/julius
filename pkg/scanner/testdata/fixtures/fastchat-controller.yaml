@@ -7,6 +7,7 @@ cases:
     responses:
       "/get_worker_address":
         status: 200
+        method: POST
         headers:
           Content-Type: application/json
           Server: uvicorn
@@ -16,6 +17,7 @@ cases:
     responses:
       "/get_worker_address":
         status: 200
+        method: POST
         headers:
           Content-Type: application/json
           Server: nginx/1.25.3

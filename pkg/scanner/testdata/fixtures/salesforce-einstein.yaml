@@ -7,6 +7,7 @@ cases:
     responses:
       "/iamessage/api/v2/authorization/unauthenticated/access-token":
         status: 400
+        method: POST
         headers:
           Content-Type: application/json
         body: '{"message":"Invalid Embedded Service Deployment for the specified organization.","errorCode":"INVALID_INPUT"}'
@@ -15,6 +16,7 @@ cases:
     responses:
       "/iamessage/api/v2/authorization/unauthenticated/access-token":
         status: 400
+        method: POST
         headers:
           Content-Type: application/json
         body: '{"message":"Bad Request","error":"malformed_request"}'

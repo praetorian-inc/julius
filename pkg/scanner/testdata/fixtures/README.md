@@ -41,6 +41,9 @@ Notes:
   define returns `404` with an empty body — this is what makes `require: all`
   chains and negatives fail naturally.
 - **`status: 0`** (or omitted) is served as `200`.
+- **`method`** (optional) restricts a response to requests using that HTTP
+  method; a mismatch is served `405`, catching a probe whose method regresses
+  (e.g. `POST` -> `GET`). Omit it to accept any method.
 - **Empty header values won't match** a `header.contains` rule: that rule means
   "header present with a non-empty value", so give such headers a real value
   (e.g. `Server: uvicorn`).

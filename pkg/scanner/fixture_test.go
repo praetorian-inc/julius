@@ -59,8 +59,12 @@ type fixtureCase struct {
 }
 
 // fixtureResponse is the canned HTTP response served for a given request path.
+// Method, when set, restricts the response to requests using that HTTP method;
+// a mismatch is served 405 so a probe whose method regresses (e.g. POST->GET)
+// no longer receives the canned body. Empty means any method is accepted.
 type fixtureResponse struct {
 	Status  int               `yaml:"status"`
+	Method  string            `yaml:"method,omitempty"`
 	Headers map[string]string `yaml:"headers,omitempty"`
 	Body    string            `yaml:"body,omitempty"`
 }
@@ -78,6 +82,10 @@ func (c fixtureCase) handler() http.Handler {
 		}
 		if !ok {
 			w.WriteHeader(http.StatusNotFound)
+			return
+		}
+		if resp.Method != "" && !strings.EqualFold(r.Method, resp.Method) {
+			w.WriteHeader(http.StatusMethodNotAllowed)
 			return
 		}
 		for k, v := range resp.Headers {
@@ -140,14 +148,22 @@ func TestProbeFixtures(t *testing.T) {
 
 	for _, fx := range loadFixtures(t) {
 		p, ok := probeMap[fx.Probe]
-		require.Truef(t, ok, "%s references unknown probe %q", fx.path, fx.Probe)
-		require.NotEmptyf(t, fx.Cases, "%s has no cases", fx.path)
+		if !assert.Truef(t, ok, "%s references unknown probe %q", fx.path, fx.Probe) {
+			continue
+		}
+		if !assert.NotEmptyf(t, fx.Cases, "%s has no cases", fx.path) {
+			continue
+		}
 
 		t.Run(fx.Probe, func(t *testing.T) {
 			t.Parallel()
 			for _, c := range fx.Cases {
-				require.NotEmptyf(t, c.Name, "%s has a case with no name", fx.path)
-				require.NotEmptyf(t, c.Responses, "%s/%s has no responses", fx.Probe, c.Name)
+				if !assert.NotEmptyf(t, c.Name, "%s has a case with no name", fx.path) {
+					continue
+				}
+				if !assert.NotEmptyf(t, c.Responses, "%s/%s has no responses", fx.Probe, c.Name) {
+					continue
+				}
 
 				t.Run(c.Name, func(t *testing.T) {
 					t.Parallel()
@@ -190,7 +206,9 @@ func TestEveryProbeHasFixture(t *testing.T) {
 
 	for name := range probeMap {
 		c, ok := covered[name]
-		assert.Truef(t, ok, "probe %q has no fixture in %s", name, fixturesDir)
+		if !assert.Truef(t, ok, "probe %q has no fixture in %s", name, fixturesDir) {
+			continue
+		}
 		assert.Truef(t, c.hasPositive, "probe %q fixture has no positive (match: true) case", name)
 		assert.Truef(t, c.hasNegative, "probe %q fixture has no negative (match: false) case", name)
 	}
