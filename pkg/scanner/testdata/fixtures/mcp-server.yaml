@@ -1,0 +1,78 @@
+# Golden-file fixtures for the mcp-server probe.
+# Validated by pkg/scanner/fixture_test.go against probes/mcp-server.yaml.
+# mcp-server is require:any with two vectors (both POST to empty path):
+#   1. Open server: body contains "protocolVersion" AND "serverInfo"
+#   2. OAuth-protected: status 401 + WWW-Authenticate contains "resource_metadata"
+#      + MCP-Protocol-Version header present
+probe: mcp-server
+cases:
+  # Open MCP server: the initialize handshake returns a JSON-RPC result with
+  # protocolVersion and serverInfo — the two MCP-specific markers.
+  - name: positive-open-server
+    match: true
+    responses:
+      /:
+        status: 200
+        method: POST
+        headers:
+          Content-Type: application/json
+        body: '{"jsonrpc":"2.0","id":1,"result":{"protocolVersion":"2025-06-18","serverInfo":{"name":"test-mcp","version":"0.1.0"},"capabilities":{"tools":{}}}}'
+
+  # Open MCP server returning SSE (seen in the wild with DeepWiki, Context7).
+  # The probe has no content-type rule, so text/event-stream must still match.
+  - name: positive-open-server-sse
+    match: true
+    responses:
+      /:
+        status: 200
+        method: POST
+        headers:
+          Content-Type: text/event-stream
+        body: |
+          event: message
+          data: {"jsonrpc":"2.0","id":1,"result":{"protocolVersion":"2025-06-18","serverInfo":{"name":"deepwiki","version":"1.0"},"capabilities":{"tools":{}}}}
+
+  # OAuth-protected MCP server (RFC 9728): 401 with WWW-Authenticate containing
+  # resource_metadata and MCP-Protocol-Version header present.
+  - name: positive-oauth-protected
+    match: true
+    responses:
+      /:
+        status: 401
+        method: POST
+        headers:
+          WWW-Authenticate: 'Bearer resource_metadata="https://mcp.example.com/.well-known/oauth-protected-resource"'
+          MCP-Protocol-Version: "2025-06-18"
+        body: "Unauthorized"
+
+  # A 401 with resource_metadata but WITHOUT MCP-Protocol-Version header.
+  # This is a generic RFC 9728 OAuth API, not an MCP server — must not match.
+  - name: negative-oauth-no-mcp-header
+    match: false
+    responses:
+      /:
+        status: 401
+        method: POST
+        headers:
+          WWW-Authenticate: 'Bearer resource_metadata="https://api.example.com/.well-known/oauth-protected-resource"'
+        body: "Unauthorized"
+
+  # A JSON-RPC 2.0 response (e.g. Ethereum RPC) that has jsonrpc but no
+  # protocolVersion or serverInfo — must not match.
+  - name: negative-generic-jsonrpc
+    match: false
+    responses:
+      /:
+        status: 200
+        method: POST
+        headers:
+          Content-Type: application/json
+        body: '{"jsonrpc":"2.0","id":1,"result":"0x1"}'
+
+  # An unrelated service that returns 404 on the target URL.
+  - name: negative-unrelated
+    match: false
+    responses:
+      /:
+        status: 404
+        body: "not found"
