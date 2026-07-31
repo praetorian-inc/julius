@@ -78,3 +78,18 @@ requests:
       - type: header.contains
         header: MCP-Protocol-Version
         value: ""
+
+# Augustus: emit the MCP generator config for a detected server so consumers
+# (Guard's augustus capability) can scan it without fabricating one. `generator:
+# mcp` sets the emitted config Type; the MCP generator is driven entirely by
+# `extra` keys (it has no REST-style model/api_key/body): `transport: auto` lets
+# augustus negotiate Streamable-HTTP vs legacy HTTP+SSE at connect time (and apply
+# the /sse path hint), and `mode: list_tools` exposes the tool surface the
+# tool-security probes inspect. `endpoint` is the exact URL julius matched ($TARGET).
+augustus:
+  generator: mcp
+  config_template:
+    endpoint: "$TARGET"
+    extra:
+      transport: auto
+      mode: list_tools

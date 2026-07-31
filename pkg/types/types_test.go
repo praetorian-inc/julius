@@ -234,3 +234,47 @@ func TestSpecificityConstants(t *testing.T) {
 	assert.Equal(t, 75, SpecificityHigh)
 	assert.Equal(t, 100, SpecificityExact)
 }
+
+// TestBuildGeneratorConfigs_MCPExtra verifies the augustus section for a
+// generator whose config lives in extra keys (the MCP generator): the emitted
+// config carries type=generator, the endpoint and any $TARGET-bearing extra
+// values are resolved, and static extra values pass through.
+func TestBuildGeneratorConfigs_MCPExtra(t *testing.T) {
+	p := Probe{
+		Name: "mcp-server",
+		Augustus: &AugustusConfig{
+			Generator: "mcp",
+			ConfigTemplate: GeneratorConfig{
+				Endpoint: "$TARGET",
+				Extra: map[string]string{
+					"transport": "auto",
+					"mode":      "list_tools",
+					"origin":    "$TARGET", // proves extra values get $TARGET substitution
+				},
+			},
+		},
+	}
+
+	configs := p.BuildGeneratorConfigs("http://host:9099/mcp", nil)
+
+	require.Len(t, configs, 1)
+	gc := configs[0]
+	assert.Equal(t, "mcp", gc.Type)
+	assert.Equal(t, "http://host:9099/mcp", gc.Endpoint)
+	assert.Equal(t, "auto", gc.Extra["transport"])
+	assert.Equal(t, "list_tools", gc.Extra["mode"])
+	assert.Equal(t, "http://host:9099/mcp", gc.Extra["origin"])
+}
+
+// TestGeneratorConfig_ExtraJSONRoundTrip pins the wire shape consumers rely on:
+// extra serializes under the "extra" key so Guard's model.GeneratorConfig.Extra
+// (map[string]any) receives transport/mode.
+func TestGeneratorConfig_ExtraJSONRoundTrip(t *testing.T) {
+	b, err := json.Marshal(GeneratorConfig{
+		Type:     "mcp",
+		Endpoint: "http://host/mcp",
+		Extra:    map[string]string{"transport": "auto", "mode": "list_tools"},
+	})
+	require.NoError(t, err)
+	assert.JSONEq(t, `{"type":"mcp","endpoint":"http://host/mcp","extra":{"transport":"auto","mode":"list_tools"}}`, string(b))
+}
