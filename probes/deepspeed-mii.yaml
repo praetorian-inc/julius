@@ -27,8 +27,12 @@ requests:
   # (mii/batching/data_classes.py), i.e.:
   #   [{"generated_text": ..., "prompt_length": N,
   #     "generated_length": N, "finish_reason": ...}]
-  # All four field names are asserted together: no single one is
-  # DeepSpeed-specific, but the combination on this path is.
+  # All four field names must be present. Note that body.contains is
+  # substring-only and does not require them to co-occur in one object, so
+  # this asserts the response *mentions* all four -- not that it is
+  # structurally an MII Response. No single field is DeepSpeed-specific; the
+  # four together on this path are sufficient in practice because they are
+  # exactly MII's Response schema, and nothing else is known to emit the set.
   - type: http
     path: /mii/deepspeed-mii
     method: POST
