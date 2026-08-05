@@ -9,10 +9,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed (Probes)
 
-- **deepspeed-mii**: Gated vector 2 (legacy Flask `POST /mii/deepspeed-mii`) with
-  `status: 200` + `content-type: application/json`. It previously matched any response
-  containing the substring `"text"`, causing false positives against non-DeepSpeed JSON
-  endpoints (surfaced during the 231-server MCP corpus validation).
+- **deepspeed-mii**: Gated vector 2 (Flask `POST /mii/deepspeed-mii`) with `status: 200`
+  + `content-type: application/json`, and re-anchored its body match from the bare
+  substring `"text"` onto the four fields the gateway actually returns
+  (`generated_text`, `prompt_length`, `generated_length`, `finish_reason`), asserted
+  together. The old marker caused false positives against any JSON endpoint carrying a
+  `text` field — notably MCP servers, whose `{"content":[{"type":"text","text":...}]}`
+  shape surfaced this during the 231-server MCP corpus validation. Because the probe
+  defaults to `require: any`, that single vector was enough to report deepspeed-mii at
+  specificity 90 even when `/v1/models` did not match. `"text"` also never matched a
+  genuine instance: the gateway returns `Response.to_msg_dict()`, and `"text"` is not a
+  substring of `"generated_text"`.
 
 ## [0.2.1] - 2026-04-02
 
