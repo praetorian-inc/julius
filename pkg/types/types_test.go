@@ -237,7 +237,7 @@ func TestSpecificityConstants(t *testing.T) {
 
 // TestBuildGeneratorConfigs_MCPExtra verifies the augustus section for a
 // generator whose config lives in extra keys (the MCP generator): the emitted
-// config carries type=generator, the endpoint is resolved, static extra values
+// config's Type is populated from Augustus.Generator, the endpoint is resolved, static extra values
 // pass through, and $MODEL-bearing extra values are substituted per model.
 func TestBuildGeneratorConfigs_MCPExtra(t *testing.T) {
 	p := Probe{
