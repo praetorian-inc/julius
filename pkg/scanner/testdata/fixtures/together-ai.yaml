@@ -1,0 +1,30 @@
+# Golden-file fixtures for the together-ai probe.
+# Validated by pkg/scanner/fixture_test.go against probes/together-ai.yaml.
+probe: together-ai
+cases:
+  - name: positive
+    match: true
+    responses:
+      "/v1/hardware":
+        status: 401
+        headers:
+          Content-Type: application/json
+        body: '{"message":"Invalid API key provided. You can find your API key at https://api.together.xyz/settings/api-keys.","type":"invalid_request_error","code":"invalid_api_key"}'
+      "/v1/models":
+        status: 200
+        headers:
+          Content-Type: application/json
+        body: '[{"id":"meta-llama/Llama-3.3-70B-Instruct-Turbo","object":"model","type":"chat","organization":"Meta","context_length":131072,"pricing":{"hourly":0,"input":0.88,"output":0.88,"base":0,"finetune":0}}]'
+  - name: negative-generic-openai-server
+    match: false
+    responses:
+      "/v1/hardware":
+        status: 401
+        headers:
+          Content-Type: application/json
+        body: '{"error":{"message":"You didn''t provide an API key.","type":"invalid_request_error","code":null}}'
+      "/v1/models":
+        status: 200
+        headers:
+          Content-Type: application/json
+        body: '{"object":"list","data":[{"id":"gpt-4o","object":"model","created":1715367049,"owned_by":"openai"}]}'

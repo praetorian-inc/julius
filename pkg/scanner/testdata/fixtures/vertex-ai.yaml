@@ -1,0 +1,35 @@
+# Golden-file fixtures for the vertex-ai probe.
+# Validated by pkg/scanner/fixture_test.go against probes/vertex-ai.yaml.
+probe: vertex-ai
+cases:
+  # Vertex AI discovery document (unauthenticated): identifies the aiplatform API.
+  - name: positive-discovery
+    match: true
+    responses:
+      /$discovery/rest?version=v1:
+        status: 200
+        headers:
+          Content-Type: application/json; charset=UTF-8
+        body: '{"kind":"discovery#restDescription","name": "aiplatform","version":"v1","title": "Vertex AI API","rootUrl":"https://aiplatform.googleapis.com/"}'
+
+  # Secondary signal: an unauthenticated resource request returns a Google error
+  # naming aiplatform.googleapis.com (require:any, so this alone matches).
+  - name: positive-resource-error
+    match: true
+    responses:
+      /v1/projects/test/locations/us-central1/models:
+        status: 403
+        headers:
+          Content-Type: application/json; charset=UTF-8
+        body: '{"error":{"code":403,"message":"Permission denied on resource","status":"PERMISSION_DENIED","details":[{"metadata":{"service":"aiplatform.googleapis.com"}}]}}'
+
+  # A DIFFERENT Google API discovery doc (compute), not Vertex AI. Guards that
+  # the probe keys on the aiplatform/Vertex markers, not just "discovery".
+  - name: negative-other-google-api
+    match: false
+    responses:
+      /$discovery/rest?version=v1:
+        status: 200
+        headers:
+          Content-Type: application/json; charset=UTF-8
+        body: '{"kind":"discovery#restDescription","name":"compute","version":"v1","title":"Compute Engine API"}'

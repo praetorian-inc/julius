@@ -1,0 +1,20 @@
+# Golden-file fixtures for the ray-serve probe.
+# Validated by pkg/scanner/fixture_test.go against probes/ray-serve.yaml.
+probe: ray-serve
+cases:
+  - name: positive
+    match: true
+    responses:
+      "/api/serve/applications/":
+        status: 200
+        headers:
+          Content-Type: application/json
+        body: '{"controller_info":{"node_id":"a1b2c3","node_ip":"10.0.0.4","actor_id":"f00d","actor_name":"SERVE_CONTROLLER_ACTOR","worker_id":"beef","log_file_path":"/tmp/ray/session/logs/serve/controller.log"},"proxy_location":"EveryNode","proxies":{},"deploy_mode":"MULTI_APP","applications":{"default":{"name":"default","status":"RUNNING","deployments":{}}}}'
+  - name: negative-generic-json-api
+    match: false
+    responses:
+      "/api/serve/applications/":
+        status: 200
+        headers:
+          Content-Type: application/json
+        body: '{"controller_info":{"node_id":"a1b2c3","actor_name":"my_controller"},"proxy_location":"EveryNode","deploy_mode":"MULTI_APP","applications":{}}'

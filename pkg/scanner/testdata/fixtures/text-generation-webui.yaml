@@ -1,0 +1,20 @@
+# Golden-file fixtures for the text-generation-webui probe.
+# Validated by pkg/scanner/fixture_test.go against probes/text-generation-webui.yaml.
+probe: text-generation-webui
+cases:
+  - name: positive
+    match: true
+    responses:
+      "/openapi.json":
+        status: 200
+        headers:
+          Content-Type: application/json
+        body: '{"openapi":"3.1.0","info":{"title":"Text generation web UI (openai extension)","version":"0.0.1"},"paths":{"/v1/internal/model/load":{"post":{"summary":"Load Model"}}},"components":{"schemas":{"ChatCompletionRequest":{"properties":{"instruction_template_str":{"type":"string","default":"text-generation-webui/user_data/instruction-templates/Alpaca.yaml"}}}}}}'
+  - name: negative-different-openapi
+    match: false
+    responses:
+      "/openapi.json":
+        status: 200
+        headers:
+          Content-Type: application/json
+        body: '{"openapi":"3.1.0","info":{"title":"vLLM API","version":"0.6.3"},"paths":{"/v1/chat/completions":{"post":{"summary":"Create Chat Completion"}},"/v1/completions":{"post":{"summary":"Create Completion"}}}}'

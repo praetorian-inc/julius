@@ -1,0 +1,40 @@
+# Golden-file fixtures for the localai probe.
+# Validated by pkg/scanner/fixture_test.go against probes/localai.yaml.
+# localai matches a single /metrics request: Prometheus exposition text that
+# names LocalAI in the help text and uses the localai_ metric prefix.
+probe: localai
+cases:
+  # Real LocalAI Prometheus endpoint: help/type comments plus localai_-prefixed
+  # metrics whose HELP text mentions LocalAI.
+  - name: positive
+    match: true
+    responses:
+      /metrics:
+        status: 200
+        headers:
+          Content-Type: text/plain; version=0.0.4; charset=utf-8
+        body: |
+          # HELP localai_api_call_total Total number of API calls handled by LocalAI
+          # TYPE localai_api_call_total counter
+          localai_api_call_total{method="POST",path="/v1/chat/completions"} 17
+          # HELP localai_http_requests_duration_seconds Request duration handled by LocalAI
+          # TYPE localai_http_requests_duration_seconds histogram
+          localai_http_requests_duration_seconds_bucket{le="0.1"} 12
+
+  # A generic Prometheus /metrics endpoint from some other service: it has the
+  # HELP/TYPE comments but no LocalAI markers or localai_ prefix. Guards the
+  # LocalAI discriminator.
+  - name: negative-generic-prometheus
+    match: false
+    responses:
+      /metrics:
+        status: 200
+        headers:
+          Content-Type: text/plain; version=0.0.4; charset=utf-8
+        body: |
+          # HELP http_requests_total Total number of HTTP requests
+          # TYPE http_requests_total counter
+          http_requests_total{code="200",handler="/api"} 1024
+          # HELP process_cpu_seconds_total Total user and system CPU time spent
+          # TYPE process_cpu_seconds_total counter
+          process_cpu_seconds_total 3.14

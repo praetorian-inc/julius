@@ -1,0 +1,32 @@
+# Golden-file fixtures for the onyx probe.
+# Validated by pkg/scanner/fixture_test.go against probes/onyx.yaml.
+# onyx is require:any: the OpenAPI spec titled "Onyx Backend" OR the Swagger UI
+# page with the Onyx Backend title.
+probe: onyx
+cases:
+  # Real Onyx: FastAPI OpenAPI spec titled Onyx Backend, and its Swagger UI page.
+  - name: positive
+    match: true
+    responses:
+      /openapi.json:
+        status: 200
+        headers:
+          Content-Type: application/json
+        body: '{"openapi":"3.1.0","info":{"title":"Onyx Backend","version":"0.1.0"},"paths":{"/chat/send-message":{},"/query/answer-with-citation":{}}}'
+      /api/docs:
+        status: 200
+        headers:
+          Content-Type: text/html; charset=utf-8
+        body: '<!DOCTYPE html><html><head><title>Onyx Backend - Swagger UI</title><link rel="stylesheet" href="/static/swagger-ui.css"></head><body><div id="swagger-ui"></div></body></html>'
+
+  # A generic FastAPI service exposing an OpenAPI spec, but titled "FastAPI"
+  # (the default), not Onyx Backend, with no Swagger page. Guards the
+  # "title":"Onyx Backend" discriminator.
+  - name: negative-generic-fastapi
+    match: false
+    responses:
+      /openapi.json:
+        status: 200
+        headers:
+          Content-Type: application/json
+        body: '{"openapi":"3.1.0","info":{"title":"FastAPI","version":"0.1.0"},"paths":{"/items":{}}}'

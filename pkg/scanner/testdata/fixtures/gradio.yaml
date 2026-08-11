@@ -1,0 +1,30 @@
+# Golden-file fixtures for the gradio probe.
+# Validated by pkg/scanner/fixture_test.go against probes/gradio.yaml.
+probe: gradio
+cases:
+  - name: positive
+    match: true
+    responses:
+      "/":
+        status: 200
+        headers:
+          Content-Type: text/html; charset=utf-8
+        body: '<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"/><script type="module" src="https://cdn.jsdelivr.net/npm/@gradio/client"></script></head><body><gradio-app></gradio-app></body></html>'
+      "/config":
+        status: 200
+        headers:
+          Content-Type: application/json
+        body: '{"version":"4.44.0","mode":"blocks","title":"Gradio","components":[{"id":1,"type":"textbox"}],"theme":"default"}'
+  - name: negative-config-missing-markers
+    match: false
+    responses:
+      "/":
+        status: 200
+        headers:
+          Content-Type: text/html; charset=utf-8
+        body: '<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"/></head><body><gradio-app></gradio-app></body></html>'
+      "/config":
+        status: 200
+        headers:
+          Content-Type: application/json
+        body: '{"version":"4.44.0","theme":"default"}'

@@ -1,0 +1,30 @@
+# Golden-file fixtures for the flowise probe.
+# Validated by pkg/scanner/fixture_test.go against probes/flowise.yaml.
+probe: flowise
+cases:
+  - name: positive
+    match: true
+    responses:
+      "/":
+        status: 200
+        headers:
+          Content-Type: text/html; charset=utf-8
+        body: '<!DOCTYPE html><html><head><title>Flowise - Build LLM Apps Easily</title><meta property="og:title" content="FlowiseAI"/><meta property="og:url" content="https://flowiseai.com"/></head><body><div id="root"></div></body></html>'
+      "/api/v1/chatflows":
+        status: 401
+        headers:
+          Content-Type: application/json
+        body: '{"statusCode":401,"success":false,"message":"Unauthorized Access"}'
+  - name: negative-generic-401
+    match: false
+    responses:
+      "/":
+        status: 200
+        headers:
+          Content-Type: text/html; charset=utf-8
+        body: '<!DOCTYPE html><html><head><title>Flowise - Build LLM Apps Easily</title><meta property="og:title" content="FlowiseAI"/><meta property="og:url" content="https://flowiseai.com"/></head><body><div id="root"></div></body></html>'
+      "/api/v1/chatflows":
+        status: 401
+        headers:
+          Content-Type: application/json
+        body: '{"statusCode":401,"message":"Unauthorized"}'

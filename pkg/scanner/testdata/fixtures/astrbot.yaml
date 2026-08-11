@@ -1,0 +1,22 @@
+# Golden-file fixtures for the astrbot probe.
+# Validated by pkg/scanner/fixture_test.go against probes/astrbot.yaml.
+probe: astrbot
+cases:
+  - name: positive
+    match: true
+    responses:
+      "/":
+        status: 200
+        headers:
+          Content-Type: text/html; charset=utf-8
+          Server: hypercorn-h11
+        body: '<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><title>AstrBot Dashboard</title><meta name="author" content="AstrBot Soulter"><link rel="icon" href="/favicon.ico"></head><body><div id="app"></div><script type="module" src="/assets/index.js"></script></body></html>'
+  - name: negative-generic-dashboard
+    match: false
+    responses:
+      "/":
+        status: 200
+        headers:
+          Content-Type: text/html; charset=utf-8
+          Server: nginx/1.25.3
+        body: '<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><title>Admin Dashboard</title></head><body><div id="app"></div></body></html>'

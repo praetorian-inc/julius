@@ -1,0 +1,24 @@
+# Golden-file fixtures for the deepspeed-mii probe.
+# Validated by pkg/scanner/fixture_test.go against probes/deepspeed-mii.yaml.
+probe: deepspeed-mii
+cases:
+  - name: positive
+    match: true
+    responses:
+      "/v1/models":
+        status: 200
+        headers:
+          Content-Type: application/json
+        body: '{"object":"list","data":[{"id":"mistralai/Mistral-7B-Instruct-v0.2","object":"model","created":1700000000,"owned_by":"deepspeed-mii"}]}'
+  - name: negative-wrong-owner
+    match: false
+    responses:
+      "/v1/models":
+        status: 200
+        headers:
+          Content-Type: application/json
+        body: '{"object":"list","data":[{"id":"mistralai/Mistral-7B-Instruct-v0.2","object":"model","created":1700000000,"owned_by":"vllm"}]}'
+      "/mii/deepspeed-mii":
+        status: 404
+        method: POST
+        body: 'Not Found'

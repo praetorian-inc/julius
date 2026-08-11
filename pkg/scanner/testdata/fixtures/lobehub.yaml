@@ -1,0 +1,27 @@
+# Golden-file fixtures for the lobehub probe.
+# Validated by pkg/scanner/fixture_test.go against probes/lobehub.yaml.
+# lobehub is require:any: the PWA manifest (with lobe-hub markers) OR the
+# /signin page referencing LobeHub and the manifest.
+probe: lobehub
+cases:
+  # Real LobeHub: PWA manifest served as application/manifest+json carrying the
+  # lobe-hub id and LobeHub name/short_name.
+  - name: positive
+    match: true
+    responses:
+      /manifest.webmanifest:
+        status: 200
+        headers:
+          Content-Type: application/manifest+json
+        body: '{"id":"lobe-hub","name":"LobeHub","short_name":"LobeHub","description":"LobeHub - an open-source, modern-design AI chat framework","start_url":"/","display":"standalone","background_color":"#fff","theme_color":"#000"}'
+
+  # A different PWA that ships a valid manifest with the right content-type but
+  # its own app id/name, not lobe-hub. Guards the "id":"lobe-hub" discriminator.
+  - name: negative-other-pwa-manifest
+    match: false
+    responses:
+      /manifest.webmanifest:
+        status: 200
+        headers:
+          Content-Type: application/manifest+json
+        body: '{"id":"my-chat-app","name":"My AI Chat","short_name":"Chat","start_url":"/","display":"standalone"}'

@@ -11,6 +11,10 @@ on:
       - 'go.sum'
       - '.golangci*'
       - 'Makefile'
+      # Probe definitions and their test fixtures are validated by the Go test
+      # suite (pkg/scanner/fixture_test.go), so edits to them must run CI too.
+      - 'probes/**'
+      - 'pkg/scanner/testdata/fixtures/**'
   workflow_dispatch:
 
 concurrency:

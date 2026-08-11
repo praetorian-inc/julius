@@ -1,0 +1,20 @@
+# Golden-file fixtures for the gpt4all probe.
+# Validated by pkg/scanner/fixture_test.go against probes/gpt4all.yaml.
+probe: gpt4all
+cases:
+  - name: positive
+    match: true
+    responses:
+      "/v1/models":
+        status: 200
+        headers:
+          Content-Type: application/json
+        body: '{"object":"list","data":[{"id":"Llama 3 8B Instruct","object":"model","created":0,"owned_by":"humanity"}]}'
+  - name: negative-wrong-owner
+    match: false
+    responses:
+      "/v1/models":
+        status: 200
+        headers:
+          Content-Type: application/json
+        body: '{"object":"list","data":[{"id":"gpt-4","object":"model","created":0,"owned_by":"openai"}]}'

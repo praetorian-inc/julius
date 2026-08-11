@@ -1,0 +1,20 @@
+# Golden-file fixtures for the betterchatgpt probe.
+# Validated by pkg/scanner/fixture_test.go against probes/betterchatgpt.yaml.
+probe: betterchatgpt
+cases:
+  - name: positive
+    match: true
+    responses:
+      "/":
+        status: 200
+        headers:
+          Content-Type: text/html; charset=utf-8
+        body: '<!DOCTYPE html><html lang="en"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><title>Better ChatGPT</title><meta name="description" content="Play and chat smarter with BetterChatGPT - an amazing open-source web app with a better UI for exploring OpenAI''s ChatGPT API!"><link rel="icon" type="image/svg+xml" href="/icon.svg"></head><body><div id="root"></div><script type="module" src="/src/main.tsx"></script></body></html>'
+  - name: negative-other-chat-ui
+    match: false
+    responses:
+      "/":
+        status: 200
+        headers:
+          Content-Type: text/html; charset=utf-8
+        body: '<!DOCTYPE html><html lang="en"><head><meta charset="UTF-8"><title>Chatbot UI</title><meta name="description" content="An open source ChatGPT UI."></head><body><div id="root"></div></body></html>'

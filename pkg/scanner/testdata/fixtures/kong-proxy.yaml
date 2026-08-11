@@ -1,0 +1,28 @@
+# Golden-file fixtures for the kong-proxy probe.
+# Validated by pkg/scanner/fixture_test.go against probes/kong-proxy.yaml.
+probe: kong-proxy
+cases:
+  - name: positive
+    match: true
+    responses:
+      "/":
+        status: 200
+        headers:
+          Server: kong/3.4.2
+          Content-Type: application/json
+        body: '{"tagline":"Welcome to kong","version":"3.4.2","hostname":"kong-admin","plugins":{"available_on_server":{"rate-limiting":true,"key-auth":true}},"services":{"router":"enabled"},"configuration":{"database":"postgres"}}'
+      "/status":
+        status: 200
+        headers:
+          Server: kong/3.4.2
+          Content-Type: application/json
+        body: '{"database":{"reachable":true},"server":{"connections_accepted":10,"connections_active":1,"total_requests":42}}'
+  - name: negative-kong-proxy-port
+    match: false
+    responses:
+      "/":
+        status: 200
+        headers:
+          Server: kong/3.4.2
+          Content-Type: application/json
+        body: '{"message":"no Route matched with those values"}'

@@ -1,0 +1,95 @@
+# probes/mcp-server.yaml
+# Reference: https://modelcontextprotocol.io/specification/2025-06-18/basic/transports
+# Reference: https://modelcontextprotocol.io/specification/2025-06-18/basic/authorization (RFC 9728)
+#
+# Model Context Protocol (MCP) servers expose tools/resources to LLM clients over the
+# Streamable HTTP transport using JSON-RPC 2.0. MCP is "JSON-RPC plus a semantic layer":
+# this probe keys on the MCP-SPECIFIC parts of that layer (the `initialize` result's
+# protocolVersion + serverInfo, plus RFC 9728 OAuth metadata) and NOT on bare
+# `"jsonrpc":"2.0"`, so it does not false-positive on generic JSON-RPC services
+# (Ethereum/Bitcoin RPC, LSP-over-HTTP, etc.).
+#
+# NOTE: no Mcp-Session-Id-header vector. The spec sets that header ON the InitializeResult
+# response — the same response carrying serverInfo — so the init vector below always matches
+# first. Tested against 231 registry servers: a session-header-only match never occurred
+# (0 sole-matches). Don't re-add it; it has no independent coverage.
+#
+# SCOPE (per team consensus): Julius answers "is THIS url an MCP server? yes/no". It does
+# NOT discover the endpoint path — MCP can live at /, /mcp, /api/mcp, per-tenant paths, etc.
+# Finding those URLs is the crawler/Vespasian/registry job; Julius is handed a URL and
+# classifies it. Therefore EVERY vector below uses `path: ""` so it tests the EXACT target
+# URL as supplied (target + "" = target) and makes no assumption about the path. Feed Julius
+# the discovered endpoint URL directly, or use `--base-paths` to graft a discovered prefix
+# onto host-level scans. (The RFC 9728 /.well-known/oauth-protected-resource doc is a
+# host-root discovery/extraction concern — recovering the endpoint path and reading
+# `authorization_servers` — which belongs in the upstream crawler, not in this classifier.)
+name: mcp-server
+description: Model Context Protocol (MCP) server - Streamable HTTP transport (JSON-RPC 2.0) for LLM tool/resource access
+# Dedicated `mcp` category (not `gateway`): MCP is a tool/resource protocol that exposes
+# capabilities TO an LLM client over JSON-RPC, not an inference proxy like the gateway
+# probes (litellm, envoy-ai-gateway, kong). The distinct category lets downstream consumers
+# route MCP assets to MCP-specific handling rather than generic gateway/web-app logic.
+category: mcp
+port_hint: 443
+specificity: 90
+require: any
+api_docs: https://modelcontextprotocol.io/specification/2025-06-18/basic/transports
+
+requests:
+  # Primary (open server): the unauthenticated `initialize` handshake POSTed to the target
+  # URL as-is. A real MCP server replies with a JSON-RPC result carrying protocolVersion +
+  # serverInfo. NOTE: the reply may be either application/json OR an SSE `data: {...}` line
+  # (both seen in the wild — DeepWiki, Context7), so we match on body markers only and add
+  # no content-type rule here. The two markers are checked independently, so field ordering
+  # is irrelevant. Together they are definitive; no non-MCP JSON-RPC service returns them.
+  - type: http
+    path: ""
+    method: POST
+    headers:
+      Content-Type: application/json
+      Accept: application/json, text/event-stream
+      MCP-Protocol-Version: "2025-06-18"
+    body: '{"jsonrpc":"2.0","id":1,"method":"initialize","params":{"protocolVersion":"2025-06-18","capabilities":{},"clientInfo":{"name":"julius","version":"1.0"}}}'
+    match:
+      - type: body.contains
+        value: '"protocolVersion"'
+      - type: body.contains
+        value: '"serverInfo"'
+
+  # OAuth-protected server (RFC 9728): MCP servers MUST return 401 with a WWW-Authenticate
+  # header pointing at the protected-resource metadata. resource_metadata alone is RFC 9728,
+  # not MCP-specific, so we also require MCP-Protocol-Version in the response headers (the
+  # MCP spec mandates servers include it in all responses). This prevents false-positives on
+  # non-MCP APIs that happen to use RFC 9728 OAuth challenges.
+  - type: http
+    path: ""
+    method: POST
+    headers:
+      Content-Type: application/json
+      Accept: application/json, text/event-stream
+      MCP-Protocol-Version: "2025-06-18"
+    body: '{"jsonrpc":"2.0","id":1,"method":"initialize","params":{"protocolVersion":"2025-06-18","capabilities":{},"clientInfo":{"name":"julius","version":"1.0"}}}'
+    match:
+      - type: status
+        value: 401
+      - type: header.contains
+        header: WWW-Authenticate
+        value: resource_metadata
+      - type: header.contains
+        header: MCP-Protocol-Version
+        value: ""
+
+# Augustus: emit the MCP generator config for a detected server so consumers
+# (Guard's augustus capability) can scan it without fabricating one. `generator:
+# mcp` sets the emitted config Type; the MCP generator is driven entirely by
+# `extra` keys (it has no REST-style model/api_key/body): `transport: auto` lets
+# augustus negotiate Streamable-HTTP vs legacy HTTP+SSE at connect time (and apply
+# the /sse path hint), and `mode: list_tools` exposes the tool surface the
+# tool-security probes inspect. `endpoint` is the exact URL julius matched ($TARGET).
+augustus:
+  generator: mcp
+  config_template:
+    endpoint: "$TARGET"
+    extra:
+      transport: auto
+      mode: list_tools

@@ -1,0 +1,22 @@
+# Golden-file fixtures for the salesforce-einstein probe.
+# Validated by pkg/scanner/fixture_test.go against probes/salesforce-einstein.yaml.
+probe: salesforce-einstein
+cases:
+  - name: positive
+    match: true
+    responses:
+      "/iamessage/api/v2/authorization/unauthenticated/access-token":
+        status: 400
+        method: POST
+        headers:
+          Content-Type: application/json
+        body: '{"message":"Invalid Embedded Service Deployment for the specified organization.","errorCode":"INVALID_INPUT"}'
+  - name: negative-generic-400
+    match: false
+    responses:
+      "/iamessage/api/v2/authorization/unauthenticated/access-token":
+        status: 400
+        method: POST
+        headers:
+          Content-Type: application/json
+        body: '{"message":"Bad Request","error":"malformed_request"}'

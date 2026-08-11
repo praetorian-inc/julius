@@ -74,6 +74,14 @@ func resolveGeneratorConfig(cfg GeneratorConfig, genType, target, model string) 
 		cfg.Headers = resolved
 	}
 
+	if cfg.Extra != nil {
+		resolved := make(map[string]string, len(cfg.Extra))
+		for k, v := range cfg.Extra {
+			resolved[k] = resolveVars(v, target, model)
+		}
+		cfg.Extra = resolved
+	}
+
 	return cfg
 }
 

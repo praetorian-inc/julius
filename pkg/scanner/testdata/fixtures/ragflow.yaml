@@ -1,0 +1,30 @@
+# Golden-file fixtures for the ragflow probe.
+# Validated by pkg/scanner/fixture_test.go against probes/ragflow.yaml.
+probe: ragflow
+cases:
+  - name: positive
+    match: true
+    responses:
+      "/v1/system/healthz":
+        status: 200
+        headers:
+          Content-Type: application/json
+        body: '{"db":"ok","redis":"ok","doc_engine":"ok","storage":"ok","status":"ok"}'
+      "/":
+        status: 200
+        headers:
+          Content-Type: text/html; charset=utf-8
+        body: '<!doctype html><html lang="en"><head><meta charset="utf-8"><title>RAGFlow</title><link rel="icon" href="/favicon.ico"></head><body><div id="root"></div><script src="/umi.js"></script></body></html>'
+  - name: negative-web-ui-not-ragflow
+    match: false
+    responses:
+      "/v1/system/healthz":
+        status: 200
+        headers:
+          Content-Type: application/json
+        body: '{"db":"ok","redis":"ok","doc_engine":"ok","storage":"ok","status":"ok"}'
+      "/":
+        status: 200
+        headers:
+          Content-Type: text/html; charset=utf-8
+        body: '<!doctype html><html lang="en"><head><title>Dashboard</title></head><body><div id="root"></div></body></html>'

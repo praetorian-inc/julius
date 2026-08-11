@@ -1,0 +1,24 @@
+# Golden-file fixtures for the fastchat-controller probe.
+# Validated by pkg/scanner/fixture_test.go against probes/fastchat-controller.yaml.
+probe: fastchat-controller
+cases:
+  - name: positive
+    match: true
+    responses:
+      "/get_worker_address":
+        status: 200
+        method: POST
+        headers:
+          Content-Type: application/json
+          Server: uvicorn
+        body: '{"address":"http://localhost:21002"}'
+  - name: negative-wrong-server-header
+    match: false
+    responses:
+      "/get_worker_address":
+        status: 200
+        method: POST
+        headers:
+          Content-Type: application/json
+          Server: nginx/1.25.3
+        body: '{"address":"http://localhost:21002"}'

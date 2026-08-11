@@ -1,0 +1,20 @@
+# Golden-file fixtures for the tensorzero probe.
+# Validated by pkg/scanner/fixture_test.go against probes/tensorzero.yaml.
+probe: tensorzero
+cases:
+  - name: positive
+    match: true
+    responses:
+      "/metrics":
+        status: 200
+        headers:
+          Content-Type: text/plain; version=0.0.4
+        body: "# HELP tensorzero_inferences_total Number of inferences.\n# TYPE tensorzero_inferences_total counter\ntensorzero_inferences_total{endpoint=\"inference\",function_name=\"generate_draft\",model_name=\"gpt-4o-mini\"} 1423\n# HELP tensorzero_inference_latency_overhead_seconds Latency overhead added by the gateway.\n# TYPE tensorzero_inference_latency_overhead_seconds histogram\ntensorzero_inference_latency_overhead_seconds_bucket{le=\"0.001\"} 812\ntensorzero_inference_latency_overhead_seconds_sum 1.83\ntensorzero_inference_latency_overhead_seconds_count 1423\n"
+  - name: negative-generic-prometheus
+    match: false
+    responses:
+      "/metrics":
+        status: 200
+        headers:
+          Content-Type: text/plain; version=0.0.4
+        body: "# HELP process_cpu_seconds_total Total user and system CPU time spent in seconds.\n# TYPE process_cpu_seconds_total counter\nprocess_cpu_seconds_total 42.7\n# HELP http_requests_total Total HTTP requests.\n# TYPE http_requests_total counter\nhttp_requests_total{method=\"get\",code=\"200\"} 1050\n"

@@ -44,6 +44,36 @@ func TestLoadProbesFromFS(t *testing.T) {
 	assert.GreaterOrEqual(t, len(loadedProbes), 1)
 }
 
+// TestEmbeddedMCPServerProbe_EmitsAugustusConfig guards the SHIPPED
+// probes/mcp-server.yaml end-to-end: it loads the real embedded probe (not a Go
+// literal) and asserts its augustus: section emits the exact MCP GeneratorConfig
+// Guard consumes. This is the actual deliverable — the augustus keys are
+// unguarded by validateProbe, and goccy/go-yaml is non-strict, so a typo like
+// `extras:` or `generatorz:` would parse with err=nil and silently ship a blank
+// config (a length-1 slice, empty inside, which Guard's len==0 fallback misses).
+// Only reading the real file here catches that (Blayne review).
+func TestEmbeddedMCPServerProbe_EmitsAugustusConfig(t *testing.T) {
+	loaded, err := LoadProbesFromFS(probes.EmbeddedProbes, ".")
+	require.NoError(t, err, "LoadProbesFromFS() should not error")
+
+	var mcp *types.Probe
+	for _, p := range loaded {
+		if p.Name == "mcp-server" {
+			mcp = p
+			break
+		}
+	}
+	require.NotNil(t, mcp, "mcp-server probe must be embedded")
+
+	configs := mcp.BuildGeneratorConfigs("http://host:9099/mcp", nil)
+	require.Len(t, configs, 1, "the augustus: section must emit exactly one generator config")
+	gc := configs[0]
+	assert.Equal(t, "mcp", gc.Type, "Type is populated from augustus.generator")
+	assert.Equal(t, "http://host:9099/mcp", gc.Endpoint, "$TARGET resolved to the target")
+	assert.Equal(t, map[string]string{"transport": "auto", "mode": "list_tools"}, gc.Extra,
+		"the transport/mode extras ship verbatim")
+}
+
 func TestSortProbesByPortHint(t *testing.T) {
 	probeList := []*types.Probe{
 		{Name: "generic", PortHint: 0},

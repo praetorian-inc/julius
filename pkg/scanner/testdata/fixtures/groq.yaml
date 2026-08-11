@@ -1,0 +1,28 @@
+# Golden-file fixtures for the groq probe.
+# Validated by pkg/scanner/fixture_test.go against probes/groq.yaml.
+# groq is require:any: either the /openai/v1/ 401 path OR the root welcome page,
+# both fingerprinted by the x-groq-region header.
+probe: groq
+cases:
+  # Real Groq: 401 on the Groq-specific /openai/v1/ path with invalid_api_key,
+  # carrying the x-groq-region infra header.
+  - name: positive-openai-path
+    match: true
+    responses:
+      /openai/v1/models:
+        status: 401
+        headers:
+          Content-Type: application/json
+          x-groq-region: us-east-1
+        body: '{"error":{"message":"Invalid API Key","type":"invalid_request_error","code":"invalid_api_key"}}'
+
+  # Same 401 body and path, but WITHOUT the x-groq-region header. Guards the
+  # header discriminator (an unrelated OpenAI-compatible 401 must not match).
+  - name: negative-no-groq-header
+    match: false
+    responses:
+      /openai/v1/models:
+        status: 401
+        headers:
+          Content-Type: application/json
+        body: '{"error":{"message":"Invalid API Key","type":"invalid_request_error","code":"invalid_api_key"}}'

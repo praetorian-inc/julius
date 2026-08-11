@@ -1,0 +1,20 @@
+# Golden-file fixtures for the openclaw probe.
+# Validated by pkg/scanner/fixture_test.go against probes/openclaw.yaml.
+probe: openclaw
+cases:
+  - name: positive
+    match: true
+    responses:
+      "/":
+        status: 200
+        headers:
+          Content-Type: text/html; charset=utf-8
+        body: '<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>OpenClaw Control</title><link rel="icon" href="/favicon.ico"></head><body><openclaw-app></openclaw-app><script type="module" src="/assets/index-8f2a1c.js"></script></body></html>'
+  - name: negative-missing-app-element
+    match: false
+    responses:
+      "/":
+        status: 200
+        headers:
+          Content-Type: text/html; charset=utf-8
+        body: '<!doctype html><html lang="en"><head><meta charset="utf-8"><title>OpenClaw Control</title></head><body><div id="app"></div><script src="/assets/index.js"></script></body></html>'

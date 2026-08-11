@@ -1,0 +1,25 @@
+# Golden-file fixtures for the dify probe.
+# Validated by pkg/scanner/fixture_test.go against probes/dify.yaml.
+probe: dify
+cases:
+  - name: positive
+    match: true
+    responses:
+      "/apps":
+        status: 200
+        headers:
+          Content-Type: text/html; charset=utf-8
+        body: '<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"/><title>Dify</title><meta name="apple-mobile-web-app-title" content="Dify"/></head><body data-public-edition="SELF_HOSTED"><div id="root"></div></body></html>'
+  - name: negative-generic-app
+    match: false
+    responses:
+      "/apps":
+        status: 200
+        headers:
+          Content-Type: text/html; charset=utf-8
+        body: '<!DOCTYPE html><html><head><title>Login</title></head><body><div id="root"></div></body></html>'
+      "/":
+        status: 200
+        headers:
+          Content-Type: text/html; charset=utf-8
+        body: '<!DOCTYPE html><html><head><title>Login</title></head><body><div id="root"></div></body></html>'

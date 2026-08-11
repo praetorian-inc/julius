@@ -1,0 +1,38 @@
+# Golden-file fixtures for the nvidia-nim probe.
+# Validated by pkg/scanner/fixture_test.go against probes/nvidia-nim.yaml.
+# nvidia-nim is require:all: /v1/metadata (modelInfo + assetInfo) AND
+# /v1/health/ready ({"status":"ready"}).
+probe: nvidia-nim
+cases:
+  # Real NVIDIA NIM container: /v1/metadata returns modelInfo and assetInfo, and
+  # /v1/health/ready reports ready.
+  - name: positive
+    match: true
+    responses:
+      /v1/metadata:
+        status: 200
+        headers:
+          Content-Type: application/json
+        body: '{"modelInfo":[{"shortName":"meta/llama-3.1-8b-instruct","modelUrl":"https://api.nvcf.nvidia.com/v2/nvcf/models"}],"assetInfo":[],"version":"1.0.0"}'
+      /v1/health/ready:
+        status: 200
+        headers:
+          Content-Type: application/json
+        body: '{"status":"ready"}'
+
+  # An OpenAI-compatible server that answers the generic /v1/health/ready but
+  # whose /v1/metadata lacks assetInfo (not the NIM shape). require:all fails on
+  # the missing assetInfo discriminator.
+  - name: negative-missing-assetinfo
+    match: false
+    responses:
+      /v1/metadata:
+        status: 200
+        headers:
+          Content-Type: application/json
+        body: '{"modelInfo":[{"shortName":"gpt-4"}],"version":"1.0.0"}'
+      /v1/health/ready:
+        status: 200
+        headers:
+          Content-Type: application/json
+        body: '{"status":"ready"}'
