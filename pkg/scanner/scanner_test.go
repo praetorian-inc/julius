@@ -3,6 +3,7 @@ package scanner
 
 import (
 	"crypto/tls"
+	"encoding/json"
 	"fmt"
 	"io"
 	"net/http"
@@ -1400,4 +1401,270 @@ func TestResponseSizeTruncation(t *testing.T) {
 	
 	// Body should be truncated to maxResponseSize
 	assert.Equal(t, 512, len(body), "response body should be truncated at size limit")
+}
+
+// ============================================================================
+// Auth Required Signal Tests
+// ============================================================================
+
+func TestScan_AuthRequired_401(t *testing.T) {
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusUnauthorized)
+		_, _ = w.Write([]byte(`{"error":"unauthorized"}`))
+	}))
+	defer server.Close()
+
+	s := NewScanner(WithTimeout(5 * time.Second))
+	probes := []*types.Probe{
+		{
+			Name:        "auth-test",
+			Category:    "llm",
+			Specificity: 50,
+			Requests: []types.Request{
+				{
+					Path:   "/v1/models",
+					Method: "GET",
+					RawMatch: []rules.RawRule{
+						{Type: "status", Value: 401},
+						{Type: "body.contains", Value: `"error"`},
+					},
+				},
+			},
+		},
+	}
+
+	results := s.Scan(server.URL, probes, false)
+
+	require.Len(t, results, 1)
+	assert.True(t, results[0].AuthRequired, "401 match should set AuthRequired")
+}
+
+func TestScan_AuthRequired_403(t *testing.T) {
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusForbidden)
+		_, _ = w.Write([]byte(`{"error":"forbidden"}`))
+	}))
+	defer server.Close()
+
+	s := NewScanner(WithTimeout(5 * time.Second))
+	probes := []*types.Probe{
+		{
+			Name:        "auth-test",
+			Category:    "llm",
+			Specificity: 50,
+			Requests: []types.Request{
+				{
+					Path:   "/v1/models",
+					Method: "GET",
+					RawMatch: []rules.RawRule{
+						{Type: "status", Value: 403},
+						{Type: "body.contains", Value: `"error"`},
+					},
+				},
+			},
+		},
+	}
+
+	results := s.Scan(server.URL, probes, false)
+
+	require.Len(t, results, 1)
+	assert.True(t, results[0].AuthRequired, "403 match should set AuthRequired")
+}
+
+func TestScan_AuthNotRequired_200(t *testing.T) {
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusOK)
+		_, _ = w.Write([]byte(`{"object":"list","data":[]}`))
+	}))
+	defer server.Close()
+
+	s := NewScanner(WithTimeout(5 * time.Second))
+	probes := []*types.Probe{
+		{
+			Name:        "open-test",
+			Category:    "llm",
+			Specificity: 50,
+			Requests: []types.Request{
+				{
+					Path:   "/v1/models",
+					Method: "GET",
+					RawMatch: []rules.RawRule{
+						{Type: "status", Value: 200},
+						{Type: "body.contains", Value: `"data"`},
+					},
+				},
+			},
+		},
+	}
+
+	results := s.Scan(server.URL, probes, false)
+
+	require.Len(t, results, 1)
+	assert.False(t, results[0].AuthRequired, "200 match should not set AuthRequired")
+}
+
+func TestScan_AuthRequired_FallsThrough(t *testing.T) {
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Content-Type", "application/json")
+		switch r.URL.Path {
+		case "/v1/models":
+			w.WriteHeader(http.StatusOK)
+			_, _ = w.Write([]byte(`{"object":"list","data":[{"id":"gpt-4"}]}`))
+		default:
+			w.WriteHeader(http.StatusNotFound)
+		}
+	}))
+	defer server.Close()
+
+	s := NewScanner(WithTimeout(5 * time.Second))
+	probes := []*types.Probe{
+		{
+			Name:        "fallthrough-test",
+			Category:    "llm",
+			Specificity: 50,
+			Requests: []types.Request{
+				{
+					Path:   "/v1/models",
+					Method: "GET",
+					RawMatch: []rules.RawRule{
+						{Type: "status", Value: 401},
+					},
+				},
+				{
+					Path:   "/v1/models",
+					Method: "GET",
+					RawMatch: []rules.RawRule{
+						{Type: "status", Value: 200},
+						{Type: "body.contains", Value: `"data"`},
+					},
+				},
+			},
+		},
+	}
+
+	results := s.Scan(server.URL, probes, false)
+
+	require.Len(t, results, 1)
+	assert.False(t, results[0].AuthRequired, "should not be auth-required when 200 request matched")
+}
+
+func TestScan_AuthRequired_JSONL_Output(t *testing.T) {
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusUnauthorized)
+		_, _ = w.Write([]byte(`{"error":"unauthorized"}`))
+	}))
+	defer server.Close()
+
+	s := NewScanner(WithTimeout(5 * time.Second))
+	probes := []*types.Probe{
+		{
+			Name:        "jsonl-auth-test",
+			Category:    "llm",
+			Specificity: 50,
+			Requests: []types.Request{
+				{
+					Path:   "/v1/models",
+					Method: "GET",
+					RawMatch: []rules.RawRule{
+						{Type: "status", Value: 401},
+						{Type: "body.contains", Value: `"error"`},
+					},
+				},
+			},
+		},
+	}
+
+	results := s.Scan(server.URL, probes, false)
+	require.Len(t, results, 1)
+
+	encoded, err := json.Marshal(results[0])
+	require.NoError(t, err)
+	assert.Contains(t, string(encoded), `"auth_required":true`)
+}
+
+func TestScan_AuthNotRequired_JSONL_Output(t *testing.T) {
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.WriteHeader(http.StatusOK)
+		_, _ = w.Write([]byte(`ok`))
+	}))
+	defer server.Close()
+
+	s := NewScanner(WithTimeout(5 * time.Second))
+	probes := []*types.Probe{
+		{
+			Name:        "jsonl-open-test",
+			Category:    "llm",
+			Specificity: 50,
+			Requests: []types.Request{
+				{
+					Path:   "/health",
+					Method: "GET",
+					RawMatch: []rules.RawRule{
+						{Type: "status", Value: 200},
+					},
+				},
+			},
+		},
+	}
+
+	results := s.Scan(server.URL, probes, false)
+	require.Len(t, results, 1)
+
+	encoded, err := json.Marshal(results[0])
+	require.NoError(t, err)
+	assert.Contains(t, string(encoded), `"auth_required":false`)
+}
+
+func TestScan_RequireAll_AuthRequired(t *testing.T) {
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Content-Type", "application/json")
+		switch r.URL.Path {
+		case "/v1/models":
+			w.WriteHeader(http.StatusUnauthorized)
+			_, _ = w.Write([]byte(`{"error":"unauthorized"}`))
+		case "/v1/chat/completions":
+			w.WriteHeader(http.StatusUnauthorized)
+			_, _ = w.Write([]byte(`{"error":"unauthorized"}`))
+		default:
+			w.WriteHeader(http.StatusNotFound)
+		}
+	}))
+	defer server.Close()
+
+	s := NewScanner(WithTimeout(5 * time.Second))
+	probes := []*types.Probe{
+		{
+			Name:        "require-all-auth",
+			Category:    "llm",
+			Specificity: 75,
+			Require:     "all",
+			Requests: []types.Request{
+				{
+					Path:   "/v1/models",
+					Method: "GET",
+					RawMatch: []rules.RawRule{
+						{Type: "status", Value: 401},
+						{Type: "body.contains", Value: `"error"`},
+					},
+				},
+				{
+					Path:   "/v1/chat/completions",
+					Method: "POST",
+					RawMatch: []rules.RawRule{
+						{Type: "status", Value: 401},
+						{Type: "body.contains", Value: `"error"`},
+					},
+				},
+			},
+		},
+	}
+
+	results := s.Scan(server.URL, probes, false)
+
+	require.Len(t, results, 1)
+	assert.True(t, results[0].AuthRequired, "require-all with 401 first request should set AuthRequired")
 }
