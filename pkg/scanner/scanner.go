@@ -150,7 +150,7 @@ func (s *Scanner) matchProbeAll(target string, p *types.Probe) (bool, matchResul
 		return false, matchResult{}
 	}
 
-	var first matchResult
+	var result matchResult
 	for i, req := range p.Requests {
 		req.ApplyDefaults()
 
@@ -160,19 +160,25 @@ func (s *Scanner) matchProbeAll(target string, p *types.Probe) (bool, matchResul
 		}
 
 		if i == 0 {
-			first = matchResult{Request: req, StatusCode: statusCode}
+			result = matchResult{Request: req, StatusCode: statusCode}
+		}
+		if statusCode == http.StatusUnauthorized || statusCode == http.StatusForbidden {
+			result.StatusCode = statusCode
 		}
 	}
 
-	return true, first
+	return true, result
 }
 
 func (s *Scanner) DoRequest(target string, req types.Request) (bool, error) {
-	matched, _ := s.doRequestWithStatus(target, req)
-	if matched == -1 {
+	statusCode, err := s.doRequestWithStatus(target, req)
+	if err != nil {
+		return false, err
+	}
+	if statusCode == -1 {
 		return false, nil
 	}
-	return matched > 0, nil
+	return true, nil
 }
 
 // doRequestWithStatus returns (statusCode, error) where statusCode == -1 means
