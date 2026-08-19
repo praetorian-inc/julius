@@ -74,17 +74,18 @@ func (s *Scanner) Scan(target string, probes []*types.Probe, augustus bool) []ty
 			default:
 			}
 
-			matched, matchedReq := s.matchProbe(target, p)
+			matched, mr := s.matchProbe(target, p)
 			if !matched {
 				return nil
 			}
 
 			result := types.Result{
-				Target:         target + matchedReq.Path,
+				Target:         target + mr.Request.Path,
 				Service:        p.Name,
-				MatchedRequest: matchedReq.Path,
+				MatchedRequest: mr.Request.Path,
 				Category:       p.Category,
 				Specificity:    p.GetSpecificity(),
+				AuthRequired:   mr.StatusCode == http.StatusUnauthorized || mr.StatusCode == http.StatusForbidden,
 			}
 
 			if p.Models != nil {
@@ -117,63 +118,87 @@ func (s *Scanner) Scan(target string, probes []*types.Probe, augustus bool) []ty
 	return results
 }
 
-func (s *Scanner) matchProbe(target string, p *types.Probe) (bool, types.Request) {
+type matchResult struct {
+	Request    types.Request
+	StatusCode int
+}
+
+func (s *Scanner) matchProbe(target string, p *types.Probe) (bool, matchResult) {
 	if p.RequiresAll() {
 		return s.matchProbeAll(target, p)
 	}
 	return s.matchProbeAny(target, p)
 }
 
-func (s *Scanner) matchProbeAny(target string, p *types.Probe) (bool, types.Request) {
+func (s *Scanner) matchProbeAny(target string, p *types.Probe) (bool, matchResult) {
 	for _, req := range p.Requests {
 		req.ApplyDefaults()
 
-		matched, err := s.DoRequest(target, req)
-		if err != nil || !matched {
+		statusCode, err := s.doRequestWithStatus(target, req)
+		if err != nil || statusCode == -1 {
 			continue
 		}
 
-		return true, req
+		return true, matchResult{Request: req, StatusCode: statusCode}
 	}
 
-	return false, types.Request{}
+	return false, matchResult{}
 }
 
-func (s *Scanner) matchProbeAll(target string, p *types.Probe) (bool, types.Request) {
+func (s *Scanner) matchProbeAll(target string, p *types.Probe) (bool, matchResult) {
 	if len(p.Requests) == 0 {
-		return false, types.Request{}
+		return false, matchResult{}
 	}
 
-	var firstReq types.Request
+	var result matchResult
 	for i, req := range p.Requests {
 		req.ApplyDefaults()
 
-		matched, err := s.DoRequest(target, req)
-		if err != nil || !matched {
-			return false, types.Request{}
+		statusCode, err := s.doRequestWithStatus(target, req)
+		if err != nil || statusCode == -1 {
+			return false, matchResult{}
 		}
 
 		if i == 0 {
-			firstReq = req
+			result = matchResult{Request: req, StatusCode: statusCode}
+		}
+		if statusCode == http.StatusUnauthorized || statusCode == http.StatusForbidden {
+			result.StatusCode = statusCode
 		}
 	}
 
-	return true, firstReq
+	return true, result
 }
 
 func (s *Scanner) DoRequest(target string, req types.Request) (bool, error) {
+	statusCode, err := s.doRequestWithStatus(target, req)
+	if err != nil {
+		return false, err
+	}
+	if statusCode == -1 {
+		return false, nil
+	}
+	return true, nil
+}
+
+// doRequestWithStatus returns (statusCode, error) where statusCode == -1 means
+// the request failed or rules didn't parse. Callers use the status code to
+// derive auth signals (401/403 → auth required).
+func (s *Scanner) doRequestWithStatus(target string, req types.Request) (int, error) {
 	resp, body, err := s.doHTTPRequest(target, req.Method, req.Path, req.Body, req.Headers)
 	if err != nil {
-		return false, fmt.Errorf("executing request: %w", err)
+		return -1, fmt.Errorf("executing request: %w", err)
 	}
 
 	rules, err := req.GetRules()
 	if err != nil {
-		return false, fmt.Errorf("parsing rules: %w", err)
+		return -1, fmt.Errorf("parsing rules: %w", err)
 	}
 
-	matched := probe.MatchRules(resp, body, rules)
-	return matched, nil
+	if probe.MatchRules(resp, body, rules) {
+		return resp.StatusCode, nil
+	}
+	return -1, nil
 }
 
 func (s *Scanner) fetchModels(target string, cfg *types.ModelsConfig) ([]string, error) {
