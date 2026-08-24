@@ -30,6 +30,7 @@ jobs:
     permissions:
       contents: read
     with:
+      golangci-lint-version: "v2.13.1"
       build-cmd-path: ./cmd/julius
       build-binary-name: julius
     secrets: inherit

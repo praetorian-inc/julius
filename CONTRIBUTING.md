@@ -15,7 +15,7 @@ Thank you for your interest in contributing to Julius, the LLM service fingerpri
 ## Quick Start
 
 1. Fork and clone the repository
-2. Install Go 1.24+
+2. Install Go 1.27.0+
 3. Run tests: `go test ./...`
 4. Make your changes
 5. Submit a pull request
