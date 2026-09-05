@@ -21,8 +21,18 @@ requests:
       - type: body.contains
         value: '"deepspeed-mii"'
 
-  # Legacy Flask gateway: POST /mii/deepspeed-mii uses the default deployment name.
+  # Flask gateway: POST /mii/deepspeed-mii uses the default deployment name.
   # RESTFUL_API_PATH="mii" in constants.py, default deployment_name="deepspeed-mii".
+  # The handler returns a JSON array of Response.to_msg_dict()
+  # (mii/batching/data_classes.py), i.e.:
+  #   [{"generated_text": ..., "prompt_length": N,
+  #     "generated_length": N, "finish_reason": ...}]
+  # All four field names must be present. Note that body.contains is
+  # substring-only and does not require them to co-occur in one object, so
+  # this asserts the response *mentions* all four -- not that it is
+  # structurally an MII Response. No single field is DeepSpeed-specific; the
+  # four together on this path are sufficient in practice because they are
+  # exactly MII's Response schema, and nothing else is known to emit the set.
   - type: http
     path: /mii/deepspeed-mii
     method: POST
@@ -30,8 +40,18 @@ requests:
       Content-Type: application/json
     body: '{"prompts": ["test"]}'
     match:
+      - type: status
+        value: 200
+      - type: content-type
+        value: application/json
       - type: body.contains
-        value: '"text"'
+        value: '"generated_text"'
+      - type: body.contains
+        value: '"prompt_length"'
+      - type: body.contains
+        value: '"generated_length"'
+      - type: body.contains
+        value: '"finish_reason"'
 
 models:
   path: /v1/models
