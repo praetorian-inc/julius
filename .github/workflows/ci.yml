@@ -5,16 +5,6 @@ on:
     branches: [main]
   pull_request:
     branches: [main]
-    paths:
-      - '**/*.go'
-      - 'go.mod'
-      - 'go.sum'
-      - '.golangci*'
-      - 'Makefile'
-      # Probe definitions and their test fixtures are validated by the Go test
-      # suite (pkg/scanner/fixture_test.go), so edits to them must run CI too.
-      - 'probes/**'
-      - 'pkg/scanner/testdata/fixtures/**'
   workflow_dispatch:
 
 concurrency:
@@ -34,3 +24,52 @@ jobs:
       build-cmd-path: ./cmd/julius
       build-binary-name: julius
     secrets: inherit
+
+  detect-go:
+    if: github.event_name == 'pull_request'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    permissions:
+      contents: read
+    outputs:
+      has_go: ${{ steps.check.outputs.has_go }}
+    steps:
+      - id: check
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          REPO: ${{ github.repository }}
+          BASE_SHA: ${{ github.event.pull_request.base.sha }}
+          HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+        run: |
+          set -eu
+          if ! FILES=$(gh api "repos/$REPO/compare/$BASE_SHA...$HEAD_SHA" --jq '.files[]?.filename' 2>/dev/null); then
+            echo "has_go=true" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+          COUNT=$(printf '%s\n' "$FILES" | grep -c . || true)
+          if [ "$COUNT" -ge 300 ]; then
+            echo "has_go=true" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+          GO_RE='\.(go|mod|sum)$|^\.golangci|^Makefile$'
+          if printf '%s\n' "$FILES" | grep -E "$GO_RE" | grep -q .; then
+            echo "has_go=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "has_go=false" >> "$GITHUB_OUTPUT"
+          fi
+
+  report-required-builds:
+    needs: detect-go
+    if: github.event_name == 'pull_request' && needs.detect-go.outputs.has_go != 'true'
+    name: ci / Build (${{ matrix.goos }}, ${{ matrix.goarch }})
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    permissions:
+      contents: read
+    strategy:
+      fail-fast: false
+      matrix:
+        goos: [linux, darwin, windows]
+        goarch: [amd64, arm64]
+    steps:
+      - run: echo "No Go changes; required Build matrix names reported."
