@@ -44,3 +44,5 @@ not mention this requirement, so do not treat their checklists as complete.
 The fixture is keyed by the probe's `name` field, not its filename. `julius
 validate` does not check that `name` matches the filename; that remains a
 convention (see `docs/agents/architecture.md`).
+
+ENG-7621 live-audit fixture: revert this sentence after the instruction-file audit comments.
