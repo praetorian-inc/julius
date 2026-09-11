@@ -6,7 +6,7 @@ require (
 	github.com/goccy/go-yaml v1.19.2
 	github.com/itchyny/gojq v0.12.18
 	github.com/olekukonko/tablewriter v0.0.5
-	github.com/praetorian-inc/capability-sdk v0.0.0-20260908174325-de5f920e8132
+	github.com/praetorian-inc/capability-sdk v0.0.0-20260911152927-8c267220a40d
 	github.com/spf13/cobra v1.10.2
 	github.com/stretchr/testify v1.11.1
 	golang.org/x/sync v0.20.0
