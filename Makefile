@@ -20,7 +20,7 @@ LDFLAGS := -s -w
 # Declare all phony targets
 .PHONY: all build build-all build-linux build-darwin build-windows \
         release release-checksums \
-        test test-verbose test-coverage lint clean help
+        test test-verbose test-coverage lint clean help cli-docs
 
 # =============================================================================
 # Build targets (local development)
@@ -78,6 +78,11 @@ test-coverage: ## Run tests with coverage report
 
 lint: ## Run linter
 	golangci-lint run ./...
+
+cli-docs: ## Regenerate CLI surface docs from the live cobra tree
+	@GOWORK=off go test ./pkg/runner -list 'TestCLISurface' | grep -qE '^TestCLISurface$$' \
+	  || { echo "cli-docs: 'go test -list' did not report TestCLISurface in ./pkg/runner. Either the -update writer was renamed, or the package failed to build -- run 'go build ./pkg/runner' to tell which. 'go test -run' exits 0 when its pattern matches nothing, so without this check the target would report success having regenerated nothing at all."; exit 1; }
+	GOWORK=off go test ./pkg/runner -run 'TestCLISurface' -count=1 -update
 
 clean: ## Clean build artifacts
 	rm -rf $(BUILD_DIR) $(DIST_DIR)
