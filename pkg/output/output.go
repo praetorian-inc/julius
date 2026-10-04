@@ -25,18 +25,24 @@ func (tw *TableWriter) Write(results []types.Result) error {
 	}
 
 	table := tablewriter.NewWriter(tw.writer)
-	table.SetHeader([]string{"TARGET", "SERVICE", "SPECIFICITY", "CATEGORY", "MODELS", "ERROR"})
+	table.SetHeader([]string{"TARGET", "SERVICE", "SPECIFICITY", "CATEGORY", "AUTH", "MODELS", "ERROR"})
 	table.SetHeaderAlignment(tablewriter.ALIGN_LEFT)
 	table.SetAlignment(tablewriter.ALIGN_LEFT)
 
 	for _, result := range results {
 		models := strings.Join(result.Models, ", ")
 
+		auth := "open"
+		if result.AuthRequired {
+			auth = "required"
+		}
+
 		table.Append([]string{
 			result.Target,
 			result.Service,
 			fmt.Sprintf("%d", result.Specificity),
 			result.Category,
+			auth,
 			models,
 			result.Error,
 		})
