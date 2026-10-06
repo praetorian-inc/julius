@@ -1,0 +1,13 @@
+# Flag names documentation may mention even though the CLI does not accept them.
+#
+# The CLI-surface doc lint (see pkg/runner/cli_surface_test.go) checks every julius invocation in
+# a fenced code block, every backticked flag name in prose, and every flag name
+# in a Go comment under the configured Go directories against the flags cobra
+# actually registers. This file is the escape hatch for deliberate mentions.
+# Every entry MUST carry a '#' reason: the gate rejects an entry without one,
+# because an unexplained exception is how a stale flag reference survives forever.
+#
+# Keep this list as short as possible. If a mention is not deliberate, fix the
+# document instead of allowing it.
+
+--api-key  # vLLM's own flag, named in SECURITY.md as the recommended configuration for that service

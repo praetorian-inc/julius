@@ -80,6 +80,22 @@ julius probe https://target.example.com
 +----------------------------+---------+-------------+-------------+--------+-------+
 ```
 
+### Subcommands
+
+<!-- BEGIN generated: cli-subcommands -->
+Julius organizes its functionality into these focused subcommands:
+
+```bash
+julius list     # List all available probe definitions
+julius probe    # Probe targets to identify LLM services
+julius validate # Validate probe definition files
+```
+<!-- END generated: cli-subcommands -->
+
+<!-- BEGIN generated: cli-aliases -->
+The full reference — every subcommand, alias and flag, including the ones hidden from `--help` — is generated into [docs/CLI.md](docs/CLI.md).
+<!-- END generated: cli-aliases -->
+
 ## Supported LLM Services
 
 Julius identifies 64 LLM platforms across self-hosted, gateway, MCP, RAG/orchestration, and cloud-managed categories:

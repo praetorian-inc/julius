@@ -1,0 +1,375 @@
+{
+  "schemaVersion": 1,
+  "surfaceHash": "sha256:0b90ec6c9ac2f198300eb2bb9b760049de4257ac3240da746f689915930e3299",
+  "commands": [
+    {
+      "path": "julius",
+      "use": "julius",
+      "short": "Julius - LLM Service Fingerprinting Tool",
+      "runnable": false,
+      "flags": [
+        {
+          "name": "banner",
+          "type": "bool",
+          "default": "true",
+          "usage": "Show ASCII banner"
+        },
+        {
+          "name": "ca-cert",
+          "type": "string",
+          "usage": "Path to custom CA certificate file"
+        },
+        {
+          "name": "concurrency",
+          "shorthand": "c",
+          "type": "int",
+          "default": "10",
+          "usage": "Maximum concurrent probe requests per target"
+        },
+        {
+          "name": "insecure",
+          "type": "bool",
+          "default": "false",
+          "usage": "Skip TLS certificate verification"
+        },
+        {
+          "name": "max-response-size",
+          "type": "int64",
+          "default": "10485760",
+          "usage": "Maximum response body size in bytes (default 10MB)"
+        },
+        {
+          "name": "no-color",
+          "type": "bool",
+          "default": "false",
+          "usage": "Disable color output"
+        },
+        {
+          "name": "output",
+          "shorthand": "o",
+          "type": "string",
+          "default": "table",
+          "usage": "Output format (table, json, jsonl)"
+        },
+        {
+          "name": "probes-dir",
+          "shorthand": "p",
+          "type": "string",
+          "usage": "Override probe definitions directory"
+        },
+        {
+          "name": "quiet",
+          "shorthand": "q",
+          "type": "bool",
+          "default": "false",
+          "usage": "Suppress non-match output"
+        },
+        {
+          "name": "timeout",
+          "shorthand": "t",
+          "type": "int",
+          "default": "5",
+          "usage": "HTTP timeout in seconds"
+        },
+        {
+          "name": "verbose",
+          "shorthand": "v",
+          "type": "bool",
+          "default": "false",
+          "usage": "Verbose output"
+        }
+      ]
+    },
+    {
+      "path": "julius list",
+      "use": "list",
+      "short": "List all available probe definitions",
+      "runnable": true,
+      "flags": [
+        {
+          "name": "banner",
+          "type": "bool",
+          "default": "true",
+          "usage": "Show ASCII banner",
+          "inherited": true
+        },
+        {
+          "name": "ca-cert",
+          "type": "string",
+          "usage": "Path to custom CA certificate file",
+          "inherited": true
+        },
+        {
+          "name": "concurrency",
+          "shorthand": "c",
+          "type": "int",
+          "default": "10",
+          "usage": "Maximum concurrent probe requests per target",
+          "inherited": true
+        },
+        {
+          "name": "insecure",
+          "type": "bool",
+          "default": "false",
+          "usage": "Skip TLS certificate verification",
+          "inherited": true
+        },
+        {
+          "name": "max-response-size",
+          "type": "int64",
+          "default": "10485760",
+          "usage": "Maximum response body size in bytes (default 10MB)",
+          "inherited": true
+        },
+        {
+          "name": "no-color",
+          "type": "bool",
+          "default": "false",
+          "usage": "Disable color output",
+          "inherited": true
+        },
+        {
+          "name": "output",
+          "shorthand": "o",
+          "type": "string",
+          "default": "table",
+          "usage": "Output format (table, json, jsonl)",
+          "inherited": true
+        },
+        {
+          "name": "probes-dir",
+          "shorthand": "p",
+          "type": "string",
+          "usage": "Override probe definitions directory",
+          "inherited": true
+        },
+        {
+          "name": "quiet",
+          "shorthand": "q",
+          "type": "bool",
+          "default": "false",
+          "usage": "Suppress non-match output",
+          "inherited": true
+        },
+        {
+          "name": "timeout",
+          "shorthand": "t",
+          "type": "int",
+          "default": "5",
+          "usage": "HTTP timeout in seconds",
+          "inherited": true
+        },
+        {
+          "name": "verbose",
+          "shorthand": "v",
+          "type": "bool",
+          "default": "false",
+          "usage": "Verbose output",
+          "inherited": true
+        }
+      ]
+    },
+    {
+      "path": "julius probe",
+      "use": "probe [targets...]",
+      "short": "Probe targets to identify LLM services",
+      "runnable": true,
+      "flags": [
+        {
+          "name": "augustus",
+          "type": "bool",
+          "default": "false",
+          "usage": "Include Augustus generator configs in output"
+        },
+        {
+          "name": "banner",
+          "type": "bool",
+          "default": "true",
+          "usage": "Show ASCII banner",
+          "inherited": true
+        },
+        {
+          "name": "base-paths",
+          "type": "string",
+          "usage": "Comma-separated path prefixes to prepend to probe paths (e.g., /api,/proxy)"
+        },
+        {
+          "name": "ca-cert",
+          "type": "string",
+          "usage": "Path to custom CA certificate file",
+          "inherited": true
+        },
+        {
+          "name": "concurrency",
+          "shorthand": "c",
+          "type": "int",
+          "default": "10",
+          "usage": "Maximum concurrent probe requests per target",
+          "inherited": true
+        },
+        {
+          "name": "file",
+          "shorthand": "f",
+          "type": "string",
+          "usage": "Read targets from file"
+        },
+        {
+          "name": "header",
+          "shorthand": "H",
+          "type": "stringArray",
+          "default": "[]",
+          "usage": "Custom HTTP header (e.g., \"Authorization: Bearer token\"). Can be specified multiple times"
+        },
+        {
+          "name": "insecure",
+          "type": "bool",
+          "default": "false",
+          "usage": "Skip TLS certificate verification",
+          "inherited": true
+        },
+        {
+          "name": "max-response-size",
+          "type": "int64",
+          "default": "10485760",
+          "usage": "Maximum response body size in bytes (default 10MB)",
+          "inherited": true
+        },
+        {
+          "name": "no-color",
+          "type": "bool",
+          "default": "false",
+          "usage": "Disable color output",
+          "inherited": true
+        },
+        {
+          "name": "output",
+          "shorthand": "o",
+          "type": "string",
+          "default": "table",
+          "usage": "Output format (table, json, jsonl)",
+          "inherited": true
+        },
+        {
+          "name": "probes-dir",
+          "shorthand": "p",
+          "type": "string",
+          "usage": "Override probe definitions directory",
+          "inherited": true
+        },
+        {
+          "name": "quiet",
+          "shorthand": "q",
+          "type": "bool",
+          "default": "false",
+          "usage": "Suppress non-match output",
+          "inherited": true
+        },
+        {
+          "name": "timeout",
+          "shorthand": "t",
+          "type": "int",
+          "default": "5",
+          "usage": "HTTP timeout in seconds",
+          "inherited": true
+        },
+        {
+          "name": "verbose",
+          "shorthand": "v",
+          "type": "bool",
+          "default": "false",
+          "usage": "Verbose output",
+          "inherited": true
+        }
+      ]
+    },
+    {
+      "path": "julius validate",
+      "use": "validate [directory]",
+      "short": "Validate probe definition files",
+      "runnable": true,
+      "flags": [
+        {
+          "name": "banner",
+          "type": "bool",
+          "default": "true",
+          "usage": "Show ASCII banner",
+          "inherited": true
+        },
+        {
+          "name": "ca-cert",
+          "type": "string",
+          "usage": "Path to custom CA certificate file",
+          "inherited": true
+        },
+        {
+          "name": "concurrency",
+          "shorthand": "c",
+          "type": "int",
+          "default": "10",
+          "usage": "Maximum concurrent probe requests per target",
+          "inherited": true
+        },
+        {
+          "name": "insecure",
+          "type": "bool",
+          "default": "false",
+          "usage": "Skip TLS certificate verification",
+          "inherited": true
+        },
+        {
+          "name": "max-response-size",
+          "type": "int64",
+          "default": "10485760",
+          "usage": "Maximum response body size in bytes (default 10MB)",
+          "inherited": true
+        },
+        {
+          "name": "no-color",
+          "type": "bool",
+          "default": "false",
+          "usage": "Disable color output",
+          "inherited": true
+        },
+        {
+          "name": "output",
+          "shorthand": "o",
+          "type": "string",
+          "default": "table",
+          "usage": "Output format (table, json, jsonl)",
+          "inherited": true
+        },
+        {
+          "name": "probes-dir",
+          "shorthand": "p",
+          "type": "string",
+          "usage": "Override probe definitions directory",
+          "inherited": true
+        },
+        {
+          "name": "quiet",
+          "shorthand": "q",
+          "type": "bool",
+          "default": "false",
+          "usage": "Suppress non-match output",
+          "inherited": true
+        },
+        {
+          "name": "timeout",
+          "shorthand": "t",
+          "type": "int",
+          "default": "5",
+          "usage": "HTTP timeout in seconds",
+          "inherited": true
+        },
+        {
+          "name": "verbose",
+          "shorthand": "v",
+          "type": "bool",
+          "default": "false",
+          "usage": "Verbose output",
+          "inherited": true
+        }
+      ]
+    }
+  ]
+}
