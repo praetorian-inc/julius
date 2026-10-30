@@ -3,7 +3,7 @@
 # julius CLI reference
 
 Every command, alias and flag below is derived from the cobra command tree, not from prose.
-Schema version 1, surface hash `sha256:0b90ec6c9ac2f198300eb2bb9b760049de4257ac3240da746f689915930e3299`.
+Schema version 1, surface hash `sha256:13a7761739dbaa91d852750c58caf6348442ab056715c755e97a60dfafbb1cfe`.
 
 Regenerate with `make cli-docs` after adding, removing or renaming a command or a flag.
 
@@ -36,6 +36,8 @@ Julius - LLM Service Fingerprinting Tool
 | `--no-color` |  | bool | `false` | Disable color output |
 | `--output` | `-o` | string | `table` | Output format (table, json, jsonl) |
 | `--probes-dir` | `-p` | string |  | Override probe definitions directory |
+| `--proxy` |  | string |  | Proxy URL (e.g. socks5://127.0.0.1:1080, http://127.0.0.1:8080) |
+| `--proxy-auth` |  | string |  | Proxy authentication (username:password) |
 | `--quiet` | `-q` | bool | `false` | Suppress non-match output |
 | `--timeout` | `-t` | int | `5` | HTTP timeout in seconds |
 | `--verbose` | `-v` | bool | `false` | Verbose output |
@@ -59,6 +61,8 @@ List all available probe definitions
 | `--no-color` |  | bool | `false` | Disable color output |
 | `--output` | `-o` | string | `table` | Output format (table, json, jsonl) |
 | `--probes-dir` | `-p` | string |  | Override probe definitions directory |
+| `--proxy` |  | string |  | Proxy URL (e.g. socks5://127.0.0.1:1080, http://127.0.0.1:8080) |
+| `--proxy-auth` |  | string |  | Proxy authentication (username:password) |
 | `--quiet` | `-q` | bool | `false` | Suppress non-match output |
 | `--timeout` | `-t` | int | `5` | HTTP timeout in seconds |
 | `--verbose` | `-v` | bool | `false` | Verbose output |
@@ -91,6 +95,8 @@ Probe targets to identify LLM services
 | `--no-color` |  | bool | `false` | Disable color output |
 | `--output` | `-o` | string | `table` | Output format (table, json, jsonl) |
 | `--probes-dir` | `-p` | string |  | Override probe definitions directory |
+| `--proxy` |  | string |  | Proxy URL (e.g. socks5://127.0.0.1:1080, http://127.0.0.1:8080) |
+| `--proxy-auth` |  | string |  | Proxy authentication (username:password) |
 | `--quiet` | `-q` | bool | `false` | Suppress non-match output |
 | `--timeout` | `-t` | int | `5` | HTTP timeout in seconds |
 | `--verbose` | `-v` | bool | `false` | Verbose output |
@@ -114,6 +120,8 @@ Validate probe definition files
 | `--no-color` |  | bool | `false` | Disable color output |
 | `--output` | `-o` | string | `table` | Output format (table, json, jsonl) |
 | `--probes-dir` | `-p` | string |  | Override probe definitions directory |
+| `--proxy` |  | string |  | Proxy URL (e.g. socks5://127.0.0.1:1080, http://127.0.0.1:8080) |
+| `--proxy-auth` |  | string |  | Proxy authentication (username:password) |
 | `--quiet` | `-q` | bool | `false` | Suppress non-match output |
 | `--timeout` | `-t` | int | `5` | HTTP timeout in seconds |
 | `--verbose` | `-v` | bool | `false` | Verbose output |

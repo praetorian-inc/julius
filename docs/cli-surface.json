@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "surfaceHash": "sha256:0b90ec6c9ac2f198300eb2bb9b760049de4257ac3240da746f689915930e3299",
+  "surfaceHash": "sha256:13a7761739dbaa91d852750c58caf6348442ab056715c755e97a60dfafbb1cfe",
   "commands": [
     {
       "path": "julius",
@@ -56,6 +56,16 @@
           "shorthand": "p",
           "type": "string",
           "usage": "Override probe definitions directory"
+        },
+        {
+          "name": "proxy",
+          "type": "string",
+          "usage": "Proxy URL (e.g. socks5://127.0.0.1:1080, http://127.0.0.1:8080)"
+        },
+        {
+          "name": "proxy-auth",
+          "type": "string",
+          "usage": "Proxy authentication (username:password)"
         },
         {
           "name": "quiet",
@@ -141,6 +151,18 @@
           "shorthand": "p",
           "type": "string",
           "usage": "Override probe definitions directory",
+          "inherited": true
+        },
+        {
+          "name": "proxy",
+          "type": "string",
+          "usage": "Proxy URL (e.g. socks5://127.0.0.1:1080, http://127.0.0.1:8080)",
+          "inherited": true
+        },
+        {
+          "name": "proxy-auth",
+          "type": "string",
+          "usage": "Proxy authentication (username:password)",
           "inherited": true
         },
         {
@@ -257,6 +279,18 @@
           "inherited": true
         },
         {
+          "name": "proxy",
+          "type": "string",
+          "usage": "Proxy URL (e.g. socks5://127.0.0.1:1080, http://127.0.0.1:8080)",
+          "inherited": true
+        },
+        {
+          "name": "proxy-auth",
+          "type": "string",
+          "usage": "Proxy authentication (username:password)",
+          "inherited": true
+        },
+        {
           "name": "quiet",
           "shorthand": "q",
           "type": "bool",
@@ -343,6 +377,18 @@
           "shorthand": "p",
           "type": "string",
           "usage": "Override probe definitions directory",
+          "inherited": true
+        },
+        {
+          "name": "proxy",
+          "type": "string",
+          "usage": "Proxy URL (e.g. socks5://127.0.0.1:1080, http://127.0.0.1:8080)",
+          "inherited": true
+        },
+        {
+          "name": "proxy-auth",
+          "type": "string",
+          "usage": "Proxy authentication (username:password)",
           "inherited": true
         },
         {
