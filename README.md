@@ -4,7 +4,7 @@
 
 > Identify Ollama, vLLM, LiteLLM, and 60+ AI services running on any endpoint in seconds.
 
-[![Go Version](https://img.shields.io/badge/go-1.25+-blue.svg)](https://golang.org/)
+[![Go Version](https://img.shields.io/badge/go-1.27.0+-blue.svg)](https://golang.org/)
 [![License](https://img.shields.io/github/license/praetorian-inc/julius)](LICENSE)
 [![Build Status](https://img.shields.io/github/actions/workflow/status/praetorian-inc/julius/ci.yml?branch=main)](https://github.com/praetorian-inc/julius/actions)
 [![Go Report Card](https://goreportcard.com/badge/github.com/praetorian-inc/julius)](https://goreportcard.com/report/github.com/praetorian-inc/julius)
