@@ -30,6 +30,10 @@ archives:
 checksum:
   name_template: "checksums.txt"
 
+release:
+  extra_files:
+    - glob: docs/cli-surface.json
+
 changelog:
   sort: asc
   filters:
