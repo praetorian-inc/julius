@@ -68,6 +68,11 @@ func runProbe(cmd *cobra.Command, args []string) error {
 		return fmt.Errorf("building TLS config: %w", err)
 	}
 
+	proxy, err := buildProxyURL()
+	if err != nil {
+		return fmt.Errorf("building proxy config: %w", err)
+	}
+
 	headers, err := parseHeaders(customHeaders)
 	if err != nil {
 		return fmt.Errorf("parsing headers: %w", err)
@@ -79,6 +84,7 @@ func runProbe(cmd *cobra.Command, args []string) error {
 		scanner.WithConcurrency(concurrency),
 		scanner.WithMaxResponseSize(maxResponseSize),
 		scanner.WithTLSConfig(tlsConfig),
+		scanner.WithProxy(proxy),
 		scanner.WithHeaders(headers),
 	)
 

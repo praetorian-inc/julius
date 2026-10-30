@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"net/url"
 	"sort"
 	"strings"
 	"sync"
@@ -242,13 +243,41 @@ func WithMaxResponseSize(n int64) Option {
 	}
 }
 
+// transport returns the Scanner's *http.Transport, installing a clone of
+// http.DefaultTransport the first time one is needed.
+//
+// Options that customise transport behaviour must go through here rather than
+// assigning s.client.Transport directly: two options that each clone
+// DefaultTransport would silently discard whichever ran first, making the
+// result depend on the order in NewScanner's argument list.
+func (s *Scanner) transport() *http.Transport {
+	if tr, ok := s.client.Transport.(*http.Transport); ok && tr != nil {
+		return tr
+	}
+	tr := http.DefaultTransport.(*http.Transport).Clone()
+	s.client.Transport = tr
+	return tr
+}
+
 func WithTLSConfig(cfg *tls.Config) Option {
 	return func(s *Scanner) {
 		if cfg != nil {
-			transport := http.DefaultTransport.(*http.Transport).Clone()
-			transport.TLSClientConfig = cfg
-			s.client.Transport = transport
+			s.transport().TLSClientConfig = cfg
 		}
+	}
+}
+
+// WithProxy routes every probe through the given proxy. A nil URL is a no-op,
+// leaving http.DefaultTransport's ProxyFromEnvironment behaviour intact.
+//
+// http.Transport dials socks5:// URLs natively and honours credentials in the
+// URL's userinfo, so SOCKS5 needs no extra dependency here.
+func WithProxy(proxyURL *url.URL) Option {
+	return func(s *Scanner) {
+		if proxyURL == nil {
+			return
+		}
+		s.transport().Proxy = http.ProxyURL(proxyURL)
 	}
 }
 

@@ -5,9 +5,34 @@ import (
 	"path/filepath"
 	"testing"
 
+	"github.com/praetorian-inc/julius/pkg/rules"
+	"github.com/praetorian-inc/julius/pkg/types"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
+
+// An empty request path is valid: the request targets the supplied URL as-is, so a probe
+// can classify the exact URL it is handed (e.g. MCP, whose endpoint path is not fixed and
+// is discovered upstream) rather than a fixed sub-path of it.
+func TestValidateProbe_EmptyPathIsValid(t *testing.T) {
+	p := &types.Probe{
+		Name: "match-target-as-is",
+		Requests: []types.Request{{
+			Path:     "",
+			Method:   "POST",
+			RawMatch: []rules.RawRule{{Type: "body.contains", Value: "x"}},
+		}},
+	}
+	assert.Empty(t, validateProbe(p), "empty path should be allowed")
+}
+
+func TestValidateProbe_RequiresMatchRule(t *testing.T) {
+	p := &types.Probe{
+		Name:     "no-rules",
+		Requests: []types.Request{{Path: "", Method: "GET"}},
+	}
+	assert.NotEmpty(t, validateProbe(p), "a request with no match rules should be invalid")
+}
 
 func TestBuildTLSConfig_NilWhenNoFlagsSet(t *testing.T) {
 	// Save original values

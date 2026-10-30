@@ -105,9 +105,10 @@ func validateProbe(p *types.Probe) []string {
 	}
 
 	for i, req := range p.Requests {
-		if req.Path == "" {
-			errors = append(errors, fmt.Sprintf("request %d: path is required", i))
-		}
+		// An empty path is intentionally allowed: the request is then sent to the target
+		// URL exactly as supplied (target + "" = target). This lets a probe classify the
+		// URL it is handed rather than a fixed sub-path of it — required for services like
+		// MCP whose endpoint path is not fixed and is discovered upstream (crawler/registry).
 		if len(req.RawMatch) == 0 {
 			errors = append(errors, fmt.Sprintf("request %d: at least one match rule is required", i))
 		}
