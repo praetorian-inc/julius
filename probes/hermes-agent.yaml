@@ -1,0 +1,104 @@
+# Source: gateway/platforms/api_server.py in NousResearch/hermes-agent.
+# Public health endpoints avoid agent execution; capabilities is an authenticated fallback.
+# Separate signatures cover standard spaced and compact JSON without changing Julius.
+# Model aliases from /v1/models are intentionally not treated as underlying model inventory.
+name: hermes-agent
+description: Hermes Agent API server by Nous Research
+category: rag-orchestration
+port_hint: 8642
+specificity: 100
+require: any
+api_docs: https://hermes-agent.nousresearch.com/docs/user-guide/features/api-server
+requests:
+  - type: http
+    path: /health
+    method: GET
+    match:
+      - type: status
+        value: 200
+      - type: content-type
+        value: application/json
+      - type: body.prefix
+        value: '{'
+      - type: body.contains
+        value: '"status": "ok"'
+      - type: body.contains
+        value: '"platform": "hermes-agent"'
+      - type: body.contains
+        value: '"version"'
+  - type: http
+    path: /health
+    method: GET
+    match:
+      - type: status
+        value: 200
+      - type: content-type
+        value: application/json
+      - type: body.prefix
+        value: '{'
+      - type: body.contains
+        value: '"status":"ok"'
+      - type: body.contains
+        value: '"platform":"hermes-agent"'
+      - type: body.contains
+        value: '"version"'
+  - type: http
+    path: /v1/health
+    method: GET
+    match:
+      - type: status
+        value: 200
+      - type: content-type
+        value: application/json
+      - type: body.prefix
+        value: '{'
+      - type: body.contains
+        value: '"status": "ok"'
+      - type: body.contains
+        value: '"platform": "hermes-agent"'
+      - type: body.contains
+        value: '"version"'
+  - type: http
+    path: /v1/health
+    method: GET
+    match:
+      - type: status
+        value: 200
+      - type: content-type
+        value: application/json
+      - type: body.prefix
+        value: '{'
+      - type: body.contains
+        value: '"status":"ok"'
+      - type: body.contains
+        value: '"platform":"hermes-agent"'
+      - type: body.contains
+        value: '"version"'
+  - type: http
+    path: /v1/capabilities
+    method: GET
+    match:
+      - type: status
+        value: 200
+      - type: content-type
+        value: application/json
+      - type: body.prefix
+        value: '{'
+      - type: body.contains
+        value: '"object": "hermes.api_server.capabilities"'
+      - type: body.contains
+        value: '"platform": "hermes-agent"'
+  - type: http
+    path: /v1/capabilities
+    method: GET
+    match:
+      - type: status
+        value: 200
+      - type: content-type
+        value: application/json
+      - type: body.prefix
+        value: '{'
+      - type: body.contains
+        value: '"object":"hermes.api_server.capabilities"'
+      - type: body.contains
+        value: '"platform":"hermes-agent"'

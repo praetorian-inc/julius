@@ -46,7 +46,7 @@ You've discovered an open port during a security assessment. Is it Ollama on por
 
 | Feature | Description |
 |---------|-------------|
-| **63 LLM Services** | Detects Ollama, vLLM, LiteLLM, LocalAI, Hugging Face TGI, AWS Bedrock, and 57 more |
+| **65 LLM Services** | Detects Ollama, vLLM, LiteLLM, LocalAI, Hugging Face TGI, AWS Bedrock, and 59 more |
 | **Fast Scanning** | Concurrent probing with intelligent port-based prioritization |
 | **Model Discovery** | Extracts available models from identified endpoints |
 | **Specificity Scoring** | 1-100 scoring ranks results by most specific match (e.g., LiteLLM over generic OpenAI-compatible) |
@@ -82,7 +82,7 @@ julius probe https://target.example.com
 
 ## Supported LLM Services
 
-Julius identifies 64 LLM platforms across self-hosted, gateway, MCP, RAG/orchestration, and cloud-managed categories:
+Julius identifies 65 LLM platforms across self-hosted, gateway, MCP, RAG/orchestration, and cloud-managed categories:
 
 ### Self-Hosted LLM Servers (25)
 
@@ -132,7 +132,7 @@ Julius identifies 64 LLM platforms across self-hosted, gateway, MCP, RAG/orchest
 |---------|--------------|-------------|
 | [MCP Server](https://modelcontextprotocol.io) | 443 | Model Context Protocol server (Streamable HTTP / JSON-RPC) exposing tools & resources to LLM clients |
 
-### RAG & Orchestration Platforms (18)
+### RAG & Orchestration Platforms (19)
 
 | Service | Default Port | Description |
 |---------|--------------|-------------|
@@ -142,6 +142,7 @@ Julius identifies 64 LLM platforms across self-hosted, gateway, MCP, RAG/orchest
 | [Dify](https://dify.ai) | 80 | LLM app development platform with workflow orchestration |
 | [Flowise](https://flowiseai.com) | 3000 | Low-code platform for AI agents and workflows |
 | [h2oGPT](https://github.com/h2oai/h2ogpt) | 7860 | Private local GPT with document Q&A |
+| [Hermes Agent](https://hermes-agent.nousresearch.com) | 8642 | Autonomous AI agent with an OpenAI-compatible API |
 | [HuggingFace Chat UI](https://github.com/huggingface/chat-ui) | 3000 | Open source ChatGPT-style interface |
 | [Langflow](https://www.langflow.org) | 7860 | Low-code platform for AI agents and RAG |
 | [LibreChat](https://librechat.ai) | 3080 | Multi-provider chat interface with RAG |
