@@ -6,6 +6,7 @@ type Result struct {
 	MatchedRequest   string            `json:"matched_request"`
 	Category         string            `json:"category"`
 	Specificity      int               `json:"specificity"`
+	AuthRequired     bool              `json:"auth_required"`
 	Models           []string          `json:"models,omitempty"`
 	GeneratorConfigs []GeneratorConfig `json:"generator_configs,omitempty"`
 	Error            string            `json:"error,omitempty"`

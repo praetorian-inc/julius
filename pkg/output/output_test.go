@@ -50,10 +50,12 @@ func TestTableWriter_WriteSingleResult(t *testing.T) {
 	assert.Contains(t, output, "TARGET")
 	assert.Contains(t, output, "SERVICE")
 	assert.Contains(t, output, "SPECIFICITY")
+	assert.Contains(t, output, "AUTH")
 
 	assert.Contains(t, output, "https://api.openai.com")
 	assert.Contains(t, output, "OpenAI API")
 	assert.Contains(t, output, "75")
+	assert.Contains(t, output, "open")
 }
 
 func TestTableWriter_WriteMultipleResults(t *testing.T) {
@@ -313,6 +315,48 @@ func TestNewWriter_JSONL(t *testing.T) {
 	output := buf.String()
 	lines := strings.Split(strings.TrimSpace(output), "\n")
 	require.Len(t, lines, 1, "Should have 1 line")
+}
+
+func TestTableWriter_AuthRequired(t *testing.T) {
+	buf := &bytes.Buffer{}
+	writer := NewTableWriter(buf)
+
+	results := []types.Result{
+		{
+			Target:       "https://api.example.com/v1/models",
+			Service:      "openai-compatible",
+			Category:     "generic",
+			Specificity:  1,
+			AuthRequired: true,
+		},
+	}
+
+	err := writer.Write(results)
+	require.NoError(t, err)
+
+	output := buf.String()
+	assert.Contains(t, output, "required")
+}
+
+func TestTableWriter_AuthOpen(t *testing.T) {
+	buf := &bytes.Buffer{}
+	writer := NewTableWriter(buf)
+
+	results := []types.Result{
+		{
+			Target:       "https://api.example.com/v1/models",
+			Service:      "ollama",
+			Category:     "self-hosted",
+			Specificity:  100,
+			AuthRequired: false,
+		},
+	}
+
+	err := writer.Write(results)
+	require.NoError(t, err)
+
+	output := buf.String()
+	assert.Contains(t, output, "open")
 }
 
 func TestTableWriterModelsAndError(t *testing.T) {
