@@ -7,7 +7,7 @@ concurrency:
   cancel-in-progress: true
 jobs:
   audit:
-    uses: praetorian-inc/public-workflows/.github/workflows/agents-md-audit.yml@522f02d44dc72b199da3d6b8db755fe3aeabff1d  # v2.19.2
+    uses: praetorian-inc/public-workflows/.github/workflows/agents-md-audit.yml@aaa895ad25fda4d6600e64e2f5d41dd3afdc2a13  # v2.21.3
     permissions:
       contents: read
       pull-requests: write
