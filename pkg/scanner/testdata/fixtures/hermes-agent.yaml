@@ -1,0 +1,311 @@
+# Synthetic responses; these are not captures from a running Hermes instance.
+probe: hermes-agent
+cases:
+  - name: positive-health-spaced
+    match: true
+    responses:
+      /health:
+        status: 200
+        method: GET
+        headers:
+          Content-Type: application/json
+        body: |-
+          {
+            "status": "ok",
+            "platform": "hermes-agent",
+            "version": "test-version"
+          }
+  - name: positive-health-compact
+    match: true
+    responses:
+      /health:
+        status: 200
+        method: GET
+        headers:
+          Content-Type: application/json
+        body: '{"status":"ok","platform":"hermes-agent","version":"test-version"}'
+  - name: positive-health-reordered
+    match: true
+    responses:
+      /health:
+        status: 200
+        method: GET
+        headers:
+          Content-Type: application/json
+        body: |-
+          {
+            "version": "test-version",
+            "platform": "hermes-agent",
+            "status": "ok"
+          }
+  - name: positive-versioned-health-spaced
+    match: true
+    responses:
+      /v1/health:
+        status: 200
+        method: GET
+        headers:
+          Content-Type: application/json
+        body: |-
+          {
+            "status": "ok",
+            "platform": "hermes-agent",
+            "version": "test-version"
+          }
+  - name: positive-versioned-health-compact
+    match: true
+    responses:
+      /v1/health:
+        status: 200
+        method: GET
+        headers:
+          Content-Type: application/json
+        body: '{"status":"ok","platform":"hermes-agent","version":"test-version"}'
+  - name: positive-capabilities-spaced
+    match: true
+    responses:
+      /v1/capabilities:
+        status: 200
+        method: GET
+        headers:
+          Content-Type: application/json
+        body: |-
+          {
+            "object": "hermes.api_server.capabilities",
+            "platform": "hermes-agent",
+            "model": "test-profile"
+          }
+  - name: positive-capabilities-compact
+    match: true
+    responses:
+      /v1/capabilities:
+        status: 200
+        method: GET
+        headers:
+          Content-Type: application/json
+        body: '{"object":"hermes.api_server.capabilities","platform":"hermes-agent","model":"test-profile"}'
+  - name: positive-json-charset
+    match: true
+    responses:
+      /health:
+        status: 200
+        method: GET
+        headers:
+          Content-Type: application/json; charset=utf-8
+        body: |-
+          {
+            "status": "ok",
+            "platform": "hermes-agent",
+            "version": "test-version"
+          }
+  - name: negative-generic-health
+    match: false
+    responses:
+      /health:
+        status: 200
+        method: GET
+        headers:
+          Content-Type: application/json
+        body: |-
+          {
+            "status": "ok"
+          }
+  - name: negative-name-mentioned-only
+    match: false
+    responses:
+      /health:
+        status: 200
+        method: GET
+        headers:
+          Content-Type: application/json
+        body: |-
+          {
+            "status": "ok",
+            "platform": "other-service",
+            "info": "hermes-agent",
+            "version": "test-version"
+          }
+  - name: negative-wrong-platform
+    match: false
+    responses:
+      /health:
+        status: 200
+        method: GET
+        headers:
+          Content-Type: application/json
+        body: |-
+          {
+            "status": "ok",
+            "platform": "other-service",
+            "version": "test-version"
+          }
+  - name: negative-platform-suffix
+    match: false
+    responses:
+      /health:
+        status: 200
+        method: GET
+        headers:
+          Content-Type: application/json
+        body: |-
+          {
+            "status": "ok",
+            "platform": "hermes-agent-impostor",
+            "version": "test-version"
+          }
+  - name: negative-missing-version
+    match: false
+    responses:
+      /health:
+        status: 200
+        method: GET
+        headers:
+          Content-Type: application/json
+        body: |-
+          {
+            "status": "ok",
+            "platform": "hermes-agent"
+          }
+  - name: negative-unhealthy-status
+    match: false
+    responses:
+      /health:
+        status: 200
+        method: GET
+        headers:
+          Content-Type: application/json
+        body: |-
+          {
+            "status": "error",
+            "platform": "hermes-agent",
+            "version": "test-version"
+          }
+  - name: negative-html-content-type
+    match: false
+    responses:
+      /health:
+        status: 200
+        method: GET
+        headers:
+          Content-Type: text/html
+        body: |-
+          {
+            "status": "ok",
+            "platform": "hermes-agent",
+            "version": "test-version"
+          }
+  - name: negative-health-unauthorized
+    match: false
+    responses:
+      /health:
+        status: 401
+        method: GET
+        headers:
+          Content-Type: application/json
+        body: |-
+          {
+            "status": "ok",
+            "platform": "hermes-agent",
+            "version": "test-version"
+          }
+  - name: negative-health-server-error
+    match: false
+    responses:
+      /health:
+        status: 500
+        method: GET
+        headers:
+          Content-Type: application/json
+        body: |-
+          {
+            "status": "ok",
+            "platform": "hermes-agent",
+            "version": "test-version"
+          }
+  - name: negative-capabilities-wrong-object
+    match: false
+    responses:
+      /v1/capabilities:
+        status: 200
+        method: GET
+        headers:
+          Content-Type: application/json
+        body: |-
+          {
+            "object": "other.api_server.capabilities",
+            "platform": "hermes-agent",
+            "model": "test-profile"
+          }
+  - name: negative-capabilities-wrong-platform
+    match: false
+    responses:
+      /v1/capabilities:
+        status: 200
+        method: GET
+        headers:
+          Content-Type: application/json
+        body: |-
+          {
+            "object": "hermes.api_server.capabilities",
+            "platform": "other-service",
+            "model": "test-profile"
+          }
+  - name: negative-capabilities-unauthorized
+    match: false
+    responses:
+      /v1/capabilities:
+        status: 401
+        method: GET
+        headers:
+          Content-Type: application/json
+        body: |-
+          {
+            "object": "hermes.api_server.capabilities",
+            "platform": "hermes-agent",
+            "model": "test-profile"
+          }
+  - name: negative-not-found
+    match: false
+    responses:
+      /health:
+        status: 404
+        method: GET
+        headers:
+          Content-Type: application/json
+        body: |-
+          {
+            "status": "ok",
+            "platform": "hermes-agent",
+            "version": "test-version"
+          }
+  - name: negative-json-string-mention
+    match: false
+    responses:
+      /health:
+        status: 200
+        method: GET
+        headers:
+          Content-Type: application/json
+        body: |-
+          {
+            "status": "ok",
+            "message": "{\"status\":\"ok\",\"platform\":\"hermes-agent\",\"version\":\"test-version\"}"
+          }
+  - name: negative-empty-json
+    match: false
+    responses:
+      /health:
+        status: 200
+        method: GET
+        headers:
+          Content-Type: application/json
+        body: '{}'
+  - name: negative-versioned-health-wrong-platform
+    match: false
+    responses:
+      /v1/health:
+        status: 200
+        method: GET
+        headers:
+          Content-Type: application/json
+        body: '{"status":"ok","platform":"other-service","version":"test-version"}'
