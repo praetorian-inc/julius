@@ -116,7 +116,7 @@ func (c fixtureCase) handler() http.Handler {
 		var reqBody []byte
 		if r.Body != nil {
 			reqBody, _ = io.ReadAll(r.Body)
-			r.Body.Close()
+			_ = r.Body.Close()
 		}
 
 		var resp *fixtureResponse
