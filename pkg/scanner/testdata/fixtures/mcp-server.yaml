@@ -1,14 +1,84 @@
 # Golden-file fixtures for the mcp-server probe.
 # Validated by pkg/scanner/fixture_test.go against probes/mcp-server.yaml.
-# mcp-server is require:any with two vectors (both POST to empty path):
-#   1. Open server: body contains "protocolVersion" AND "serverInfo"
-#   2. OAuth-protected: status 401 + WWW-Authenticate contains "resource_metadata"
-#      + MCP-Protocol-Version header present
+# mcp-server is require:any with five vectors:
+#   V1:  server/discover (2026-07-28, open): body contains "supportedVersions"
+#        AND "io.modelcontextprotocol/serverInfo"
+#   V1b: server/discover (2026-07-28, non-compliant shape): body contains
+#        "protocolVersion" AND "serverInfo" (old flat response to new method)
+#   V2:  server/discover (2026-07-28, OAuth): status 401 + WWW-Authenticate
+#        contains "resource_metadata" AND "mcp:" (scope prefix)
+#   V3:  initialize (2025-06-18, open): body contains "protocolVersion"
+#        AND "serverInfo"
+#   V4:  initialize (2025-06-18, OAuth): status 401 + WWW-Authenticate contains
+#        "resource_metadata" + MCP-Protocol-Version header present
 probe: mcp-server
 cases:
+  # ---- 2026-07-28 spec positives ----
+
+  # Open MCP server responding to server/discover with the new response shape:
+  # supportedVersions array + serverInfo inside _meta with namespaced key.
+  - name: positive-discover-open
+    match: true
+    responses:
+      /:
+        status: 200
+        method: POST
+        headers:
+          Content-Type: application/json
+        body: '{"jsonrpc":"2.0","id":1,"result":{"cacheScope":"private","capabilities":{"tools":{"listChanged":true}},"resultType":"complete","supportedVersions":["2026-07-28"],"ttlMs":0,"_meta":{"io.modelcontextprotocol/serverInfo":{"name":"test-mcp","version":"1.0"}}}}'
+
+  # Open MCP server responding to server/discover with multiple supported versions.
+  - name: positive-discover-multi-version
+    match: true
+    responses:
+      /:
+        status: 200
+        method: POST
+        headers:
+          Content-Type: application/json
+        body: '{"jsonrpc":"2.0","id":1,"result":{"supportedVersions":["2026-07-28","2025-06-18"],"_meta":{"io.modelcontextprotocol/serverInfo":{"name":"multi-ver-mcp","version":"2.0"}},"capabilities":{"tools":{}}}}'
+
+  # Non-compliant 2026-07-28 server: responds to server/discover but returns
+  # the old flat shape (protocolVersion + serverInfo) instead of the spec-
+  # mandated supportedVersions + namespaced _meta. V1b catches this.
+  # Uses request dispatching: server/discover gets the flat response while
+  # initialize gets a method-not-found error, proving only V1b can match.
+  - name: positive-discover-flat-shape
+    match: true
+    responses:
+      /:
+        - request_match:
+            body_contains: "server/discover"
+          status: 200
+          method: POST
+          headers:
+            Content-Type: application/json
+          body: '{"jsonrpc":"2.0","id":1,"result":{"protocolVersion":"2026-07-28","serverInfo":{"name":"minimal","version":"1.0"},"capabilities":{"tools":{}}}}'
+        - request_match:
+            body_contains: "initialize"
+          status: 200
+          method: POST
+          headers:
+            Content-Type: application/json
+          body: '{"jsonrpc":"2.0","id":1,"error":{"code":-32601,"message":"Method not found: initialize"}}'
+
+  # OAuth-protected server (2026-07-28): 401 with resource_metadata in
+  # WWW-Authenticate. No MCP-Protocol-Version response header needed for V2.
+  - name: positive-discover-oauth
+    match: true
+    responses:
+      /:
+        status: 401
+        method: POST
+        headers:
+          WWW-Authenticate: 'Bearer resource_metadata="https://mcp.example.com/.well-known/oauth-protected-resource" scope="mcp:tools:read mcp:tools:execute"'
+        body: ""
+
+  # ---- 2025-06-18 spec positives ----
+
   # Open MCP server: the initialize handshake returns a JSON-RPC result with
   # protocolVersion and serverInfo — the two MCP-specific markers.
-  - name: positive-open-server
+  - name: positive-initialize-open
     match: true
     responses:
       /:
@@ -20,7 +90,7 @@ cases:
 
   # Open MCP server returning SSE (seen in the wild with DeepWiki, Context7).
   # The probe has no content-type rule, so text/event-stream must still match.
-  - name: positive-open-server-sse
+  - name: positive-initialize-open-sse
     match: true
     responses:
       /:
@@ -32,9 +102,9 @@ cases:
           event: message
           data: {"jsonrpc":"2.0","id":1,"result":{"protocolVersion":"2025-06-18","serverInfo":{"name":"deepwiki","version":"1.0"},"capabilities":{"tools":{}}}}
 
-  # OAuth-protected MCP server (RFC 9728): 401 with WWW-Authenticate containing
-  # resource_metadata and MCP-Protocol-Version header present.
-  - name: positive-oauth-protected
+  # OAuth-protected MCP server (2025-06-18): 401 with WWW-Authenticate containing
+  # resource_metadata and MCP-Protocol-Version header present in the response.
+  - name: positive-initialize-oauth
     match: true
     responses:
       /:
@@ -45,9 +115,14 @@ cases:
           MCP-Protocol-Version: "2025-06-18"
         body: "Unauthorized"
 
-  # A 401 with resource_metadata but WITHOUT MCP-Protocol-Version header.
-  # This is a generic RFC 9728 OAuth API, not an MCP server — must not match.
-  - name: negative-oauth-no-mcp-header
+  # ---- Negatives ----
+
+  # A 401 with resource_metadata but NO "mcp:" scope prefix and NO
+  # MCP-Protocol-Version header. This could be any RFC 9728 OAuth API
+  # (financial API, identity provider, etc.), not necessarily MCP.
+  # V2 won't match: requires "mcp:" in scope. V4 won't match: requires
+  # MCP-Protocol-Version header. No vector matches → negative.
+  - name: negative-oauth-no-mcp-scope
     match: false
     responses:
       /:
@@ -57,8 +132,20 @@ cases:
           WWW-Authenticate: 'Bearer resource_metadata="https://api.example.com/.well-known/oauth-protected-resource"'
         body: "Unauthorized"
 
+  # A 401 without resource_metadata — just a generic Bearer challenge.
+  # Neither OAuth vector matches: both require resource_metadata.
+  - name: negative-generic-401-bearer
+    match: false
+    responses:
+      /:
+        status: 401
+        method: POST
+        headers:
+          WWW-Authenticate: 'Bearer realm="api"'
+        body: "Unauthorized"
+
   # A JSON-RPC 2.0 response (e.g. Ethereum RPC) that has jsonrpc but no
-  # protocolVersion or serverInfo — must not match.
+  # protocolVersion, serverInfo, or supportedVersions — must not match.
   - name: negative-generic-jsonrpc
     match: false
     responses:
@@ -69,6 +156,19 @@ cases:
           Content-Type: application/json
         body: '{"jsonrpc":"2.0","id":1,"result":"0x1"}'
 
+  # A JSON-RPC response with "protocolVersion" but no "serverInfo" (and no
+  # supportedVersions / io.modelcontextprotocol/serverInfo). Could be a
+  # non-MCP protocol that happens to use a version field.
+  - name: negative-partial-protocol-version
+    match: false
+    responses:
+      /:
+        status: 200
+        method: POST
+        headers:
+          Content-Type: application/json
+        body: '{"jsonrpc":"2.0","id":1,"result":{"protocolVersion":"1.0","capabilities":{}}}'
+
   # An unrelated service that returns 404 on the target URL.
   - name: negative-unrelated
     match: false
@@ -76,3 +176,28 @@ cases:
       /:
         status: 404
         body: "not found"
+
+  # A 200 JSON response with "supportedVersions" but no serverInfo — e.g. a
+  # generic API version endpoint. Neither discover vector matches.
+  - name: negative-generic-versions-endpoint
+    match: false
+    responses:
+      /:
+        status: 200
+        method: POST
+        headers:
+          Content-Type: application/json
+        body: '{"supportedVersions":["v1","v2"],"default":"v2"}'
+
+  # A JSON-RPC error response from a server that rejects the namespaced _meta
+  # envelope (e.g. an older MCP server that doesn't understand the 2026-07-28
+  # params shape). The error body contains none of V1/V3's positive markers.
+  - name: negative-wrong-envelope-error
+    match: false
+    responses:
+      /:
+        status: 200
+        method: POST
+        headers:
+          Content-Type: application/json
+        body: '{"jsonrpc":"2.0","id":1,"error":{"code":-32602,"message":"Invalid params: missing required field protocolVersion in _meta"}}'

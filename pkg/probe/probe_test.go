@@ -70,7 +70,7 @@ func TestEmbeddedMCPServerProbe_EmitsAugustusConfig(t *testing.T) {
 	gc := configs[0]
 	assert.Equal(t, "mcp", gc.Type, "Type is populated from augustus.generator")
 	assert.Equal(t, "http://host:9099/mcp", gc.Endpoint, "$TARGET resolved to the target")
-	assert.Equal(t, map[string]string{"transport": "auto", "mode": "list_tools"}, gc.Extra,
+	assert.Equal(t, map[string]string{"transport": "streamable-http", "mode": "list_tools"}, gc.Extra,
 		"the transport/mode extras ship verbatim")
 }
 

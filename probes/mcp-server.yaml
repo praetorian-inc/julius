@@ -1,18 +1,16 @@
 # probes/mcp-server.yaml
-# Reference: https://modelcontextprotocol.io/specification/2025-06-18/basic/transports
+# Reference: https://modelcontextprotocol.io/specification/2026-07-28/basic/transports
 # Reference: https://modelcontextprotocol.io/specification/2025-06-18/basic/authorization (RFC 9728)
 #
 # Model Context Protocol (MCP) servers expose tools/resources to LLM clients over the
 # Streamable HTTP transport using JSON-RPC 2.0. MCP is "JSON-RPC plus a semantic layer":
-# this probe keys on the MCP-SPECIFIC parts of that layer (the `initialize` result's
-# protocolVersion + serverInfo, plus RFC 9728 OAuth metadata) and NOT on bare
+# this probe keys on the MCP-SPECIFIC parts of that layer and NOT on bare
 # `"jsonrpc":"2.0"`, so it does not false-positive on generic JSON-RPC services
 # (Ethereum/Bitcoin RPC, LSP-over-HTTP, etc.).
 #
-# NOTE: no Mcp-Session-Id-header vector. The spec sets that header ON the InitializeResult
-# response — the same response carrying serverInfo — so the init vector below always matches
-# first. Tested against 231 registry servers: a session-header-only match never occurred
-# (0 sole-matches). Don't re-add it; it has no independent coverage.
+# Vectors 1–2 target the 2026-07-28 spec (server/discover, stateless, _meta envelope,
+# mcp-method header). Vectors 3–4 target the 2025-06-18 spec (initialize handshake) for
+# backward compatibility with servers that haven't upgraded yet.
 #
 # SCOPE (per team consensus): Julius answers "is THIS url an MCP server? yes/no". It does
 # NOT discover the endpoint path — MCP can live at /, /mcp, /api/mcp, per-tenant paths, etc.
@@ -25,23 +23,88 @@
 # `authorization_servers` — which belongs in the upstream crawler, not in this classifier.)
 name: mcp-server
 description: Model Context Protocol (MCP) server - Streamable HTTP transport (JSON-RPC 2.0) for LLM tool/resource access
-# Dedicated `mcp` category (not `gateway`): MCP is a tool/resource protocol that exposes
-# capabilities TO an LLM client over JSON-RPC, not an inference proxy like the gateway
-# probes (litellm, envoy-ai-gateway, kong). The distinct category lets downstream consumers
-# route MCP assets to MCP-specific handling rather than generic gateway/web-app logic.
 category: mcp
 port_hint: 443
 specificity: 90
 require: any
-api_docs: https://modelcontextprotocol.io/specification/2025-06-18/basic/transports
+api_docs: https://modelcontextprotocol.io/specification/2026-07-28/basic/transports
 
 requests:
-  # Primary (open server): the unauthenticated `initialize` handshake POSTed to the target
-  # URL as-is. A real MCP server replies with a JSON-RPC result carrying protocolVersion +
-  # serverInfo. NOTE: the reply may be either application/json OR an SSE `data: {...}` line
-  # (both seen in the wild — DeepWiki, Context7), so we match on body markers only and add
-  # no content-type rule here. The two markers are checked independently, so field ordering
-  # is irrelevant. Together they are definitive; no non-MCP JSON-RPC service returns them.
+  # ---- 2026-07-28 spec vectors ----
+
+  # Vector 1: server/discover (2026-07-28, open server)
+  # The stateless discovery call replaces the old initialize handshake. The _meta
+  # envelope uses namespaced keys (io.modelcontextprotocol/*) and the mcp-method
+  # request header is mandatory. The response carries serverInfo inside _meta and
+  # a supportedVersions array at the top level.
+  - type: http
+    path: ""
+    method: POST
+    headers:
+      Content-Type: application/json
+      Accept: application/json, text/event-stream
+      MCP-Protocol-Version: "2026-07-28"
+      mcp-method: server/discover
+    body: '{"jsonrpc":"2.0","id":1,"method":"server/discover","params":{"_meta":{"io.modelcontextprotocol/protocolVersion":"2026-07-28","io.modelcontextprotocol/clientCapabilities":{}}}}'
+    match:
+      - type: body.contains
+        value: '"supportedVersions"'
+      - type: body.contains
+        value: io.modelcontextprotocol/serverInfo
+
+  # Vector 1b: server/discover (2026-07-28, non-compliant response shape)
+  # Some early/partial 2026-07-28 implementations handle server/discover but
+  # return the old flat response shape (protocolVersion + serverInfo at the top
+  # level) instead of the spec-mandated supportedVersions + namespaced _meta
+  # envelope. They reject initialize, so V3 can't catch them. Same request as
+  # V1 but matched against the 2025-06-18-era body markers.
+  - type: http
+    path: ""
+    method: POST
+    headers:
+      Content-Type: application/json
+      Accept: application/json, text/event-stream
+      MCP-Protocol-Version: "2026-07-28"
+      mcp-method: server/discover
+    body: '{"jsonrpc":"2.0","id":1,"method":"server/discover","params":{"_meta":{"io.modelcontextprotocol/protocolVersion":"2026-07-28","io.modelcontextprotocol/clientCapabilities":{}}}}'
+    match:
+      - type: body.contains
+        value: '"protocolVersion"'
+      - type: body.contains
+        value: '"serverInfo"'
+
+  # Vector 2: server/discover (2026-07-28, OAuth-protected server)
+  # An auth-required server returns 401 with a WWW-Authenticate header pointing at
+  # RFC 9728 protected-resource metadata. We match on resource_metadata AND the MCP-
+  # specific "mcp:" scope prefix in the challenge to distinguish from generic OAuth APIs
+  # that also use RFC 9728 (e.g. financial APIs, identity providers).
+  - type: http
+    path: ""
+    method: POST
+    headers:
+      Content-Type: application/json
+      Accept: application/json, text/event-stream
+      MCP-Protocol-Version: "2026-07-28"
+      mcp-method: server/discover
+    body: '{"jsonrpc":"2.0","id":1,"method":"server/discover","params":{"_meta":{"io.modelcontextprotocol/protocolVersion":"2026-07-28","io.modelcontextprotocol/clientCapabilities":{}}}}'
+    match:
+      - type: status
+        value: 401
+      - type: header.contains
+        header: WWW-Authenticate
+        value: resource_metadata
+      - type: header.contains
+        header: WWW-Authenticate
+        value: "mcp:"
+
+  # ---- 2025-06-18 spec vectors (backward compat) ----
+
+  # Vector 3: initialize (2025-06-18, open server)
+  # The old handshake for servers that haven't upgraded to the 2026-07-28 spec.
+  # A real MCP server replies with a JSON-RPC result carrying protocolVersion +
+  # serverInfo. NOTE: the reply may be either application/json OR an SSE `data: {...}`
+  # line (both seen in the wild — DeepWiki, Context7), so we match on body markers
+  # only and add no content-type rule here.
   - type: http
     path: ""
     method: POST
@@ -56,11 +119,10 @@ requests:
       - type: body.contains
         value: '"serverInfo"'
 
-  # OAuth-protected server (RFC 9728): MCP servers MUST return 401 with a WWW-Authenticate
-  # header pointing at the protected-resource metadata. resource_metadata alone is RFC 9728,
-  # not MCP-specific, so we also require MCP-Protocol-Version in the response headers (the
-  # MCP spec mandates servers include it in all responses). This prevents false-positives on
-  # non-MCP APIs that happen to use RFC 9728 OAuth challenges.
+  # Vector 4: initialize (2025-06-18, OAuth-protected server)
+  # Older auth-required servers return 401 with WWW-Authenticate + MCP-Protocol-Version
+  # response header. We require the response header to avoid false-positives on non-MCP
+  # APIs that happen to use RFC 9728 OAuth challenges.
   - type: http
     path: ""
     method: POST
@@ -80,16 +142,11 @@ requests:
         value: ""
 
 # Augustus: emit the MCP generator config for a detected server so consumers
-# (Guard's augustus capability) can scan it without fabricating one. `generator:
-# mcp` sets the emitted config Type; the MCP generator is driven entirely by
-# `extra` keys (it has no REST-style model/api_key/body): `transport: auto` lets
-# augustus negotiate Streamable-HTTP vs legacy HTTP+SSE at connect time (and apply
-# the /sse path hint), and `mode: list_tools` exposes the tool surface the
-# tool-security probes inspect. `endpoint` is the exact URL julius matched ($TARGET).
+# (Guard's augustus capability) can scan it without fabricating one.
 augustus:
   generator: mcp
   config_template:
     endpoint: "$TARGET"
     extra:
-      transport: auto
+      transport: streamable-http
       mode: list_tools

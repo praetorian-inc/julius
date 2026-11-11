@@ -53,38 +53,88 @@ type fixture struct {
 // fixtureCase is one scenario: a set of canned responses and the match result
 // the probe must produce against them.
 type fixtureCase struct {
-	Name      string                     `yaml:"name"`
-	Match     bool                       `yaml:"match"`
-	Responses map[string]fixtureResponse `yaml:"responses"`
+	Name      string                        `yaml:"name"`
+	Match     bool                          `yaml:"match"`
+	Responses map[string]fixtureResponseSet `yaml:"responses"`
+}
+
+// fixtureRequestMatch restricts a canned response to requests whose body
+// contains the given substring.
+type fixtureRequestMatch struct {
+	BodyContains string `yaml:"body_contains,omitempty"`
 }
 
 // fixtureResponse is the canned HTTP response served for a given request path.
 // Method, when set, restricts the response to requests using that HTTP method;
 // a mismatch is served 405 so a probe whose method regresses (e.g. POST->GET)
 // no longer receives the canned body. Empty means any method is accepted.
+// RequestMatch, when set, further restricts the response by request body.
 type fixtureResponse struct {
-	Status  int               `yaml:"status"`
-	Method  string            `yaml:"method,omitempty"`
-	Headers map[string]string `yaml:"headers,omitempty"`
-	Body    string            `yaml:"body,omitempty"`
+	Status       int                  `yaml:"status"`
+	Method       string               `yaml:"method,omitempty"`
+	Headers      map[string]string    `yaml:"headers,omitempty"`
+	Body         string               `yaml:"body,omitempty"`
+	RequestMatch *fixtureRequestMatch `yaml:"request_match,omitempty"`
+}
+
+// fixtureResponseSet unmarshals from either a single response object
+// (backward compatible) or an array of responses dispatched by request.
+type fixtureResponseSet []fixtureResponse
+
+func (rs *fixtureResponseSet) UnmarshalYAML(data []byte) error {
+	var arr []fixtureResponse
+	if err := yaml.Unmarshal(data, &arr); err == nil {
+		*rs = arr
+		return nil
+	}
+	var single fixtureResponse
+	if err := yaml.Unmarshal(data, &single); err != nil {
+		return err
+	}
+	*rs = []fixtureResponse{single}
+	return nil
 }
 
 // handler serves the case's canned responses keyed by the full request URI
 // (path plus ?query), falling back to the bare path if no exact match is
 // found. Any path not present in the fixture returns 404 with an empty body,
 // which lets negative cases (and unmet require:all chains) fail naturally.
+// Within a path, the first response whose method and request_match fit the
+// request is served; if none fits, 405.
 func (c fixtureCase) handler() http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		key := r.URL.RequestURI() // path plus ?query, matching how probes specify paths
-		resp, ok := c.Responses[key]
+		respSet, ok := c.Responses[key]
 		if !ok {
-			resp, ok = c.Responses[r.URL.Path]
+			respSet, ok = c.Responses[r.URL.Path]
 		}
 		if !ok {
 			w.WriteHeader(http.StatusNotFound)
 			return
 		}
-		if resp.Method != "" && !strings.EqualFold(r.Method, resp.Method) {
+
+		var reqBody []byte
+		if r.Body != nil {
+			reqBody, _ = io.ReadAll(r.Body)
+			_ = r.Body.Close()
+		}
+
+		var resp *fixtureResponse
+		for i := range respSet {
+			candidate := &respSet[i]
+			if candidate.Method != "" && !strings.EqualFold(r.Method, candidate.Method) {
+				continue
+			}
+			if candidate.RequestMatch != nil && candidate.RequestMatch.BodyContains != "" {
+				if !strings.Contains(string(reqBody), candidate.RequestMatch.BodyContains) {
+					continue
+				}
+			}
+			resp = candidate
+			break
+		}
+
+		if resp == nil {
 			w.WriteHeader(http.StatusMethodNotAllowed)
 			return
 		}
