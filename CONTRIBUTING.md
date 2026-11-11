@@ -76,7 +76,7 @@ models:
 |-------|----------|-------------|
 | `name` | Yes | Unique identifier matching the filename (without `.yaml`) |
 | `description` | Yes | Human-readable description of the LLM service |
-| `category` | Yes | Service category: `self-hosted`, `gateway`, `rag-orchestration`, `cloud-managed`, `generic` |
+| `category` | Yes | Service category: `self-hosted`, `gateway`, `rag-orchestration`, `cloud-managed`, `mcp`, `generic` |
 | `port_hint` | No | Default port for the service (helps prioritize probes) |
 | `specificity` | No | Match specificity score from 1-100 (100=exact match, 50=default, 1=generic fallback) |
 | `api_docs` | No | Link to the service's API documentation |
@@ -125,7 +125,7 @@ julius probe -v https://different-llm-service:port
 |-------|----------|---------|-------------|
 | `name` | Yes | - | Unique identifier, should match filename |
 | `description` | Yes | - | Human-readable description |
-| `category` | Yes | - | Service category: `self-hosted`, `gateway`, `rag-orchestration`, `cloud-managed`, `generic` |
+| `category` | Yes | - | Service category: `self-hosted`, `gateway`, `rag-orchestration`, `cloud-managed`, `mcp`, `generic` |
 | `port_hint` | No | - | Default port for the service |
 | `specificity` | No | 50 | Match specificity score (1-100, higher = more specific) |
 | `api_docs` | No | - | Link to API documentation |
