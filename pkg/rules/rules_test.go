@@ -264,7 +264,7 @@ func TestContentTypeRule_Match(t *testing.T) {
 
 func TestContentTypeRule_Unmarshal(t *testing.T) {
 	yamlStr := "type: content-type\nvalue: application/json"
-	
+
 	var raw RawRule
 	err := yaml.Unmarshal([]byte(yamlStr), &raw)
 	require.NoError(t, err)
@@ -272,7 +272,7 @@ func TestContentTypeRule_Unmarshal(t *testing.T) {
 	rule, err := raw.ToRule()
 	require.NoError(t, err)
 	assert.Equal(t, "content-type", rule.GetType())
-	
+
 	contentTypeRule, ok := rule.(*ContentTypeRule)
 	require.True(t, ok)
 	assert.Equal(t, "application/json", contentTypeRule.Value)

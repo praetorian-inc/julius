@@ -46,7 +46,7 @@ func TestDoRequest_Match(t *testing.T) {
 	}))
 	defer server.Close()
 
-	s := NewScanner(WithTimeout(5*time.Second))
+	s := NewScanner(WithTimeout(5 * time.Second))
 	req := types.Request{
 		Type:   "http",
 		Path:   "/",
@@ -70,7 +70,7 @@ func TestDoRequest_NoMatch(t *testing.T) {
 	}))
 	defer server.Close()
 
-	s := NewScanner(WithTimeout(5*time.Second))
+	s := NewScanner(WithTimeout(5 * time.Second))
 	req := types.Request{
 		Type:   "http",
 		Path:   "/",
@@ -149,7 +149,7 @@ func TestScan_ReturnsAllMatches(t *testing.T) {
 	}))
 	defer server.Close()
 
-	s := NewScanner(WithTimeout(5*time.Second))
+	s := NewScanner(WithTimeout(5 * time.Second))
 	probes := []*types.Probe{
 		{
 			Name:        "specific-service",
@@ -198,7 +198,7 @@ func TestScan_SortsBySpecificity(t *testing.T) {
 	}))
 	defer server.Close()
 
-	s := NewScanner(WithTimeout(5*time.Second))
+	s := NewScanner(WithTimeout(5 * time.Second))
 	probes := []*types.Probe{
 		{Name: "low", Specificity: 25, Requests: []types.Request{{Path: "/", RawMatch: []rules.RawRule{{Type: "status", Value: 200}}}}},
 		{Name: "high", Specificity: 100, Requests: []types.Request{{Path: "/", RawMatch: []rules.RawRule{{Type: "status", Value: 200}}}}},
@@ -224,7 +224,7 @@ func TestScan_NoMatch(t *testing.T) {
 	}))
 	defer server.Close()
 
-	s := NewScanner(WithTimeout(5*time.Second))
+	s := NewScanner(WithTimeout(5 * time.Second))
 	probes := []*types.Probe{
 		{
 			Name:     "OpenAI",
@@ -260,7 +260,7 @@ func TestScanAll(t *testing.T) {
 	}))
 	defer server2.Close()
 
-	s := NewScanner(WithTimeout(5*time.Second))
+	s := NewScanner(WithTimeout(5 * time.Second))
 	targets := []string{server1.URL, server2.URL}
 	probes := []*types.Probe{
 		{
@@ -310,7 +310,7 @@ func TestScanAll_SomeNoMatch(t *testing.T) {
 	}))
 	defer server2.Close()
 
-	s := NewScanner(WithTimeout(5*time.Second))
+	s := NewScanner(WithTimeout(5 * time.Second))
 	targets := []string{server1.URL, server2.URL}
 	probes := []*types.Probe{
 		{
@@ -348,7 +348,7 @@ func TestDoRequest_WithBodyAndHeaders(t *testing.T) {
 	}))
 	defer server.Close()
 
-	s := NewScanner(WithTimeout(5*time.Second))
+	s := NewScanner(WithTimeout(5 * time.Second))
 	req := types.Request{
 		Path:   "/test",
 		Method: "POST",
@@ -413,7 +413,7 @@ func TestScanWithModels(t *testing.T) {
 			}))
 			defer server.Close()
 
-			scanner := NewScanner(WithTimeout(5*time.Second))
+			scanner := NewScanner(WithTimeout(5 * time.Second))
 			probes := []*types.Probe{
 				{
 					Name:     "ollama",
@@ -458,7 +458,7 @@ func TestScanWithoutModelsConfig(t *testing.T) {
 	}))
 	defer server.Close()
 
-	scanner := NewScanner(WithTimeout(5*time.Second))
+	scanner := NewScanner(WithTimeout(5 * time.Second))
 	probes := []*types.Probe{
 		{
 			Name:     "test-service",
@@ -545,7 +545,7 @@ func TestFetchModels(t *testing.T) {
 			}))
 			defer server.Close()
 
-			scanner := NewScanner(WithTimeout(5*time.Second))
+			scanner := NewScanner(WithTimeout(5 * time.Second))
 			models, err := scanner.fetchModels(server.URL, tt.config)
 
 			if tt.wantErr {
@@ -568,7 +568,7 @@ func TestFetchModelsWithHeaders(t *testing.T) {
 	}))
 	defer server.Close()
 
-	scanner := NewScanner(WithTimeout(5*time.Second))
+	scanner := NewScanner(WithTimeout(5 * time.Second))
 	cfg := &types.ModelsConfig{
 		Path:    "/v1/models",
 		Method:  "GET",
@@ -825,7 +825,7 @@ func TestSingleflightDeduplication(t *testing.T) {
 	}))
 	defer server.Close()
 
-	s := NewScanner(WithTimeout(5*time.Second))
+	s := NewScanner(WithTimeout(5 * time.Second))
 
 	// Simulate multiple goroutines hitting the same endpoint concurrently
 	var wg sync.WaitGroup
@@ -851,7 +851,7 @@ func TestCachePersistsAcrossCalls(t *testing.T) {
 	}))
 	defer server.Close()
 
-	s := NewScanner(WithTimeout(5*time.Second))
+	s := NewScanner(WithTimeout(5 * time.Second))
 
 	// First call
 	_, _, _ = s.doHTTPRequest(server.URL, "GET", "/v1/models", "", nil)
@@ -871,7 +871,7 @@ func TestDifferentURLsNotDeduplicated(t *testing.T) {
 	}))
 	defer server.Close()
 
-	s := NewScanner(WithTimeout(5*time.Second))
+	s := NewScanner(WithTimeout(5 * time.Second))
 
 	// Different paths = different cache keys
 	_, _, _ = s.doHTTPRequest(server.URL, "GET", "/v1/models", "", nil)
@@ -908,7 +908,7 @@ func TestConcurrentProbeExecution(t *testing.T) {
 		}
 	}
 
-	s := NewScanner(WithTimeout(5*time.Second))
+	s := NewScanner(WithTimeout(5 * time.Second))
 	start := time.Now()
 	s.Scan(server.URL, probes, false)
 	elapsed := time.Since(start)
@@ -967,7 +967,7 @@ func TestCacheKeyIncludesMethod(t *testing.T) {
 	}))
 	defer server.Close()
 
-	s := NewScanner(WithTimeout(5*time.Second))
+	s := NewScanner(WithTimeout(5 * time.Second))
 
 	// Same URL, different methods = different cache keys
 	_, _, _ = s.doHTTPRequest(server.URL, "GET", "/v1/models", "", nil)
@@ -986,7 +986,7 @@ func TestCacheKeyIncludesBody(t *testing.T) {
 	}))
 	defer server.Close()
 
-	s := NewScanner(WithTimeout(5*time.Second))
+	s := NewScanner(WithTimeout(5 * time.Second))
 
 	// Same URL and method, different body = different cache keys
 	_, _, _ = s.doHTTPRequest(server.URL, "POST", "/v1/chat", `{"a":1}`, nil)
@@ -1015,7 +1015,7 @@ func TestScan_RequireAll_AllMatch(t *testing.T) {
 	}))
 	defer server.Close()
 
-	s := NewScanner(WithTimeout(5*time.Second))
+	s := NewScanner(WithTimeout(5 * time.Second))
 	probes := []*types.Probe{
 		{
 			Name:    "test-all",
@@ -1057,7 +1057,7 @@ func TestScan_RequireAll_SomeFail(t *testing.T) {
 	}))
 	defer server.Close()
 
-	s := NewScanner(WithTimeout(5*time.Second))
+	s := NewScanner(WithTimeout(5 * time.Second))
 	probes := []*types.Probe{
 		{
 			Name:    "test-all",
@@ -1096,7 +1096,7 @@ func TestScan_RequireAny_Default(t *testing.T) {
 	}))
 	defer server.Close()
 
-	s := NewScanner(WithTimeout(5*time.Second))
+	s := NewScanner(WithTimeout(5 * time.Second))
 	probes := []*types.Probe{
 		{
 			Name: "test-any", // No require field = default "any"
@@ -1128,7 +1128,7 @@ func TestScan_RequireAll_EmptyRequests(t *testing.T) {
 	}))
 	defer server.Close()
 
-	s := NewScanner(WithTimeout(5*time.Second))
+	s := NewScanner(WithTimeout(5 * time.Second))
 	probes := []*types.Probe{
 		{
 			Name:     "test-empty",
@@ -1163,15 +1163,16 @@ func TestProbe_RequiresAll(t *testing.T) {
 		})
 	}
 }
+
 // ============================================================================
 // TLS Configuration Tests
 // ============================================================================
 
 func TestNewScanner_NilTLSConfig(t *testing.T) {
-	s := NewScanner(WithTimeout(5*time.Second))
-	
+	s := NewScanner(WithTimeout(5 * time.Second))
+
 	require.NotNil(t, s.client, "client should not be nil")
-	
+
 	// When tlsConfig is nil, client.Transport should be nil (uses default)
 	assert.Nil(t, s.client.Transport, "Transport should be nil when tlsConfig is nil")
 }
@@ -1180,12 +1181,12 @@ func TestNewScanner_WithTLSConfig(t *testing.T) {
 	tlsConfig := &tls.Config{
 		InsecureSkipVerify: true,
 	}
-	
+
 	s := NewScanner(WithTimeout(5*time.Second), WithTLSConfig(tlsConfig))
-	
+
 	require.NotNil(t, s.client, "client should not be nil")
 	require.NotNil(t, s.client.Transport, "Transport should be set when tlsConfig provided")
-	
+
 	// Verify it's an http.Transport with the TLS config
 	transport, ok := s.client.Transport.(*http.Transport)
 	require.True(t, ok, "Transport should be *http.Transport")
@@ -1265,7 +1266,7 @@ func TestWithHeaders_NilHeaders(t *testing.T) {
 
 func TestNewScanner_DefaultMaxResponseSize(t *testing.T) {
 	s := NewScanner(WithTimeout(5*time.Second), WithMaxResponseSize(0))
-	
+
 	assert.Equal(t, int64(10*1024*1024), s.maxResponseSize, "maxResponseSize should default to 10MB when 0 is passed")
 }
 
@@ -1386,19 +1387,19 @@ func TestResponseSizeTruncation(t *testing.T) {
 	for i := range largeBody {
 		largeBody[i] = 'A'
 	}
-	
+
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusOK)
 		_, _ = w.Write(largeBody)
 	}))
 	defer server.Close()
-	
+
 	// Set maxResponseSize to only 512 bytes
 	s := NewScanner(WithTimeout(5*time.Second), WithMaxResponseSize(512))
-	
+
 	_, body, err := s.doHTTPRequest(server.URL, "GET", "/", "", nil)
 	require.NoError(t, err)
-	
+
 	// Body should be truncated to maxResponseSize
 	assert.Equal(t, 512, len(body), "response body should be truncated at size limit")
 }

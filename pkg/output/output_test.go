@@ -177,8 +177,8 @@ func TestNewWriter_Table(t *testing.T) {
 
 	results := []types.Result{
 		{
-			Target:     "https://api.openai.com",
-			Service:    "OpenAI API",
+			Target:  "https://api.openai.com",
+			Service: "OpenAI API",
 		},
 	}
 
@@ -198,8 +198,8 @@ func TestNewWriter_JSON(t *testing.T) {
 
 	results := []types.Result{
 		{
-			Target:     "https://test.com",
-			Service:    "Test",
+			Target:  "https://test.com",
+			Service: "Test",
 		},
 	}
 
@@ -304,8 +304,8 @@ func TestNewWriter_JSONL(t *testing.T) {
 
 	results := []types.Result{
 		{
-			Target:     "https://test.com",
-			Service:    "Test",
+			Target:  "https://test.com",
+			Service: "Test",
 		},
 	}
 
