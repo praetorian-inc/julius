@@ -41,15 +41,26 @@ cases:
   # Non-compliant 2026-07-28 server: responds to server/discover but returns
   # the old flat shape (protocolVersion + serverInfo) instead of the spec-
   # mandated supportedVersions + namespaced _meta. V1b catches this.
+  # Uses request dispatching: server/discover gets the flat response while
+  # initialize gets a method-not-found error, proving only V1b can match.
   - name: positive-discover-flat-shape
     match: true
     responses:
       /:
-        status: 200
-        method: POST
-        headers:
-          Content-Type: application/json
-        body: '{"jsonrpc":"2.0","id":1,"result":{"protocolVersion":"2026-07-28","serverInfo":{"name":"minimal","version":"1.0"},"capabilities":{"tools":{}}}}'
+        - request_match:
+            body_contains: "server/discover"
+          status: 200
+          method: POST
+          headers:
+            Content-Type: application/json
+          body: '{"jsonrpc":"2.0","id":1,"result":{"protocolVersion":"2026-07-28","serverInfo":{"name":"minimal","version":"1.0"},"capabilities":{"tools":{}}}}'
+        - request_match:
+            body_contains: "initialize"
+          status: 200
+          method: POST
+          headers:
+            Content-Type: application/json
+          body: '{"jsonrpc":"2.0","id":1,"error":{"code":-32601,"message":"Method not found: initialize"}}'
 
   # OAuth-protected server (2026-07-28): 401 with resource_metadata in
   # WWW-Authenticate. No MCP-Protocol-Version response header needed for V2.
