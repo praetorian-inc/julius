@@ -9,7 +9,11 @@ updates:
     labels:
       - "dependencies"
       - "ci"
-    open-pull-requests-limit: 10
+    open-pull-requests-limit: 5
+    groups:
+      public-workflows:
+        patterns:
+          - "praetorian-inc/public-workflows"
 
   - package-ecosystem: "gomod"
     directory: "/"
@@ -19,4 +23,9 @@ updates:
       prefix: "deps"
     labels:
       - "dependencies"
-    open-pull-requests-limit: 10
+    open-pull-requests-limit: 5
+    groups:
+      go-deps-minor:
+        update-types:
+          - "minor"
+          - "patch"
