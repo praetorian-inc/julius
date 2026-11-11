@@ -4,7 +4,7 @@
 #   V1: server/discover (2026-07-28, open): body contains "supportedVersions"
 #       AND "io.modelcontextprotocol/serverInfo"
 #   V2: server/discover (2026-07-28, OAuth): status 401 + WWW-Authenticate
-#       contains "resource_metadata"
+#       contains "resource_metadata" AND "mcp:" (scope prefix)
 #   V3: initialize (2025-06-18, open): body contains "protocolVersion"
 #       AND "serverInfo"
 #   V4: initialize (2025-06-18, OAuth): status 401 + WWW-Authenticate contains
@@ -91,14 +91,13 @@ cases:
 
   # ---- Negatives ----
 
-  # A 401 with resource_metadata but WITHOUT MCP-Protocol-Version header.
-  # V2 (2026-07-28 OAuth) WILL match this because it only requires 401 +
-  # resource_metadata. This is correct: in 2026-07-28, the MCP-Protocol-Version
-  # response header is no longer required to identify an MCP server behind OAuth.
-  # V4 (2025-06-18 OAuth) won't match (needs MCP-Protocol-Version header).
-  # Since require:any, the probe matches — so this is actually a positive.
-  - name: positive-oauth-no-mcp-header
-    match: true
+  # A 401 with resource_metadata but NO "mcp:" scope prefix and NO
+  # MCP-Protocol-Version header. This could be any RFC 9728 OAuth API
+  # (financial API, identity provider, etc.), not necessarily MCP.
+  # V2 won't match: requires "mcp:" in scope. V4 won't match: requires
+  # MCP-Protocol-Version header. No vector matches → negative.
+  - name: negative-oauth-no-mcp-scope
+    match: false
     responses:
       /:
         status: 401
@@ -163,3 +162,16 @@ cases:
         headers:
           Content-Type: application/json
         body: '{"supportedVersions":["v1","v2"],"default":"v2"}'
+
+  # A JSON-RPC error response from a server that rejects the namespaced _meta
+  # envelope (e.g. an older MCP server that doesn't understand the 2026-07-28
+  # params shape). The error body contains none of V1/V3's positive markers.
+  - name: negative-wrong-envelope-error
+    match: false
+    responses:
+      /:
+        status: 200
+        method: POST
+        headers:
+          Content-Type: application/json
+        body: '{"jsonrpc":"2.0","id":1,"error":{"code":-32602,"message":"Invalid params: missing required field protocolVersion in _meta"}}'
