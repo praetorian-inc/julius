@@ -1,14 +1,16 @@
 # Golden-file fixtures for the mcp-server probe.
 # Validated by pkg/scanner/fixture_test.go against probes/mcp-server.yaml.
-# mcp-server is require:any with four vectors:
-#   V1: server/discover (2026-07-28, open): body contains "supportedVersions"
-#       AND "io.modelcontextprotocol/serverInfo"
-#   V2: server/discover (2026-07-28, OAuth): status 401 + WWW-Authenticate
-#       contains "resource_metadata" AND "mcp:" (scope prefix)
-#   V3: initialize (2025-06-18, open): body contains "protocolVersion"
-#       AND "serverInfo"
-#   V4: initialize (2025-06-18, OAuth): status 401 + WWW-Authenticate contains
-#       "resource_metadata" + MCP-Protocol-Version header present
+# mcp-server is require:any with five vectors:
+#   V1:  server/discover (2026-07-28, open): body contains "supportedVersions"
+#        AND "io.modelcontextprotocol/serverInfo"
+#   V1b: server/discover (2026-07-28, non-compliant shape): body contains
+#        "protocolVersion" AND "serverInfo" (old flat response to new method)
+#   V2:  server/discover (2026-07-28, OAuth): status 401 + WWW-Authenticate
+#        contains "resource_metadata" AND "mcp:" (scope prefix)
+#   V3:  initialize (2025-06-18, open): body contains "protocolVersion"
+#        AND "serverInfo"
+#   V4:  initialize (2025-06-18, OAuth): status 401 + WWW-Authenticate contains
+#        "resource_metadata" + MCP-Protocol-Version header present
 probe: mcp-server
 cases:
   # ---- 2026-07-28 spec positives ----
@@ -35,6 +37,19 @@ cases:
         headers:
           Content-Type: application/json
         body: '{"jsonrpc":"2.0","id":1,"result":{"supportedVersions":["2026-07-28","2025-06-18"],"_meta":{"io.modelcontextprotocol/serverInfo":{"name":"multi-ver-mcp","version":"2.0"}},"capabilities":{"tools":{}}}}'
+
+  # Non-compliant 2026-07-28 server: responds to server/discover but returns
+  # the old flat shape (protocolVersion + serverInfo) instead of the spec-
+  # mandated supportedVersions + namespaced _meta. V1b catches this.
+  - name: positive-discover-flat-shape
+    match: true
+    responses:
+      /:
+        status: 200
+        method: POST
+        headers:
+          Content-Type: application/json
+        body: '{"jsonrpc":"2.0","id":1,"result":{"protocolVersion":"2026-07-28","serverInfo":{"name":"minimal","version":"1.0"},"capabilities":{"tools":{}}}}'
 
   # OAuth-protected server (2026-07-28): 401 with resource_metadata in
   # WWW-Authenticate. No MCP-Protocol-Version response header needed for V2.

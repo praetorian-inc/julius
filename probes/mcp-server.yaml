@@ -52,6 +52,27 @@ requests:
       - type: body.contains
         value: io.modelcontextprotocol/serverInfo
 
+  # Vector 1b: server/discover (2026-07-28, non-compliant response shape)
+  # Some early/partial 2026-07-28 implementations handle server/discover but
+  # return the old flat response shape (protocolVersion + serverInfo at the top
+  # level) instead of the spec-mandated supportedVersions + namespaced _meta
+  # envelope. They reject initialize, so V3 can't catch them. Same request as
+  # V1 but matched against the 2025-06-18-era body markers.
+  - type: http
+    path: ""
+    method: POST
+    headers:
+      Content-Type: application/json
+      Accept: application/json, text/event-stream
+      MCP-Protocol-Version: "2026-07-28"
+      mcp-method: server/discover
+    body: '{"jsonrpc":"2.0","id":1,"method":"server/discover","params":{"_meta":{"io.modelcontextprotocol/protocolVersion":"2026-07-28","io.modelcontextprotocol/clientCapabilities":{}}}}'
+    match:
+      - type: body.contains
+        value: '"protocolVersion"'
+      - type: body.contains
+        value: '"serverInfo"'
+
   # Vector 2: server/discover (2026-07-28, OAuth-protected server)
   # An auth-required server returns 401 with a WWW-Authenticate header pointing at
   # RFC 9728 protected-resource metadata. We match on resource_metadata AND the MCP-
