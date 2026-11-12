@@ -9,7 +9,20 @@ updates:
     labels:
       - "dependencies"
       - "ci"
-    open-pull-requests-limit: 10
+    open-pull-requests-limit: 5
+    ignore:
+      # Leaderboard reusables are SHA-pinned to commits whose
+      # job_workflow_ref is on the LeaderboardMetricsRole IAM trust list.
+      # Auto-bumping breaks OIDC AssumeRole (metrics silently stop)
+      # unless the new SHA is added to the trust first via the ENG-4164
+      # runbook. Must be rolled manually, not by dependabot.
+      # (See Augustus PR #241, which broke metrics exactly this way.)
+      - dependency-name: "praetorian-inc/public-workflows/.github/workflows/leaderboard-metrics.yml"
+      - dependency-name: "praetorian-inc/public-workflows/.github/workflows/leaderboard-backfill.yml"
+    groups:
+      public-workflows:
+        patterns:
+          - "praetorian-inc/public-workflows"
 
   - package-ecosystem: "gomod"
     directory: "/"
@@ -19,4 +32,9 @@ updates:
       prefix: "deps"
     labels:
       - "dependencies"
-    open-pull-requests-limit: 10
+    open-pull-requests-limit: 5
+    groups:
+      go-deps-minor:
+        update-types:
+          - "minor"
+          - "patch"
