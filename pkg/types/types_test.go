@@ -255,7 +255,7 @@ func TestBuildGeneratorConfigs_MCPExtra(t *testing.T) {
 		},
 	}
 
-	configs := p.BuildGeneratorConfigs("http://host:9099/mcp", []string{"model-a"})
+	configs := p.BuildGeneratorConfigs("http://host:9099/mcp", []string{"model-a"}, nil)
 
 	require.Len(t, configs, 1)
 	gc := configs[0]
@@ -282,4 +282,55 @@ func TestGeneratorConfig_ExtraJSONRoundTrip(t *testing.T) {
 	var got GeneratorConfig
 	require.NoError(t, json.Unmarshal(b, &got))
 	assert.Equal(t, original.Extra, got.Extra)
+}
+
+func TestMergeMetadataIntoExtra(t *testing.T) {
+	tests := []struct {
+		name     string
+		extra    map[string]string
+		metadata map[string]string
+		want     map[string]string
+	}{
+		{"nil metadata leaves nil Extra", nil, nil, nil},
+		{"empty metadata leaves Extra unchanged", map[string]string{"a": "1"}, map[string]string{}, map[string]string{"a": "1"}},
+		{"merges into nil Extra", nil, map[string]string{"protocol_version": "2026-07-28", "x": "y"}, map[string]string{"protocol_version": "2026-07-28", "x": "y"}},
+		{"merges into existing Extra", map[string]string{"a": "1"}, map[string]string{"b": "2"}, map[string]string{"a": "1", "b": "2"}},
+		{"overlapping key keeps original", map[string]string{"a": "1"}, map[string]string{"a": "override", "b": "2"}, map[string]string{"a": "1", "b": "2"}},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			cfg := GeneratorConfig{Extra: tt.extra}
+			mergeMetadataIntoExtra(&cfg, tt.metadata)
+			assert.Equal(t, tt.want, cfg.Extra)
+		})
+	}
+}
+
+func TestBuildGeneratorConfigs_Metadata(t *testing.T) {
+	p := Probe{
+		Name: "mcp-server",
+		Augustus: &AugustusConfig{
+			Generator: "mcp",
+			ConfigTemplate: GeneratorConfig{
+				Endpoint: "$TARGET",
+				Extra:    map[string]string{"mode": "list_tools"},
+			},
+		},
+	}
+	metadata := map[string]string{"protocol_version": "2026-07-28", "mode": "ignored"}
+
+	t.Run("no models", func(t *testing.T) {
+		configs := p.BuildGeneratorConfigs("http://host/mcp", nil, metadata)
+		require.Len(t, configs, 1)
+		assert.Equal(t, "2026-07-28", configs[0].Extra["protocol_version"])
+		assert.Equal(t, "list_tools", configs[0].Extra["mode"])
+	})
+
+	t.Run("per model", func(t *testing.T) {
+		configs := p.BuildGeneratorConfigs("http://host/mcp", []string{"m1", "m2"}, metadata)
+		require.Len(t, configs, 2)
+		for _, c := range configs {
+			assert.Equal(t, "2026-07-28", c.Extra["protocol_version"])
+		}
+	})
 }
