@@ -255,7 +255,7 @@ func TestBuildGeneratorConfigs_MCPExtra(t *testing.T) {
 		},
 	}
 
-	configs := p.BuildGeneratorConfigs("http://host:9099/mcp", []string{"model-a"})
+	configs := p.BuildGeneratorConfigs("http://host:9099/mcp", []string{"model-a"}, nil)
 
 	require.Len(t, configs, 1)
 	gc := configs[0]

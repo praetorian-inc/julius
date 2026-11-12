@@ -25,7 +25,7 @@ func (tw *TableWriter) Write(results []types.Result) error {
 	}
 
 	table := tablewriter.NewWriter(tw.writer)
-	table.SetHeader([]string{"TARGET", "SERVICE", "SPECIFICITY", "CATEGORY", "AUTH", "MODELS", "ERROR"})
+	table.SetHeader([]string{"TARGET", "SERVICE", "SPECIFICITY", "CATEGORY", "AUTH", "VERSION", "MODELS", "ERROR"})
 	table.SetHeaderAlignment(tablewriter.ALIGN_LEFT)
 	table.SetAlignment(tablewriter.ALIGN_LEFT)
 
@@ -43,6 +43,7 @@ func (tw *TableWriter) Write(results []types.Result) error {
 			fmt.Sprintf("%d", result.Specificity),
 			result.Category,
 			auth,
+			result.Metadata["protocol_version"],
 			models,
 			result.Error,
 		})

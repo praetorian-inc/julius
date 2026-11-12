@@ -65,7 +65,7 @@ func TestEmbeddedMCPServerProbe_EmitsAugustusConfig(t *testing.T) {
 	}
 	require.NotNil(t, mcp, "mcp-server probe must be embedded")
 
-	configs := mcp.BuildGeneratorConfigs("http://host:9099/mcp", nil)
+	configs := mcp.BuildGeneratorConfigs("http://host:9099/mcp", nil, nil)
 	require.Len(t, configs, 1, "the augustus: section must emit exactly one generator config")
 	gc := configs[0]
 	assert.Equal(t, "mcp", gc.Type, "Type is populated from augustus.generator")

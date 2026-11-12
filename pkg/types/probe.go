@@ -16,16 +16,17 @@ const (
 )
 
 type Probe struct {
-	Name        string          `yaml:"name"`
-	Description string          `yaml:"description"`
-	Category    string          `yaml:"category"`
-	PortHint    int             `yaml:"port_hint"`
-	Specificity int             `yaml:"specificity"`       // 1-100, 0 treated as default (50)
-	Require     string          `yaml:"require,omitempty"` // "any" (default) or "all"
-	APIDocs     string          `yaml:"api_docs"`
-	Requests    []Request       `yaml:"requests"`
-	Models      *ModelsConfig   `yaml:"models,omitempty"`
-	Augustus    *AugustusConfig `yaml:"augustus,omitempty"`
+	Name        string            `yaml:"name"`
+	Description string            `yaml:"description"`
+	Category    string            `yaml:"category"`
+	PortHint    int               `yaml:"port_hint"`
+	Specificity int               `yaml:"specificity"`       // 1-100, 0 treated as default (50)
+	Require     string            `yaml:"require,omitempty"` // "any" (default) or "all"
+	Extract     map[string]string `yaml:"extract,omitempty"`
+	APIDocs     string            `yaml:"api_docs"`
+	Requests    []Request         `yaml:"requests"`
+	Models      *ModelsConfig     `yaml:"models,omitempty"`
+	Augustus    *AugustusConfig   `yaml:"augustus,omitempty"`
 }
 
 func (p *Probe) RequiresAll() bool {
@@ -39,22 +40,38 @@ func (p *Probe) GetSpecificity() int {
 	return p.Specificity
 }
 
-func (p *Probe) BuildGeneratorConfigs(target string, models []string) []GeneratorConfig {
+func (p *Probe) BuildGeneratorConfigs(target string, models []string, metadata map[string]string) []GeneratorConfig {
 	if p.Augustus == nil {
 		return nil
 	}
 
 	if len(models) == 0 {
 		config := resolveGeneratorConfig(p.Augustus.ConfigTemplate, p.Augustus.Generator, target, "")
+		mergeMetadataIntoExtra(&config, metadata)
 		return []GeneratorConfig{config}
 	}
 
 	configs := make([]GeneratorConfig, 0, len(models))
 	for _, model := range models {
 		config := resolveGeneratorConfig(p.Augustus.ConfigTemplate, p.Augustus.Generator, target, model)
+		mergeMetadataIntoExtra(&config, metadata)
 		configs = append(configs, config)
 	}
 	return configs
+}
+
+func mergeMetadataIntoExtra(config *GeneratorConfig, metadata map[string]string) {
+	if len(metadata) == 0 {
+		return
+	}
+	if config.Extra == nil {
+		config.Extra = make(map[string]string, len(metadata))
+	}
+	for k, v := range metadata {
+		if _, exists := config.Extra[k]; !exists {
+			config.Extra[k] = v
+		}
+	}
 }
 
 func resolveGeneratorConfig(cfg GeneratorConfig, genType, target, model string) GeneratorConfig {
