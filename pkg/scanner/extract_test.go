@@ -1,6 +1,7 @@
 package scanner
 
 import (
+	"strings"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -101,4 +102,30 @@ func TestExtractFromBody(t *testing.T) {
 			assert.Equal(t, tt.want, extractFromBody([]byte(tt.body), tt.extracts))
 		})
 	}
+}
+
+func TestSanitizeMetadataValue(t *testing.T) {
+	tests := []struct {
+		name string
+		in   string
+		want string
+	}{
+		{"clean passes through", "2025-06-18", "2025-06-18"},
+		{"control chars stripped", "hello\x00world", "helloworld"},
+		{"DEL stripped", "a\x7fb", "ab"},
+		{"ANSI stripped", "hello\x1b[31mred\x1b[0m", "hellored"},
+		{"truncated to 256", strings.Repeat("a", 300), strings.Repeat("a", 256)},
+		{"empty", "", ""},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			assert.Equal(t, tt.want, sanitizeMetadataValue(tt.in))
+		})
+	}
+}
+
+func TestExtractFromBody_SanitizesHostileValue(t *testing.T) {
+	body := []byte(`{"v":"1.0\u001b[31m-evil\u001b[0m\u0000"}`)
+	got := extractFromBody(body, map[string]string{"version": ".v"})
+	assert.Equal(t, map[string]string{"version": "1.0-evil"}, got)
 }

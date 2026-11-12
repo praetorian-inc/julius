@@ -4,11 +4,32 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/url"
+	"regexp"
 	"strconv"
 	"strings"
 
 	"github.com/itchyny/gojq"
 )
+
+var ansiEscRe = regexp.MustCompile(`\x1b\[[0-9;]*[a-zA-Z]`)
+
+func sanitizeMetadataValue(s string) string {
+	s = ansiEscRe.ReplaceAllString(s, "")
+
+	var b strings.Builder
+	for _, r := range s {
+		if r < 0x20 || r == 0x7f {
+			continue
+		}
+		b.WriteRune(r)
+	}
+	s = b.String()
+
+	if len(s) > 256 {
+		s = s[:256]
+	}
+	return s
+}
 
 func NormalizeTarget(target string) string {
 	target = strings.TrimSpace(target)
@@ -113,7 +134,7 @@ func extractFromBody(body []byte, extracts map[string]string) map[string]string 
 			continue
 		}
 		if s, ok := v.(string); ok && s != "" {
-			result[field] = s
+			result[field] = sanitizeMetadataValue(s)
 		}
 	}
 
