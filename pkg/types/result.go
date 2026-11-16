@@ -7,6 +7,7 @@ type Result struct {
 	Category         string            `json:"category"`
 	Specificity      int               `json:"specificity"`
 	AuthRequired     bool              `json:"auth_required"`
+	Metadata         map[string]string `json:"metadata,omitempty"`
 	Models           []string          `json:"models,omitempty"`
 	GeneratorConfigs []GeneratorConfig `json:"generator_configs,omitempty"`
 	Error            string            `json:"error,omitempty"`

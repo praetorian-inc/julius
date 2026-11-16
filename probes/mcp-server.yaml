@@ -27,6 +27,8 @@ category: mcp
 port_hint: 443
 specificity: 90
 require: any
+extract:
+  protocol_version: '.result.protocolVersion // .result.supportedVersions[0]'
 api_docs: https://modelcontextprotocol.io/specification/2026-07-28/basic/transports
 
 requests:
