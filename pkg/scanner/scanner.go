@@ -44,7 +44,34 @@ func NewScanner(opts ...Option) *Scanner {
 	for _, opt := range opts {
 		opt(s)
 	}
+	if len(s.headers) > 0 {
+		s.client.CheckRedirect = sameOriginRedirect
+	}
 	return s
+}
+
+func sameOriginRedirect(req *http.Request, via []*http.Request) error {
+	if len(via) >= 10 {
+		return fmt.Errorf("stopped after 10 redirects")
+	}
+
+	origin := via[0].URL
+	if req.URL.Scheme != origin.Scheme ||
+		!strings.EqualFold(req.URL.Hostname(), origin.Hostname()) ||
+		effectivePort(req.URL) != effectivePort(origin) {
+		return fmt.Errorf("refusing cross-origin redirect with configured headers")
+	}
+	return nil
+}
+
+func effectivePort(u *url.URL) string {
+	if port := u.Port(); port != "" {
+		return port
+	}
+	if u.Scheme == "https" {
+		return "443"
+	}
+	return "80"
 }
 
 func (s *Scanner) ScanAll(targets []string, probes []*types.Probe, augustus bool) []types.Result {
