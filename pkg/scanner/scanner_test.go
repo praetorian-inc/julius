@@ -8,6 +8,7 @@ import (
 	"io"
 	"net/http"
 	"net/http/httptest"
+	"net/url"
 	"sync"
 	"sync/atomic"
 	"testing"
@@ -18,6 +19,95 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
+
+func TestScanner_AuthenticatedRedirects(t *testing.T) {
+	for _, tc := range []struct {
+		name          string
+		authenticated bool
+		foreign       bool
+		wantError     bool
+	}{
+		{"same origin authenticated", true, false, false},
+		{"foreign origin authenticated", true, true, true},
+		{"foreign origin anonymous", false, true, false},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			var foreignRequests atomic.Int32
+			foreign := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+				foreignRequests.Add(1)
+				w.WriteHeader(http.StatusOK)
+			}))
+			defer foreign.Close()
+
+			server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+				if tc.authenticated {
+					assert.Equal(t, "secret", r.Header.Get("X-API-Key"))
+					assert.Equal(t, "session=test", r.Header.Get("Cookie"))
+				}
+				if r.URL.Path == "/final" {
+					w.WriteHeader(http.StatusOK)
+					return
+				}
+				target := "/final"
+				if tc.foreign {
+					target = foreign.URL
+				}
+				http.Redirect(w, r, target, http.StatusFound)
+			}))
+			defer server.Close()
+
+			var headers map[string]string
+			if tc.authenticated {
+				headers = map[string]string{"X-API-Key": "secret", "Cookie": "session=test"}
+			}
+			s := NewScanner(WithHeaders(headers))
+			_, _, err := s.doHTTPRequest(server.URL, http.MethodGet, "/", "", nil)
+
+			if tc.wantError {
+				require.ErrorContains(t, err, "cross-origin")
+				assert.Zero(t, foreignRequests.Load(), "credentials must not reach the foreign server")
+			} else {
+				require.NoError(t, err)
+				if tc.foreign {
+					assert.Equal(t, int32(1), foreignRequests.Load())
+				}
+			}
+		})
+	}
+}
+
+func TestSameOriginRedirect(t *testing.T) {
+	origin, err := http.NewRequest(http.MethodGet, "https://example.com/start", nil)
+	require.NoError(t, err)
+
+	for _, tc := range []struct {
+		url     string
+		allowed bool
+	}{
+		{"https://example.com/next", true},
+		{"https://EXAMPLE.COM:443/next", true},
+		{"https://example.com:8443/next", false},
+		{"https://other.example.com/next", false},
+		{"http://example.com/next", false},
+	} {
+		t.Run(tc.url, func(t *testing.T) {
+			target, err := url.Parse(tc.url)
+			require.NoError(t, err)
+			err = sameOriginRedirect(&http.Request{URL: target}, []*http.Request{origin})
+			if tc.allowed {
+				require.NoError(t, err)
+			} else {
+				require.ErrorContains(t, err, "cross-origin")
+			}
+		})
+	}
+
+	via := make([]*http.Request, 10)
+	for i := range via {
+		via[i] = origin
+	}
+	require.ErrorContains(t, sameOriginRedirect(origin, via), "10 redirects")
+}
 
 func TestNewScanner(t *testing.T) {
 	timeout := 5 * time.Second
