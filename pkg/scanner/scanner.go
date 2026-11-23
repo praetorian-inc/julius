@@ -35,7 +35,7 @@ type Scanner struct {
 
 type Option func(*Scanner)
 
-func NewScanner(opts ...Option) *Scanner {
+func New(opts ...Option) *Scanner {
 	s := &Scanner{
 		client:          &http.Client{},
 		concurrency:     DefaultConcurrency,
@@ -45,6 +45,10 @@ func NewScanner(opts ...Option) *Scanner {
 		opt(s)
 	}
 	return s
+}
+
+func NewScanner(timeout time.Duration, concurrency int) *Scanner {
+	return New(WithTimeout(timeout), WithConcurrency(concurrency))
 }
 
 func (s *Scanner) ScanAll(targets []string, probes []*types.Probe, augustus bool) []types.Result {
