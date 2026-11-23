@@ -417,3 +417,17 @@ func TestTableWriterModelsAndError(t *testing.T) {
 		})
 	}
 }
+
+func TestTableWriter_VersionColumn(t *testing.T) {
+	buf := &bytes.Buffer{}
+	err := NewTableWriter(buf).Write([]types.Result{{
+		Target:   "https://mcp.example.com",
+		Service:  "MCP Server",
+		Metadata: map[string]string{"protocol_version": "2026-07-28"},
+	}})
+	require.NoError(t, err)
+
+	out := buf.String()
+	assert.Contains(t, out, "VERSION")
+	assert.Contains(t, out, "2026-07-28")
+}
