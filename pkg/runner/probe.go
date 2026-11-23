@@ -79,7 +79,7 @@ func runProbe(cmd *cobra.Command, args []string) error {
 	}
 
 	timeoutDuration := time.Duration(timeout) * time.Second
-	s := scanner.New(
+	s := scanner.NewScanner(
 		scanner.WithTimeout(timeoutDuration),
 		scanner.WithConcurrency(concurrency),
 		scanner.WithMaxResponseSize(maxResponseSize),

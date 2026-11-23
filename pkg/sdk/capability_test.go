@@ -31,7 +31,7 @@ func startMCPServer(t *testing.T, response string, statusCode int) (*httptest.Se
 		}
 		w.Header().Set("Content-Type", "application/json")
 		w.WriteHeader(statusCode)
-		fmt.Fprint(w, response)
+		_, _ = fmt.Fprint(w, response)
 	}))
 
 	host, port := hostPort(t, srv)

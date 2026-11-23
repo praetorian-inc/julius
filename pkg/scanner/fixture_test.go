@@ -220,7 +220,7 @@ func TestProbeFixtures(t *testing.T) {
 					server := httptest.NewServer(c.handler())
 					defer server.Close()
 
-					s := New(WithTimeout(5 * time.Second))
+					s := NewScanner(WithTimeout(5 * time.Second))
 					results := s.Scan(server.URL, []*types.Probe{p}, false)
 					matched := len(results) > 0
 

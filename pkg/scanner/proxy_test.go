@@ -18,8 +18,8 @@ func TestTransportOptionsComposeInEitherOrder(t *testing.T) {
 	tlsCfg := &tls.Config{InsecureSkipVerify: true} //nolint:gosec // test fixture
 
 	for name, s := range map[string]*Scanner{
-		"tls then proxy": New(WithTLSConfig(tlsCfg), WithProxy(proxy)),
-		"proxy then tls": New(WithProxy(proxy), WithTLSConfig(tlsCfg)),
+		"tls then proxy": NewScanner(WithTLSConfig(tlsCfg), WithProxy(proxy)),
+		"proxy then tls": NewScanner(WithProxy(proxy), WithTLSConfig(tlsCfg)),
 	} {
 		t.Run(name, func(t *testing.T) {
 			tr, ok := s.client.Transport.(*http.Transport)
@@ -43,7 +43,7 @@ func TestTransportOptionsComposeInEitherOrder(t *testing.T) {
 // A nil URL must leave DefaultTransport's ProxyFromEnvironment intact so
 // HTTP_PROXY/HTTPS_PROXY keep working for callers that rely on them.
 func TestWithProxy_NilIsNoOp(t *testing.T) {
-	s := New(WithProxy(nil))
+	s := NewScanner(WithProxy(nil))
 	if s.client.Transport != nil {
 		t.Error("a nil proxy should not install a transport")
 	}

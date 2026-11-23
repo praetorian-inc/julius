@@ -2,6 +2,8 @@ package sdk
 
 import (
 	"fmt"
+	"net"
+	"strconv"
 	"strings"
 	"time"
 
@@ -36,7 +38,11 @@ func (c *Capability) Match(_ capability.ExecutionContext, input capmodel.Port) e
 }
 
 func (c *Capability) Invoke(ctx capability.ExecutionContext, input capmodel.Port, output capability.Emitter) error {
-	targetURL := fmt.Sprintf("%s://%s:%d", input.Service, input.Parent.DNS, input.Port)
+	scheme := "http"
+	if strings.HasPrefix(input.Service, "https") {
+		scheme = "https"
+	}
+	targetURL := fmt.Sprintf("%s://%s", scheme, net.JoinHostPort(input.Parent.DNS, strconv.Itoa(input.Port)))
 
 	loadedProbes, err := probe.LoadProbesFromFS(probes.EmbeddedProbes, ".")
 	if err != nil {
@@ -44,11 +50,21 @@ func (c *Capability) Invoke(ctx capability.ExecutionContext, input capmodel.Port
 	}
 
 	if basePaths, ok := ctx.Parameters.GetString("base-paths"); ok && basePaths != "" {
-		paths := strings.Split(basePaths, ",")
-		loadedProbes = probe.ExpandWithBasePaths(loadedProbes, paths)
+		raw := strings.Split(basePaths, ",")
+		paths := make([]string, 0, len(raw))
+		for _, p := range raw {
+			if t := strings.TrimSpace(p); t != "" {
+				paths = append(paths, t)
+			}
+		}
+		if len(paths) > 0 {
+			loadedProbes = probe.ExpandWithBasePaths(loadedProbes, paths)
+		}
 	}
 
-	sc := scanner.New(scanner.WithTimeout(30 * time.Second))
+	loadedProbes = probe.SortProbesByPortHint(loadedProbes, input.Port)
+
+	sc := scanner.NewScanner(scanner.WithTimeout(30 * time.Second))
 	results := sc.Scan(targetURL, loadedProbes, true)
 
 	if len(results) == 0 {
@@ -56,7 +72,7 @@ func (c *Capability) Invoke(ctx capability.ExecutionContext, input capmodel.Port
 	}
 
 	result := results[0]
-	if result.Error != "" || result.Service == "" {
+	if result.Service == "" {
 		return nil
 	}
 
